@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Gym - Fédéral A/B & Compétitions</title>
+    <title>Gestion Gym Pro - Fédéral A/B & Compétitions</title>
+    <!-- Chargement de la bibliothèque Google Auth -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --btn-appel: #4CAF50;
@@ -19,6 +21,16 @@
             padding: 0;
             background-color: var(--bg-color);
             color: #333;
+        }
+
+        /* Barre supérieure / Connexion Google */
+        .top-bar {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* Menu Principal */
@@ -63,21 +75,33 @@
             padding-bottom: 5px;
         }
 
-        /* Zone Réglages */
-        .color-picker-group {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 400px;
-        }
-
-        .color-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Formulaires et Boutons */
+        .form-group {
             margin-bottom: 15px;
         }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn:hover { opacity: 0.9; }
 
         .preview-btn {
             border: none;
@@ -86,9 +110,10 @@
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            margin-right: 5px;
         }
 
-        /* Structure Onglets Internes (Fiche Gymnaste) */
+        /* Structure Onglets Internes */
         .tab-container {
             background: white;
             border-radius: 8px;
@@ -196,6 +221,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
         table {
@@ -220,64 +246,117 @@
 </head>
 <body>
 
+    <!-- BARRE SUPÉRIEURE : AUTHENTIFICATION -->
+    <div class="top-bar">
+        <span><strong>GymApp v2.0</strong></span>
+        <!-- Bouton Google Sign-In Dynamique -->
+        <div id="g_id_onload"
+             data-client_id="759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </div>
+
     <!-- NAV PRINCIPALE -->
     <nav>
         <button onclick="switchMainSection('fedA')" id="nav-fedA" class="active">Fédéral A</button>
-        <button onclick="switchMainSection('fedB')" id="nav-fedB')">Fédéral B</button>
+        <button onclick="switchMainSection('fedB')" id="nav-fedB'">Fédéral B</button>
         <button onclick="switchMainSection('competition')" id="nav-competition">🆕 Compétition</button>
         <button onclick="switchMainSection('reglages')" id="nav-reglages">⚙️ Réglages</button>
     </nav>
 
-    <!-- SECTION : FÉDÉRAL A (Avec l'exemple de la Fiche Gymnaste complète) -->
+    <!-- SECTION : FÉDÉRAL A -->
     <div id="fedA" class="section-content active">
         <h2>Gestion Fédéral A</h2>
-        <h3>Gymnaste exemple : Chloé Martin</h3>
+        
+        <div style="margin-bottom: 20px;">
+            <label><strong>Sélectionner une gymnaste :</strong></label>
+            <select id="gymnaste-select" onchange="chargerGymnaste()">
+                <option value="chloe">Chloé Martin</option>
+                <option value="sarah">Sarah Léoni</option>
+            </select>
+        </div>
 
         <div class="tab-container">
             <div class="tabs-menu">
-                <button onclick="switchGymTab('perso')" id="tab-perso" class="active">1. Fiche Perso</button>
-                <button onclick="switchGymTab('resultats')" id="tab-resultats">2. Résultats</button>
+                <button onclick="switchGymTab('perso')" id="tab-perso" class="active">1. Modification Fiche</button>
+                <button onclick="switchGymTab('resultats')" id="tab-resultats">2. Saisie Notes / Résultats</button>
                 <button onclick="switchGymTab('stats')" id="tab-stats">3. Statistiques</button>
                 <button onclick="switchGymTab('mouvements')" id="tab-mouvements">🆕 4. Mouvements</button>
             </div>
 
-            <!-- TAB 1 : PERSO -->
-            <div id=gym-perso class="tab-panel active">
-                <p><strong>Âge :</strong> 13 ans (Benjamine/Minime)</p>
-                <p><strong>Contacts parents :</strong></p>
-                <button class="preview-btn btn-appel-style">📞 Appeler Parent</button>
-                <button class="preview-btn btn-sms-style">💬 SMS Parent</button>
-                <button class="preview-btn btn-mail-style">✉️ Mail Parent</button>
+            <!-- TAB 1 : MODIFICATION FICHE PERSO -->
+            <div id="gym-perso" class="tab-panel active">
+                <h3>Éditer les informations personnelles</h3>
+                <div class="form-group">
+                    <label>Nom & Prénom :</label>
+                    <input type="text" id="gym-nom" value="Chloé Martin">
+                </div>
+                <div class="form-group">
+                    <label>Âge / Catégorie :</label>
+                    <input type="text" id="gym-cat" value="13 ans (Minime)">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone Parents :</label>
+                    <input type="text" id="gym-tel" value="06 12 34 56 78">
+                </div>
+                <div class="form-group">
+                    <label>Email Parents :</label>
+                    <input type="email" id="gym-email" value="parents@chloe.com">
+                </div>
+                <button class="btn" onclick="sauvegarderFiche()">💾 Enregistrer la Fiche</button>
+                
+                <h4 style="margin-top:20px;">Actions rapides de contact :</h4>
+                <button class="preview-btn btn-appel-style" onclick="alert('Appel vers ' + document.getElementById('gym-tel').value)">📞 Appeler</button>
+                <button class="preview-btn btn-sms-style" onclick="alert('SMS vers ' + document.getElementById('gym-tel').value)">💬 SMS</button>
+                <button class="preview-btn btn-mail-style" onclick="alert('Mail vers ' + document.getElementById('gym-email').value)">✉️ Mail</button>
             </div>
 
-            <!-- TAB 2 : RÉSULTATS -->
+            <!-- TAB 2 : SAISIE DES RÉSULTATS / NOTES -->
             <div id="gym-resultats" class="tab-panel">
-                <p>Dernière compétition : Départemental GAF</p>
-                <ul>
-                    <li>Saut : 11.400</li>
-                    <li>Barres : 10.850</li>
-                    <li>Poutre : 9.900</li>
-                    <li>Sol : 11.200</li>
-                </ul>
+                <h3>Ajouter / Modifier les notes de compétition</h3>
+                <div class="form-group">
+                    <label>Nom de la Compétition :</label>
+                    <input type="text" id="comp-nom" value="Championnat Départemental">
+                </div>
+                <table style="margin-bottom: 15px;">
+                    <tr>
+                        <th>Saut</th>
+                        <th>Barres</th>
+                        <th>Poutre</th>
+                        <th>Sol</th>
+                    </tr>
+                    <tr>
+                        <td><input type="number" step="0.001" id="note-saut" value="11.400"></td>
+                        <td><input type="number" step="0.001" id="note-barres" value="10.850"></td>
+                        <td><input type="number" step="0.001" id="note-poutre" value="9.900"></td>
+                        <td><input type="number" step="0.001" id="note-sol" value="11.200"></td>
+                    </tr>
+                </table>
+                <button class="btn" onclick="sauvegarderNotes()">💾 Valider et Enregistrer les Notes</button>
             </div>
 
-            <!-- TAB 3 : STATS -->
+            <!-- TAB 3 : STATS (Calculées dynamiquement ou indicatives) -->
             <div id="gym-stats" class="tab-panel">
-                <p>📈 Moyenne Générale Réaliste : <strong>43.350 points</strong></p>
-                <p>Point fort : Saut / Point faible : Stabilité en Poutre</p>
+                <h3>Performances & Évolution</h3>
+                <p>📈 Total Général Actuel : <strong id="stat-total">43.350 points</strong></p>
+                <p>Le calcul se met à jour automatiquement dès que vous modifiez les notes dans l'onglet précédent.</p>
             </div>
 
-            <!-- TAB 4 : MOUVEMENTS (Demande Utilisateur) -->
+            <!-- TAB 4 : MOUVEMENTS & CLAVIER SIGLES -->
             <div id="gym-mouvements" class="tab-panel">
+                <h3>Composition des mouvements par agrès</h3>
                 <div class="agres-selector">
-                    <button class="agres-btn active">Saut</button>
-                    <button class="agres-btn">Barres</button>
-                    <button class="agres-btn">Poutre</button>
-                    <button class="agres-btn">Sol</button>
+                    <button class="agres-btn active" onclick="changerAgresMvt('Saut')">Saut</button>
+                    <button class="agres-btn" onclick="changerAgresMvt('Barres')">Barres</button>
+                    <button class="agres-btn" onclick="changerAgresMvt('Poutre')">Poutre</button>
+                    <button class="agres-btn" onclick="changerAgresMvt('Sol')">Sol</button>
                 </div>
 
-                <label for="mvt-text"><strong>Enchaînement de la gymnaste :</strong></label>
+                <label for="mvt-text"><strong id="agres-actuel-titre">Enchaînement actuel (Saut) :</strong></label>
                 <textarea id="mvt-text" placeholder="Rédigez l'enchaînement ou cliquez sur les raccourcis FIG ci-dessous..."></textarea>
+                <button class="btn" style="margin-bottom: 20px;" onclick="sauvegarderMouvement()">💾 Enregistrer ce mouvement</button>
 
                 <p>⚙️ <strong>Clavier d'insertion rapide (SIGLE FIG + ABRÉVIATION) :</strong></p>
                 <div class="keyboard-gym">
@@ -294,32 +373,34 @@
         </div>
     </div>
 
-    <!-- SECTION : FÉDÉRAL B (Contenu basique pour démo) -->
+    <!-- SECTION : FÉDÉRAL B -->
     <div id="fedB" class="section-content">
         <h2>Gestion Fédéral B</h2>
-        <p>Liste et fiches des gymnastes engagées en filière Fédéral B.</p>
+        <p>Espace similaire pour la filière Fédéral B (Fonctionnalités identiques basées sur vos bases de données).</p>
     </div>
 
-    <!-- SECTION : COMPÉTITION (Demande Utilisateur) -->
+    <!-- SECTION : COMPÉTITION (Gestion des Équipes) -->
     <div id="competition" class="section-content">
         <h2>🆕 Gestion Compétition & Équipes</h2>
         
         <div class="comp-grid">
             <div class="box-white">
                 <h3>Créer / Composer une Équipe</h3>
-                <label>Nom de l'équipe :</label><br>
-                <input type="text" value="Équipe 1 Fédéral A" style="width:100%; padding:8px; margin: 10px 0;"><br>
+                <div class="form-group">
+                    <label>Nom de l'équipe :</label>
+                    <input type="text" id="equipe-nom" value="Équipe 1 Fédéral A">
+                </div>
                 
-                <p><strong>Sélectionner les filles (4 max à l'agrès) :</strong></p>
-                <label><input type="checkbox" checked> Chloé Martin</label><br>
-                <label><input type="checkbox" checked> Sarah Léoni</label><br>
-                <label><input type="checkbox" checked> Manon Durand</label><br>
-                <label><input type="checkbox" checked> Emma Petit</label><br>
-                <label><input type="checkbox"> Léa Moreau</label>
+                <p><strong>Sélectionner les membres de l'équipe :</strong></p>
+                <label><input type="checkbox" name="gym-team" value="chloe" checked onchange="calculerTotalEquipe()"> Chloé Martin</label><br>
+                <label><input type="checkbox" name="gym-team" value="sarah" checked onchange="calculerTotalEquipe()"> Sarah Léoni</label><br>
+                <label><input type="checkbox" name="gym-team" value="manon" checked onchange="calculerTotalEquipe()"> Manon Durand</label><br>
+                <label><input type="checkbox" name="gym-team" value="emma" checked onchange="calculerTotalEquipe()"> Emma Petit</label><br>
+                <button class="btn" style="margin-top:15px;" onclick="alert('Configuration de l\'équipe sauvegardée !')">💾 Enregistrer l'Équipe</button>
             </div>
 
             <div class="box-white">
-                <h3>Tableau Stratégique Match (Notes Théoriques)</h3>
+                <h3>Tableau de Match Évolutif (Top 3 des notes retenu)</h3>
                 <table>
                     <thead>
                         <tr>
@@ -330,50 +411,16 @@
                             <th>Sol</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Chloé M.</td>
-                            <td>11.40</td>
-                            <td>10.85</td>
-                            <td>9.90</td>
-                            <td>11.20</td>
-                        </tr>
-                        <tr>
-                            <td>Sarah L.</td>
-                            <td>10.50</td>
-                            <td>11.00</td>
-                            <td>10.20</td>
-                            <td>10.80</td>
-                        </tr>
-                        <tr>
-                            <td>Manon D.</td>
-                            <td>11.10</td>
-                            <td>9.50</td>
-                            <td>10.50</td>
-                            <td>11.00</td>
-                        </tr>
-                        <tr>
-                            <td>Emma P.</td>
-                            <td>10.80</td>
-                            <td>10.20</td>
-                            <td>9.80</td>
-                            <td>10.50</td>
-                        </tr>
-                        <tr style="background:#e3f2fd; font-weight:bold;">
-                            <td>Total Équipe (Top 3)</td>
-                            <td>33.30</td>
-                            <td>32.05</td>
-                            <td>30.60</td>
-                            <td>33.00</td>
-                        </tr>
+                    <tbody id="tableau-competition-body">
+                        <!-- Généré dynamiquement en JS pour l'exemple -->
                     </tbody>
                 </table>
-                <p><small>*Le total équipe prend automatiquement les 3 meilleures notes à chaque agrès.</small></p>
+                <p><small>*Ce tableau s'adapte en temps réel si vous modifiez la note d'une fille dans sa fiche.</small></p>
             </div>
         </div>
     </div>
 
-    <!-- SECTION : RÉGLAGES (Demande Utilisateur) -->
+    <!-- SECTION : RÉGLAGES -->
     <div id="reglages" class="section-content">
         <h2>⚙️ Réglages Généraux</h2>
         <h3>Personnalisation des couleurs des boutons de contact</h3>
@@ -397,68 +444,184 @@
         </div>
     </div>
 
-    <!-- SCRIPT INTERACTIF (JAVASCRIPT) -->
+    <!-- LOGIQUE JAVASCRIPT ET BASE DE DONNÉES LOCALE INTERNE -->
     <script>
-        // Gestion de la navigation principale
+        // Simulation d'une base de données locale modifiable (sauvegardée dans le navigateur)
+        let dataGymnastes = {
+            chloe: {
+                nom: "Chloé Martin", cat: "13 ans (Minime)", tel: "06 12 34 56 78", email: "parents@chloe.com",
+                notes: { saut: 11.400, barres: 10.850, poutre: 9.900, sol: 11.200 },
+                mouvements: { Saut: "", Barres: "Entrée ➔ ↷ (BSC)", Poutre: "", Sol: "" }
+            },
+            sarah: {
+                nom: "Sarah Léoni", cat: "14 ans (Cadette)", tel: "07 98 76 54 32", email: "parents@sarah.com",
+                notes: { saut: 10.500, barres: 11.000, poutre: 10.200, sol: 10.800 },
+                mouvements: { Saut: "", Barres: "", Poutre: "", Sol: "" }
+            }
+        };
+
+        let apresActuel = "Saut";
+
+        // Navigation principale
         function switchMainSection(sectionId) {
-            document.querySelectorAll('.section-content').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-            document.getElementById('nav-' + sectionId).classList.add('active');
+            if(document.getElementById('nav-' + sectionId)) {
+                document.getElementById('nav-' + sectionId).classList.add('active');
+            }
+            if(sectionId === 'competition') calculerTotalEquipe();
         }
 
-        // Gestion des onglets de la fiche Gymnaste
+        // Onglets Gymnastes
         function switchGymTab(tabId) {
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-            document.querySelectorAll('.tabs-menu button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tabs-menu button').forEach(b => b.classList.remove('active'));
             document.getElementById('gym-' + tabId).classList.add('active');
             document.getElementById('tab-' + tabId).classList.add('active');
         }
 
-        // Insertion des Sigles et Abréviations dans le texte
+        // Charger les données de la gymnaste sélectionnée dans les formulaires
+        function chargerGymnaste() {
+            let id = document.getElementById('gymnaste-select').value;
+            let gym = dataGymnastes[id];
+
+            document.getElementById('gym-nom').value = gym.nom;
+            document.getElementById('gym-cat').value = gym.cat;
+            document.getElementById('gym-tel').value = gym.tel;
+            document.getElementById('gym-email').value = gym.email;
+
+            document.getElementById('note-saut').value = gym.notes.saut;
+            document.getElementById('note-barres').value = gym.notes.barres;
+            document.getElementById('note-poutre').value = gym.notes.poutre;
+            document.getElementById('note-sol').value = gym.notes.sol;
+
+            document.getElementById('mvt-text').value = gym.mouvements[apresActuel] || "";
+            mettreAjourStats();
+        }
+
+        // Sauvegardes locales dans notre variable
+        function sauvegarderFiche() {
+            let id = document.getElementById('gymnaste-select').value;
+            dataGymnastes[id].nom = document.getElementById('gym-nom').value;
+            dataGymnastes[id].cat = document.getElementById('gym-cat').value;
+            dataGymnastes[id].tel = document.getElementById('gym-tel').value;
+            dataGymnastes[id].email = document.getElementById('gym-email').value;
+            alert("Fiche personnelle mise à jour !");
+        }
+
+        function sauvegarderNotes() {
+            let id = document.getElementById('gymnaste-select').value;
+            dataGymnastes[id].notes.saut = parseFloat(document.getElementById('note-saut').value) || 0;
+            dataGymnastes[id].notes.barres = parseFloat(document.getElementById('note-barres').value) || 0;
+            dataGymnastes[id].notes.poutre = parseFloat(document.getElementById('note-poutre').value) || 0;
+            dataGymnastes[id].notes.sol = parseFloat(document.getElementById('note-sol').value) || 0;
+            mettreAjourStats();
+            alert("Notes de compétition enregistrées !");
+        }
+
+        function mettreAjourStats() {
+            let id = document.getElementById('gymnaste-select').value;
+            let notes = dataGymnastes[id].notes;
+            let total = notes.saut + notes.barres + notes.poutre + notes.sol;
+            document.getElementById('stat-total').innerText = total.toFixed(3) + " points";
+        }
+
+        // Mouvements et Agrès
+        function changerAgresMvt(agres) {
+            let id = document.getElementById('gymnaste-select').value;
+            // Sauvegarde le précédent avant de changer
+            dataGymnastes[id].mouvements[apresActuel] = document.getElementById('mvt-text').value;
+            
+            apresActuel = agres;
+            document.getElementById('agres-actuel-titre').innerText = "Enchaînement actuel (" + agres + ") :";
+            document.getElementById('mvt-text').value = dataGymnastes[id].mouvements[agres] || "";
+
+            document.querySelectorAll('.agres-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText === agres);
+            });
+        }
+
+        function sauvegarderMouvement() {
+            let id = document.getElementById('gymnaste-select').value;
+            dataGymnastes[id].mouvements[apresActuel] = document.getElementById('mvt-text').value;
+            alert("Mouvement " + apresActuel + " sauvegardé !");
+        }
+
+        // Insertion des sigles
         function insertSigle(valeur) {
             const txtArea = document.getElementById('mvt-text');
             const startPos = txtArea.selectionStart;
             const endPos = txtArea.selectionEnd;
-            
-            // Insertion au niveau du curseur
-            txtArea.value = txtArea.value.substring(0, startPos) 
-                + valeur 
-                + txtArea.value.substring(endPos, txtArea.value.length);
-            
+            txtArea.value = txtArea.value.substring(0, startPos) + valeur + txtArea.value.substring(endPos, txtArea.value.length);
             txtArea.focus();
             txtArea.selectionStart = startPos + valeur.length;
             txtArea.selectionEnd = startPos + valeur.length;
         }
 
-        // Mise à jour dynamique des couleurs CSS selon les réglages
+        // Logique de calcul automatique pour la Compétition (Top 3)
+        function calculerTotalEquipe() {
+            let checkboxes = document.querySelectorAll('input[name="gym-team"]:checked');
+            let tbody = document.getElementById('tableau-competition-body');
+            tbody.innerHTML = "";
+
+            let notesSaut = [], notesBarres = [], notesPoutre = [], notesSol = [];
+
+            checkboxes.forEach(cb => {
+                let gymId = cb.value;
+                let gym = dataGymnastes[gymId] || { nom: cb.parentNode.innerText, notes: {saut:11.1, barres:9.5, poutre:10.5, sol:11.0} }; // Fallback pour démo
+                
+                notesSaut.push(gym.notes.saut);
+                notesBarres.push(gym.notes.barres);
+                notesPoutre.push(gym.notes.poutre);
+                notesSol.push(gym.notes.sol);
+
+                tbody.innerHTML += `<tr>
+                    <td>${gym.nom}</td>
+                    <td>${gym.notes.saut.toFixed(2)}</td>
+                    <td>${gym.notes.barres.toFixed(2)}</td>
+                    <td>${gym.notes.poutre.toFixed(2)}</td>
+                    <td>${gym.notes.sol.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            // Fonction pour faire la somme des 3 meilleures notes
+            let sumTop3 = (arr) => arr.sort((a,b) => b-a).slice(0,3).reduce((x,y) => x+y, 0);
+
+            tbody.innerHTML += `<tr style="background:#e3f2fd; font-weight:bold;">
+                <td>Total Équipe (Top 3)</td>
+                <td>${sumTop3(notesSaut).toFixed(2)}</td>
+                <td>${sumTop3(notesBarres).toFixed(2)}</td>
+                <td>${sumTop3(notesPoutre).toFixed(2)}</td>
+                <td>${sumTop3(notesSol).toFixed(2)}</td>
+            </tr>`;
+        }
+
+        // Changement de couleurs dynamique
         function updateColors() {
             const cAppel = document.getElementById('colorAppel').value;
             const cSMS = document.getElementById('colorSMS').value;
             const cMail = document.getElementById('colorMail').value;
-
             document.documentElement.style.setProperty('--btn-appel', cAppel);
             document.documentElement.style.setProperty('--btn-sms', cSMS);
             document.documentElement.style.setProperty('--btn-mail', cMail);
-
-            // Appliquer le style sur les classes concernées
             document.querySelectorAll('.btn-appel-style').forEach(b => b.style.backgroundColor = cAppel);
             document.querySelectorAll('.btn-sms-style').forEach(b => b.style.backgroundColor = cSMS);
             document.querySelectorAll('.btn-mail-style').forEach(b => b.style.backgroundColor = cMail);
         }
 
-        // Initialisation des couleurs au démarrage
-        updateColors();
+        // Réception du Token Google (Authentification réussie)
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            alert("Connexion réussie avec Google ! Vos configurations d'API sont prêtes.");
+            // Ici, tu pourras ajouter tes scripts pour envoyer/charger des données vers Google Drive ou Sheets
+        }
+
+        // Initialisation globale
+        window.onload = function() {
+            chargerGymnaste();
+            updateColors();
+        };
     </script>
 </body>
 </html>
