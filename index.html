@@ -3,468 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi Gymnastique (Drive Cloud)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+    <title>Gestion Gym - Fédéral A/B & Compétitions</title>
     <style>
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f3f4f6; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        :root {
+            --btn-appel: #4CAF50;
+            --btn-sms: #2196F3;
+            --btn-mail: #FF9800;
+            --primary-color: #6200ee;
+            --bg-color: #f5f5f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+
+        /* Menu Principal */
+        nav {
+            background-color: var(--primary-color);
+            display: flex;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        nav button.active, nav button:hover {
+            border-bottom: 3px solid #fff;
+            font-weight: bold;
+        }
+
+        /* Conteneurs de Sections */
+        .section-content {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        h2, h3 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        /* Zone Réglages */
+        .color-picker-group {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+
+        .color-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-btn {
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Structure Onglets Internes (Fiche Gymnaste) */
+        .tab-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .tabs-menu {
+            display: flex;
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tabs-menu button {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .tabs-menu button.active {
+            background: white;
+            font-weight: bold;
+            border-top: 3px solid var(--primary-color);
+        }
+
+        .tab-panel {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Clavier Spécial Gym/Sigles */
+        .agres-selector {
+            margin-bottom: 15px;
+        }
+
+        .agres-btn {
+            background: #e0e0e0;
+            border: none;
+            padding: 10px 20px;
+            margin-right: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .agres-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .keyboard-gym {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+        }
+
+        .sigle-btn {
+            background: white;
+            border: 1px solid #bbb;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .sigle-btn:hover {
+            background: #e3f2fd;
+            border-color: var(--btn-sms);
+        }
+
+        /* Zone Équipe / Compétition */
+        .comp-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .box-white {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
-<body class="pb-24">
+<body>
 
-    <header id="app-header" class="text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center transition-colors duration-300">
-        <h1 class="text-xl font-bold tracking-wide cursor-pointer" id="app-title" onclick="showScreen('screen-levels')">🤸‍♀️ GymSuivi</h1>
-        <div class="flex items-center gap-2">
-            <button id="btn-settings" class="bg-black/20 p-1.5 rounded text-sm hover:bg-black/30 transition" onclick="toggleSettingsScreen()">⚙️ Réglages</button>
-            <button id="btn-back" class="hidden bg-black/20 px-3 py-1.5 rounded text-sm font-medium hover:bg-black/30 transition" onclick="goBack()">⬅ Retour</button>
-        </div>
-    </header>
+    <!-- NAV PRINCIPALE -->
+    <nav>
+        <button onclick="switchMainSection('fedA')" id="nav-fedA" class="active">Fédéral A</button>
+        <button onclick="switchMainSection('fedB')" id="nav-fedB')">Fédéral B</button>
+        <button onclick="switchMainSection('competition')" id="nav-competition">🆕 Compétition</button>
+        <button onclick="switchMainSection('reglages')" id="nav-reglages">⚙️ Réglages</button>
+    </nav>
 
-    <main class="max-w-md mx-auto p-4">
+    <!-- SECTION : FÉDÉRAL A (Avec l'exemple de la Fiche Gymnaste complète) -->
+    <div id="fedA" class="section-content active">
+        <h2>Gestion Fédéral A</h2>
+        <h3>Gymnaste exemple : Chloé Martin</h3>
 
-        <section id="screen-settings" class="hidden space-y-4">
-            <h2 class="text-lg font-semibold text-gray-700">Connexion Cloud & Design ☁️</h2>
-            
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
-                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Synchronisation Google Drive :</p>
-                <div id="drive-status" class="text-sm text-amber-600 font-medium">🔴 Non connecté à Google Drive</div>
-                <div class="flex gap-2">
-                    <button id="btn-login" onclick="handleAuthClick()" class="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded shadow hover:bg-blue-700 transition">Connexion Google</button>
-                    <button id="btn-logout" onclick="handleSignoutClick()" class="hidden flex-1 bg-gray-200 text-gray-700 text-sm font-medium py-2 rounded hover:bg-gray-300 transition">Déconnexion</button>
-                </div>
-                <div id="sync-indicator" class="hidden text-xs text-green-600 italic text-center">🔄 Synchronisation en cours...</div>
+        <div class="tab-container">
+            <div class="tabs-menu">
+                <button onclick="switchGymTab('perso')" id="tab-perso" class="active">1. Fiche Perso</button>
+                <button onclick="switchGymTab('resultats')" id="tab-resultats">2. Résultats</button>
+                <button onclick="switchGymTab('stats')" id="tab-stats">3. Statistiques</button>
+                <button onclick="switchGymTab('mouvements')" id="tab-mouvements">🆕 4. Mouvements</button>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Personnalisation par zone :</p>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                        <label class="text-sm font-medium text-gray-700">Barre de nav / En-tête :</label>
-                        <input type="color" id="color-header" onchange="updateCustomColor('header', this.value)" class="w-10 h-8 rounded cursor-pointer border border-gray-300">
-                    </div>
-                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                        <label class="text-sm font-medium text-gray-700">Onglet <span class="font-bold text-gray-500">Infos</span> :</label>
-                        <input type="color" id="color-tab-infos" onchange="updateCustomColor('tab-infos', this.value)" class="w-10 h-8 rounded cursor-pointer border border-gray-300">
-                    </div>
-                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                        <label class="text-sm font-medium text-gray-700">Onglet <span class="font-bold text-gray-500">Saisie</span> :</label>
-                        <input type="color" id="color-tab-saisie" onchange="updateCustomColor('tab-saisie', this.value)" class="w-10 h-8 rounded cursor-pointer border border-gray-300">
-                    </div>
-                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                        <label class="text-sm font-medium text-gray-700">Onglet <span class="font-bold text-gray-500">Suivi</span> :</label>
-                        <input type="color" id="color-tab-suivi" onchange="updateCustomColor('tab-suivi', this.value)" class="w-10 h-8 rounded cursor-pointer border border-gray-300">
-                    </div>
-                </div>
-                <button onclick="resetColors()" class="w-full bg-gray-100 text-gray-600 text-xs font-semibold py-2 rounded border border-gray-200 hover:bg-gray-200 transition">Réinitialiser les couleurs</button>
-            </div>
-        </section>
-
-        <section id="screen-levels" class="space-y-4">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">Sélectionnez un groupe :</h2>
-            <div id="levels-list" class="grid grid-cols-1 gap-3"></div>
-        </section>
-
-        <section id="screen-gymnastes" class="hidden space-y-4">
-            <h2 id="gymnastes-title" class="text-lg font-semibold text-gray-700">Gymnastes</h2>
-            <div id="gymnastes-list" class="grid grid-cols-1 gap-3"></div>
-        </section>
-
-        <section id="screen-fiche" class="hidden bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <div id="fiche-header" class="text-white p-5 flex justify-between items-start transition-colors duration-300">
-                <div>
-                    <h2 id="fiche-name" class="text-2xl font-bold">Prénom Nom</h2>
-                    <p id="fiche-category" class="text-white/80 text-sm mt-1">Catégorie</p>
-                </div>
-                <button class="bg-white/20 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-white/30 transition" onclick="openEditModal()">✏️ Modifier</button>
+            <!-- TAB 1 : PERSO -->
+            <div id=gym-perso class="tab-panel active">
+                <p><strong>Âge :</strong> 13 ans (Benjamine/Minime)</p>
+                <p><strong>Contacts parents :</strong></p>
+                <button class="preview-btn btn-appel-style">📞 Appeler Parent</button>
+                <button class="preview-btn btn-sms-style">💬 SMS Parent</button>
+                <button class="preview-btn btn-mail-style">✉️ Mail Parent</button>
             </div>
 
-            <div class="flex border-b border-gray-200 bg-gray-50">
-                <button class="flex-1 py-3 text-center text-sm font-medium border-b-2 focus:outline-none" id="tab-infos" onclick="switchTab('infos')">Infos</button>
-                <button class="flex-1 py-3 text-center text-sm font-medium border-b-2 focus:outline-none" id="tab-saisie" onclick="switchTab('saisie')">Saisie</button>
-                <button class="flex-1 py-3 text-center text-sm font-medium border-b-2 focus:outline-none" id="tab-suivi" onclick="switchTab('suivi')">Suivi</button>
+            <!-- TAB 2 : RÉSULTATS -->
+            <div id="gym-resultats" class="tab-panel">
+                <p>Dernière compétition : Départemental GAF</p>
+                <ul>
+                    <li>Saut : 11.400</li>
+                    <li>Barres : 10.850</li>
+                    <li>Poutre : 9.900</li>
+                    <li>Sol : 11.200</li>
+                </ul>
             </div>
 
-            <div class="p-5">
-                <div id="content-infos" class="tab-content active space-y-4 text-gray-600">
-                    <div><span class="block text-xs uppercase tracking-wider font-semibold text-gray-400">Date de naissance</span><p id="info-ddn" class="text-gray-800 font-medium"></p></div>
-                    <div><span class="block text-xs uppercase tracking-wider font-semibold text-gray-400">Licence</span><p id="info-licence" class="text-gray-800 font-medium"></p></div>
-                    <div><span class="block text-xs uppercase tracking-wider font-semibold text-gray-400">Contact Urgence</span><p id="info-tel" class="text-lg font-semibold"></p></div>
-                    <div><span class="block text-xs uppercase tracking-wider font-semibold text-gray-400">Notes générales</span><p id="info-notes" class="text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm italic"></p></div>
+            <!-- TAB 3 : STATS -->
+            <div id="gym-stats" class="tab-panel">
+                <p>📈 Moyenne Générale Réaliste : <strong>43.350 points</strong></p>
+                <p>Point fort : Saut / Point faible : Stabilité en Poutre</p>
+            </div>
+
+            <!-- TAB 4 : MOUVEMENTS (Demande Utilisateur) -->
+            <div id="gym-mouvements" class="tab-panel">
+                <div class="agres-selector">
+                    <button class="agres-btn active">Saut</button>
+                    <button class="agres-btn">Barres</button>
+                    <button class="agres-btn">Poutre</button>
+                    <button class="agres-btn">Sol</button>
                 </div>
 
-                <div id="content-saisie" class="tab-content space-y-4">
-                    <h3 id="title-form-score" class="text-sm font-bold uppercase tracking-wider text-gray-400">Ajouter de nouvelles notes</h3>
-                    <form id="form-score" onsubmit="saveScore(event)" class="space-y-3">
-                        <input type="hidden" id="edit-score-id">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Type de Séance</label>
-                            <select id="score-type" class="w-full p-2 border border-gray-300 rounded-md bg-white">
-                                <option>Entraînement</option>
-                                <option>Test Interne</option>
-                                <option>Compétition</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-sm font-medium text-gray-700">Saut 🤸‍♀️</label><input type="number" step="0.01" id="score-saut" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Barres 💈</label><input type="number" step="0.01" id="score-barres" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Poutre 🪵</label><input type="number" step="0.01" id="score-poutre" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Sol 🟥</label><input type="number" step="0.01" id="score-sol" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button type="button" id="btn-cancel-score-edit" class="hidden flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-300 transition" onclick="cancelScoreEdit()">Annuler</button>
-                            <button type="submit" id="btn-theme-submit-score" class="flex-2 text-white py-2.5 rounded-lg font-medium shadow transition">Enregistrer</button>
-                        </div>
-                    </form>
-                </div>
+                <label for="mvt-text"><strong>Enchaînement de la gymnaste :</strong></label>
+                <textarea id="mvt-text" placeholder="Rédigez l'enchaînement ou cliquez sur les raccourcis FIG ci-dessous..."></textarea>
 
-                <div id="content-suivi" class="tab-content space-y-6">
-                    <div class="bg-white p-2 border border-gray-100 rounded-xl shadow-inner">
-                        <canvas id="chartProgression" width="400" height="250"></canvas>
-                    </div>
-                    <div class="space-y-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Historique des résultats</h3>
-                        <div id="scores-history-list" class="space-y-2"></div>
-                    </div>
+                <p>⚙️ <strong>Clavier d'insertion rapide (SIGLE FIG + ABRÉVIATION) :</strong></p>
+                <div class="keyboard-gym">
+                    <button class="sigle-btn" onclick="insertSigle(' ↷ (BSC)')"><b>↷</b> (BSC)<br><small>Bascule</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' ⥁ (½ PV)')"><b>⥁</b> (½ PV)<br><small>Demi-pivot</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' ↩ (RTY)')"><b>↩</b> (RTY)<br><small>Rétroversion</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' ↻ (FFL)')"><b>↻</b> (FFL)<br><small>Flip-Flap</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' ⤾ (RND)')"><b>⤾</b> (RND)<br><small>Rondade</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' 🤸 (SLA)')"><b>🤸</b> (SLA)<br><small>Salto Arrière</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' 🩰 (GRJ)')"><b>🩰</b> (GRJ)<br><small>Grand Jeté</small></button>
+                    <button class="sigle-btn" onclick="insertSigle(' 🌙 (LNE)')"><b>🌙</b> (LNE)<br><small>Lune</small></button>
                 </div>
             </div>
-        </section>
-    </main>
-
-    <button id="btn-add-gym" class="fixed bottom-6 right-6 bg-pink-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl text-2xl font-bold hover:bg-pink-700 transition transform hover:scale-105" onclick="openAddModal()">+</button>
-
-    <div id="modal-add" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div id="modal-header" class="bg-pink-600 text-white p-4 font-bold text-lg flex justify-between">
-                <span id="modal-title">Ajouter une Gymnaste</span>
-                <button onclick="closeAddModal()" class="text-white hover:text-white/80">✕</button>
-            </div>
-            <form id="form-add-gym" onsubmit="handleGymFormSubmit(event)" class="p-4 space-y-3">
-                <input type="hidden" id="edit-gym-id">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-sm font-medium text-gray-700">Nom</label><input type="text" id="gym-nom" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                    <div><label class="block text-sm font-medium text-gray-700">Prénom</label><input type="text" id="gym-prenom" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                </div>
-                <div><label class="block text-sm font-medium text-gray-700">Date de naissance</label><input type="date" id="gym-ddn" required class="w-full p-2 border border-gray-300 rounded-md bg-white"></div>
-                <div><label class="block text-sm font-medium text-gray-700">Groupe / Niveau</label><select id="gym-niveau" class="w-full p-2 border border-gray-300 rounded-md bg-white"></select></div>
-                <div><label class="block text-sm font-medium text-gray-700">N° Licence</label><input type="text" id="gym-licence" class="w-full p-2 border border-gray-300 rounded-md"></div>
-                <div><label class="block text-sm font-medium text-gray-700">Téléphone Urgence</label><input type="tel" id="gym-tel" required class="w-full p-2 border border-gray-300 rounded-md"></div>
-                <div><label class="block text-sm font-medium text-gray-700">Notes / Objectifs</label><textarea id="gym-notes" class="w-full p-2 border border-gray-300 rounded-md" rows="2"></textarea></div>
-                <button type="submit" id="btn-modal-submit" class="w-full bg-pink-600 text-white py-2.5 rounded-lg font-medium shadow hover:opacity-90 transition">Valider</button>
-            </form>
         </div>
     </div>
 
-    <script>
-        // CLIENT ID POUR L'API GOOGLE DRIVE (Générique pour l'espace AppData sécurisé)
-        // Note : En production, Google requiert de lier l'URI d'origine dans la console Google Cloud.
-        const CLIENT_ID = '372428594957-8u1909j97u69g83l2995hclor7688pba.apps.googleusercontent.com'; 
-        const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    <!-- SECTION : FÉDÉRAL B (Contenu basique pour démo) -->
+    <div id="fedB" class="section-content">
+        <h2>Gestion Fédéral B</h2>
+        <p>Liste et fiches des gymnastes engagées en filière Fédéral B.</p>
+    </div>
 
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-        let googleAccessToken = null;
-        let driveFileId = null;
-
-        // DB structure globale unifiée
-        let data = {
-            levels: [{ id: "NIV-A", name: "Fédérale A" }, { id: "NIV-B", name: "Fédérale B" }],
-            gymnastes: [],
-            scores: []
-        };
-
-        // Charger le cache local au démarrage en attendant la synchro Drive
-        if(localStorage.getItem('gym_master_data')) {
-            data = JSON.parse(localStorage.getItem('gym_master_data'));
-        }
-
-        // --- ENREGISTREMENT ET PROPAGATION ---
-        function saveAllData() {
-            localStorage.setItem('gym_master_data', JSON.stringify(data));
-            if (googleAccessToken) {
-                uploadDataToDrive();
-            }
-        }
-
-        // --- CHARGEMENT GOOGLE API ---
-        function gapiLoaded() { gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() {
-            await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-            gapiInited = true;
-            checkAuthStates();
-        }
-        function gisLoaded() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID, scope: SCOPES, callback: async (resp) => {
-                    if (resp.error) return;
-                    googleAccessToken = resp.access_token;
-                    gapi.client.setToken({access_token: googleAccessToken});
-                    document.getElementById('drive-status').innerText = "🟢 Connecté à Google Drive";
-                    document.getElementById('btn-login').classList.add('hidden');
-                    document.getElementById('btn-logout').classList.remove('hidden');
-                    await syncWithDrive();
-                }
-            });
-            gisInited = true;
-            checkAuthStates();
-        }
-        function checkAuthStates() {
-            // Tente de récupérer un token existant en session
-            const storedToken = localStorage.getItem('drive_access_token');
-            if (storedToken && gapiInited) {
-                googleAccessToken = storedToken;
-                gapi.client.setToken({access_token: googleAccessToken});
-                document.getElementById('drive-status').innerText = "🟢 Connecté à Google Drive";
-                document.getElementById('btn-login').classList.add('hidden');
-                document.getElementById('btn-logout').classList.remove('hidden');
-                syncWithDrive();
-            }
-        }
-
-        function handleAuthClick() {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        }
-
-        function handleSignoutClick() {
-            const token = gapi.client.getToken();
-            if (token !== null) {
-                google.accounts.oauth2.revokeToken(token.access_token, () => {});
-                gapi.client.setToken(null);
-                googleAccessToken = null;
-                driveFileId = null;
-                localStorage.removeItem('drive_access_token');
-                document.getElementById('drive-status').innerText = "🔴 Non connecté à Google Drive";
-                document.getElementById('btn-login').classList.remove('hidden');
-                document.getElementById('btn-logout').classList.add('hidden');
-            }
-        }
-
-        // --- LOGIQUE DE SYNCHRONISATION GOOGLE DRIVE ---
-        async function syncWithDrive() {
-            document.getElementById('sync-indicator').classList.remove('hidden');
-            try {
-                localStorage.setItem('drive_access_token', googleAccessToken);
-                // Chercher le fichier existant dans appDataFolder
-                const response = await gapi.client.drive.files.list({ spaces: 'appData', fields: 'files(id, name)' });
-                const files = response.result.files;
+    <!-- SECTION : COMPÉTITION (Demande Utilisateur) -->
+    <div id="competition" class="section-content">
+        <h2>🆕 Gestion Compétition & Équipes</h2>
+        
+        <div class="comp-grid">
+            <div class="box-white">
+                <h3>Créer / Composer une Équipe</h3>
+                <label>Nom de l'équipe :</label><br>
+                <input type="text" value="Équipe 1 Fédéral A" style="width:100%; padding:8px; margin: 10px 0;"><br>
                 
-                if (files && files.length > 0) {
-                    driveFileId = files[0].id;
-                    const fileData = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-                    if (fileData.body) {
-                        data = JSON.parse(fileData.body);
-                        localStorage.setItem('gym_master_data', JSON.stringify(data));
-                        renderLevels();
-                    }
-                } else {
-                    // Créer le fichier initial si inexistant
-                    await uploadDataToDrive(true);
-                }
-            } catch (err) {
-                console.error("Synchro impossible", err);
-            }
-            document.getElementById('sync-indicator').classList.add('hidden');
-        }
+                <p><strong>Sélectionner les filles (4 max à l'agrès) :</strong></p>
+                <label><input type="checkbox" checked> Chloé Martin</label><br>
+                <label><input type="checkbox" checked> Sarah Léoni</label><br>
+                <label><input type="checkbox" checked> Manon Durand</label><br>
+                <label><input type="checkbox" checked> Emma Petit</label><br>
+                <label><input type="checkbox"> Léa Moreau</label>
+            </div>
 
-        async function uploadDataToDrive(isCreation = false) {
-            document.getElementById('sync-indicator').classList.remove('hidden');
-            const boundary = 'foo_bar_baz';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
+            <div class="box-white">
+                <h3>Tableau Stratégique Match (Notes Théoriques)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Gymnaste</th>
+                            <th>Saut</th>
+                            <th>Barres</th>
+                            <th>Poutre</th>
+                            <th>Sol</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Chloé M.</td>
+                            <td>11.40</td>
+                            <td>10.85</td>
+                            <td>9.90</td>
+                            <td>11.20</td>
+                        </tr>
+                        <tr>
+                            <td>Sarah L.</td>
+                            <td>10.50</td>
+                            <td>11.00</td>
+                            <td>10.20</td>
+                            <td>10.80</td>
+                        </tr>
+                        <tr>
+                            <td>Manon D.</td>
+                            <td>11.10</td>
+                            <td>9.50</td>
+                            <td>10.50</td>
+                            <td>11.00</td>
+                        </tr>
+                        <tr>
+                            <td>Emma P.</td>
+                            <td>10.80</td>
+                            <td>10.20</td>
+                            <td>9.80</td>
+                            <td>10.50</td>
+                        </tr>
+                        <tr style="background:#e3f2fd; font-weight:bold;">
+                            <td>Total Équipe (Top 3)</td>
+                            <td>33.30</td>
+                            <td>32.05</td>
+                            <td>30.60</td>
+                            <td>33.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><small>*Le total équipe prend automatiquement les 3 meilleures notes à chaque agrès.</small></p>
+            </div>
+        </div>
+    </div>
 
-            const metadata = { name: 'gym_suivi_data.json', parents: isCreation ? ['appDataFolder'] : [] };
-            const multipartRequestBody =
-                delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
-                delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) + close_delim;
-
-            try {
-                if (isCreation || !driveFileId) {
-                    const res = await gapi.client.request({
-                        path: '/upload/drive/v3/files', method: 'POST',
-                        params: { uploadType: 'multipart' },
-                        headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
-                        body: multipartRequestBody
-                    });
-                    driveFileId = res.result.id;
-                } else {
-                    await gapi.client.request({
-                        path: '/upload/drive/v3/files/' + driveFileId, method: 'PATCH',
-                        params: { uploadType: 'multipart' },
-                        headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
-                        body: multipartRequestBody
-                    });
-                }
-            } catch(e) { console.error("Échec d'envoi Drive", e); }
-            document.getElementById('sync-indicator').classList.add('hidden');
-        }
-
-        // --- DESIGN CHROMATIQUE ---
-        const defaultColors = { header: '#0f766e', 'tab-infos': '#0284c7', 'tab-saisie': '#16a34a', 'tab-suivi': '#7c3aed' };
-        let userColors = JSON.parse(localStorage.getItem('gym_custom_colors')) || { ...defaultColors };
-
-        function initColorsInSettings() {
-            document.getElementById('color-header').value = userColors.header;
-            document.getElementById('color-tab-infos').value = userColors['tab-infos'];
-            document.getElementById('color-tab-saisie').value = userColors['tab-saisie'];
-            document.getElementById('color-tab-suivi').value = userColors['tab-suivi'];
-        }
-        function updateCustomColor(zone, value) {
-            userColors[zone] = value; localStorage.setItem('gym_custom_colors', JSON.stringify(userColors)); applyCustomColors();
-        }
-        function resetColors() {
-            userColors = { ...defaultColors }; localStorage.setItem('gym_custom_colors', JSON.stringify(userColors)); initColorsInSettings(); applyCustomColors();
-        }
-        function applyCustomColors() {
-            document.getElementById('app-header').style.backgroundColor = userColors.header;
-            if(document.getElementById('fiche-header')) document.getElementById('fiche-header').style.backgroundColor = userColors.header;
-            const activeTab = document.querySelector('.tab-content.active');
-            if(activeTab) switchTab(activeTab.id.replace('content-', ''));
-        }
-
-        // --- AUTOMATISATION AGE ET CATÉGORIE ---
-        function calculateCategory(birthDateString) {
-            if (!birthDateString) return "Non renseignée";
-            const birthDate = new Date(birthDateString);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-            if (age >= 7 && age <= 9) return `Poussine (${age} ans)`;
-            if (age >= 10 && age <= 11) return `Benjamine (${age} ans)`;
-            if (age >= 12 && age <= 13) return `Minime (${age} ans)`;
-            if (age >= 14 && age <= 15) return `Cadette (${age} ans)`;
-            return age < 7 ? `Baby (${age} ans)` : `Junior/Senior (${age} ans)`;
-        }
-        function formatDateFR(dateString) {
-            if(!dateString) return 'Non renseignée';
-            const d = new Date(dateString); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
-        }
-
-        // --- INTERFACE NAV ET APPLICATION ---
-        let currentLevelId = null, currentGymId = null, myChart = null, screenHistory = ['screen-levels'];
-
-        function showScreen(screenId) {
-            document.getElementById('screen-levels').classList.add('hidden');
-            document.getElementById('screen-gymnastes').classList.add('hidden');
-            document.getElementById('screen-fiche').classList.add('hidden');
-            document.getElementById('screen-settings').classList.add('hidden');
-            document.getElementById(screenId).classList.remove('hidden');
-            const btnBack = document.getElementById('btn-back'), btnSettings = document.getElementById('btn-settings');
-            if (screenId === 'screen-levels') { btnBack.classList.add('hidden'); btnSettings.classList.remove('hidden'); screenHistory = ['screen-levels']; }
-            else { btnBack.classList.remove('hidden'); btnSettings.classList.add('hidden'); if(screenHistory[screenHistory.length - 1] !== screenId) screenHistory.push(screenId); }
-        }
-        function toggleSettingsScreen() {
-            if(!document.getElementById('screen-settings').classList.contains('hidden')) showScreen('screen-levels');
-            else { showScreen('screen-settings'); initColorsInSettings(); }
-        }
-        function goBack() {
-            if (screenHistory.length > 1) { screenHistory.pop(); showScreen(screenHistory[screenHistory.length - 1]); if(screenHistory[screenHistory.length - 1] === 'screen-gymnastes') renderGymnastes(); if(screenHistory[screenHistory.length - 1] === 'screen-levels') renderLevels(); }
-        }
-
-        function renderLevels() {
-            const list = document.getElementById('levels-list'); list.innerHTML = '';
-            data.levels.forEach(lvl => {
-                const count = data.gymnastes.filter(g => g.niveauId === lvl.id).length;
-                list.innerHTML += `<button onclick="openLevel('${lvl.id}', '${lvl.name}')" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition group"><div><span class="block font-bold text-gray-800 text-lg">${lvl.name}</span><span class="text-sm text-gray-400">${count} gymnaste(s)</span></div><span class="text-gray-300 text-xl">▶</span></button>`;
-            });
-            document.getElementById('gym-niveau').innerHTML = data.levels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-        }
-        function openLevel(id, name) { currentLevelId = id; document.getElementById('gymnastes-title').innerText = `Gymnastes - ${name}`; renderGymnastes(); showScreen('screen-gymnastes'); }
+    <!-- SECTION : RÉGLAGES (Demande Utilisateur) -->
+    <div id="reglages" class="section-content">
+        <h2>⚙️ Réglages Généraux</h2>
+        <h3>Personnalisation des couleurs des boutons de contact</h3>
         
-        function renderGymnastes() {
-            const list = document.getElementById('gymnastes-list'); list.innerHTML = '';
-            const filtered = data.gymnastes.filter(g => g.niveauId === currentLevelId);
-            if(filtered.length === 0) { list.innerHTML = `<p class="text-gray-400 text-center py-6 text-sm italic">Aucune gymnaste.</p>`; return; }
-            filtered.forEach(g => {
-                list.innerHTML += `<button onclick="openFiche('${g.id}')" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition"><div><span class="block font-semibold text-gray-800">${g.prenom} ${g.nom}</span><span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium mt-1 inline-block">${calculateCategory(g.ddn)}</span></div><span class="text-gray-400 text-sm font-medium">Fiche 📂</span></button>`;
+        <div class="color-picker-group">
+            <div class="color-row">
+                <label for="colorAppel">Couleur Appel :</label>
+                <input type="color" id="colorAppel" value="#4CAF50" onchange="updateColors()">
+                <button class="preview-btn btn-appel-style">Appel</button>
+            </div>
+            <div class="color-row">
+                <label for="colorSMS">Couleur SMS :</label>
+                <input type="color" id="colorSMS" value="#2196F3" onchange="updateColors()">
+                <button class="preview-btn btn-sms-style">SMS</button>
+            </div>
+            <div class="color-row">
+                <label for="colorMail">Couleur Mail :</label>
+                <input type="color" id="colorMail" value="#FF9800" onchange="updateColors()">
+                <button class="preview-btn btn-mail-style">Mail</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT INTERACTIF (JAVASCRIPT) -->
+    <script>
+        // Gestion de la navigation principale
+        function switchMainSection(sectionId) {
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.remove('active');
             });
-        }
-
-        function openFiche(id) {
-            currentGymId = id; const g = data.gymnastes.find(gym => gym.id === id);
-            document.getElementById('fiche-name').innerText = `${g.prenom} ${g.nom}`;
-            document.getElementById('fiche-category').innerText = `Catégorie : ${calculateCategory(g.ddn)}`;
-            document.getElementById('info-ddn').innerText = formatDateFR(g.ddn);
-            document.getElementById('info-licence').innerText = g.licence || 'Non renseignée';
-            document.getElementById('info-tel').innerText = g.tel || 'Non renseigné';
-            document.getElementById('info-notes').innerText = g.notes || 'Aucune note.';
-            cancelScoreEdit(); switchTab('infos'); showScreen('screen-fiche'); applyCustomColors(); buildChart(); renderScoresHistory();
-        }
-
-        function switchTab(tabName) {
-            const targetColor = userColors[`tab-${tabName}`] || defaultColors.header;
-            document.querySelectorAll('#screen-fiche button').forEach(b => { if(b.id && b.id.startsWith('tab-')) { b.style.borderColor = 'transparent'; b.style.color = '#6b7280'; } });
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(`content-${tabName}`).classList.add('active');
-            const clickedBtn = document.getElementById(`tab-${tabName}`);
-            if (clickedBtn) { clickedBtn.style.borderColor = targetColor; clickedBtn.style.color = targetColor; }
-            if(tabName === 'infos') document.getElementById('info-tel').style.color = targetColor;
-            else if(tabName === 'saisie') document.getElementById('btn-theme-submit-score').style.backgroundColor = targetColor;
-        }
-
-        // --- GESTION DES NOTES/SCORES ---
-        function renderScoresHistory() {
-            const container = document.getElementById('scores-history-list'); container.innerHTML = '';
-            const gScores = data.scores.filter(s => s.gymId === currentGymId).reverse();
-            if(gScores.length === 0) { container.innerHTML = `<p class="text-gray-400 text-sm text-center italic py-4">Aucun score.</p>`; return; }
-            gScores.forEach(s => {
-                const total = (s.saut + s.barres + s.poutre + s.sol).toFixed(2);
-                container.innerHTML += `<div class="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2"><div class="flex justify-between items-center border-b border-gray-100 pb-1.5"><div><span class="font-bold text-gray-700 text-sm">${s.date}</span><span class="text-xs bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded ml-1.5">${s.type}</span></div><div class="flex items-center gap-2"><button onclick="setupScoreEdit('${s.id}')" class="text-xs text-blue-600 font-semibold hover:underline">✏️</button><button onclick="deleteScore('${s.id}')" class="text-xs text-red-500 font-semibold hover:underline">🗑️</button></div></div><div class="grid grid-cols-4 gap-1 text-center text-xs"><div class="bg-white p-1 rounded border border-gray-100"><span class="block text-gray-400">Saut</span><span class="font-bold text-gray-800">${s.saut}</span></div><div class="bg-white p-1 rounded border border-gray-100"><span class="block text-gray-400">Bars</span><span class="font-bold text-gray-800">${s.barres}</span></div><div class="bg-white p-1 rounded border border-gray-100"><span class="block text-gray-400">Ptr</span><span class="font-bold text-gray-800">${s.poutre}</span></div><div class="bg-white p-1 rounded border border-gray-100"><span class="block text-gray-400">Sol</span><span class="font-bold text-gray-800">${s.sol}</span></div></div><div class="text-right text-xs font-bold text-gray-600 pt-0.5">Total : <span style="color: ${userColors['tab-suivi']}">${total}/80</span></div></div>`;
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active');
             });
-        }
-        function setupScoreEdit(scoreId) {
-            const s = data.scores.find(score => score.id === scoreId); if(!s) return;
-            document.getElementById('edit-score-id').value = s.id; document.getElementById('score-type').value = s.type;
-            document.getElementById('score-saut').value = s.saut; document.getElementById('score-barres').value = s.barres;
-            document.getElementById('score-poutre').value = s.poutre; document.getElementById('score-sol').value = s.sol;
-            document.getElementById('title-form-score').innerText = `✏️ Modifier le ${s.date}`;
-            document.getElementById('btn-cancel-score-edit').classList.remove('hidden'); switchTab('saisie');
-        }
-        function cancelScoreEdit() { document.getElementById('edit-score-id').value = ""; document.getElementById('form-score').reset(); document.getElementById('title-form-score').innerText = "Ajouter de nouvelles notes"; document.getElementById('btn-cancel-score-edit').classList.add('hidden'); }
-        function deleteScore(scoreId) { if(confirm("Supprimer ce score ?")) { data.scores = data.scores.filter(s => s.id !== scoreId); saveAllData(); buildChart(); renderScoresHistory(); } }
-        
-        function saveScore(e) {
-            e.preventDefault(); const idTarget = document.getElementById('edit-score-id').value;
-            const saut = parseFloat(document.getElementById('score-saut').value), barres = parseFloat(document.getElementById('score-barres').value), poutre = parseFloat(document.getElementById('score-poutre').value), sol = parseFloat(document.getElementById('score-sol').value), type = document.getElementById('score-type').value;
-            if(idTarget) { const index = data.scores.findIndex(s => s.id === idTarget); if(index !== -1) Object.assign(data.scores[index], {type, saut, barres, poutre, sol}); }
-            else { const now = new Date(); const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}`; data.scores.push({ id: "SCR-" + Date.now(), gymId: currentGymId, date: formattedDate, type, saut, barres, poutre, sol }); }
-            saveAllData(); cancelScoreEdit(); switchTab('suivi'); buildChart(); renderScoresHistory();
+            
+            document.getElementById(sectionId).classList.add('active');
+            document.getElementById('nav-' + sectionId).classList.add('active');
         }
 
-        // --- GESTION DES GYMNASTES ---
-        function openAddModal() { document.getElementById('modal-title').innerText = "Ajouter une Gymnaste"; document.getElementById('edit-gym-id').value = ""; document.getElementById('form-add-gym').reset(); if(currentLevelId) document.getElementById('gym-niveau').value = currentLevelId; document.getElementById('modal-add').classList.remove('hidden'); }
-        function openEditModal() {
-            const g = data.gymnastes.find(gym => gym.id === currentGymId); if(!g) return;
-            document.getElementById('modal-title').innerText = "Modifier la fiche"; document.getElementById('edit-gym-id').value = g.id; document.getElementById('gym-nom').value = g.nom; document.getElementById('gym-prenom').value = g.prenom; document.getElementById('gym-ddn').value = g.ddn || ''; document.getElementById('gym-niveau').value = g.niveauId; document.getElementById('gym-licence').value = g.licence || ''; document.getElementById('gym-tel').value = g.tel; document.getElementById('gym-notes').value = g.notes || ''; document.getElementById('modal-add').classList.remove('hidden');
-        }
-        function closeAddModal() { document.getElementById('modal-add').classList.add('hidden'); }
-        function handleGymFormSubmit(e) {
-            e.preventDefault(); const idTarget = document.getElementById('edit-gym-id').value;
-            const gymData = { nom: document.getElementById('gym-nom').value.toUpperCase(), prenom: document.getElementById('gym-prenom').value, ddn: document.getElementById('gym-ddn').value, niveauId: document.getElementById('gym-niveau').value, licence: document.getElementById('gym-licence').value, tel: document.getElementById('gym-tel').value, notes: document.getElementById('gym-notes').value };
-            if(idTarget) { const index = data.gymnastes.findIndex(g => g.id === idTarget); if(index !== -1) data.gymnastes[index] = { id: idTarget, ...gymData }; }
-            else { data.gymnastes.push({ id: "GYM-" + Date.now(), ...gymData }); }
-            saveAllData(); closeAddModal(); if(idTarget) openFiche(idTarget); else { renderLevels(); if(currentLevelId === gymData.niveauId) renderGymnastes(); }
-        }
-
-        // --- GRAPH ---
-        function buildChart() {
-            const gScores = data.scores.filter(s => s.gymId === currentGymId); const labels = gScores.map(s => s.date); if (myChart) myChart.destroy();
-            const ctx = document.getElementById('chartProgression').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'line', data: { labels: labels, datasets: [
-                    { label: 'Saut', data: gScores.map(s => s.saut), borderColor: '#ef4444', backgroundColor: '#ef4444', tension: 0.2 },
-                    { label: 'Barres', data: gScores.map(s => s.barres), borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.2 },
-                    { label: 'Poutre', data: gScores.map(s => s.poutre), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.2 },
-                    { label: 'Sol', data: gScores.map(s => s.sol), borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.2 }
-                ]}, options: { responsive: true, scales: { y: { min: 0, max: 20 } } }
+        // Gestion des onglets de la fiche Gymnaste
+        function switchGymTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
             });
+            document.querySelectorAll('.tabs-menu button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById('gym-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
         }
 
-        renderLevels(); applyCustomColors();
+        // Insertion des Sigles et Abréviations dans le texte
+        function insertSigle(valeur) {
+            const txtArea = document.getElementById('mvt-text');
+            const startPos = txtArea.selectionStart;
+            const endPos = txtArea.selectionEnd;
+            
+            // Insertion au niveau du curseur
+            txtArea.value = txtArea.value.substring(0, startPos) 
+                + valeur 
+                + txtArea.value.substring(endPos, txtArea.value.length);
+            
+            txtArea.focus();
+            txtArea.selectionStart = startPos + valeur.length;
+            txtArea.selectionEnd = startPos + valeur.length;
+        }
+
+        // Mise à jour dynamique des couleurs CSS selon les réglages
+        function updateColors() {
+            const cAppel = document.getElementById('colorAppel').value;
+            const cSMS = document.getElementById('colorSMS').value;
+            const cMail = document.getElementById('colorMail').value;
+
+            document.documentElement.style.setProperty('--btn-appel', cAppel);
+            document.documentElement.style.setProperty('--btn-sms', cSMS);
+            document.documentElement.style.setProperty('--btn-mail', cMail);
+
+            // Appliquer le style sur les classes concernées
+            document.querySelectorAll('.btn-appel-style').forEach(b => b.style.backgroundColor = cAppel);
+            document.querySelectorAll('.btn-sms-style').forEach(b => b.style.backgroundColor = cSMS);
+            document.querySelectorAll('.btn-mail-style').forEach(b => b.style.backgroundColor = cMail);
+        }
+
+        // Initialisation des couleurs au démarrage
+        updateColors();
     </script>
 </body>
 </html>
