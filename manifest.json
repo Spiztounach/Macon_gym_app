@@ -1,7 +1,7 @@
 {
   "name": "GymSuivi",
   "short_name": "GymSuivi",
-  "start_url": "./index.html",
+  "start_url": "/Macon_gym_app/",
   "display": "standalone",
   "background_color": "#f3f4f6",
   "theme_color": "#0f766e",
