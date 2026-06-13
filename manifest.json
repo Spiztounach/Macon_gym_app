@@ -1,0 +1,26 @@
+{
+  "name": "Macon_gym_app",
+  "short_name": "Macon_gym_app",
+  "start_url": "/Macon_gym_app/",
+  "scope": "/Macon_gym_app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f4f6",
+  "theme_color": "#0f766e",
+  "description": "Suivi des gymnastes et résultats de compétition",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
