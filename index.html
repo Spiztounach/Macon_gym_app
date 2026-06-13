@@ -1,0 +1,2670 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title id="page-title">Macon_gym_app</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script
+            src="https://apis.google.com/js/api.js"
+            async="async"
+            defer="defer"
+            onload="gapiLoaded()"></script>
+        <script
+            src="https://accounts.google.com/gsi/client"
+            async="async"
+            defer="defer"
+            onload="gisLoaded()"></script>
+        <link rel="manifest" href="manifest.json">
+        <link rel="manifest" href="manifest.json">
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+        <style>
+            body {
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                background-color: #f3f4f6;
+            }
+            .tab-content {
+                display: none;
+            }
+            .tab-content.active {
+                display: block;
+            }
+        </style>
+    </head>
+    <body class="pb-24">
+
+        <!-- ═══════════════════════════════════════════════ HEADER ═══ -->
+        <header
+            id="app-header"
+            class="text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center transition-colors duration-300">
+            <div
+                class="flex items-center gap-2 cursor-pointer"
+                onclick="showScreen('screen-levels')">
+                <img
+                    id="app-logo"
+                    class="w-7 h-7 rounded-full object-cover hidden"
+                    src=""
+                    alt="Logo">
+                <!-- FIX 10 : fallback avec emoji par défaut -->
+                <span id="app-logo-fallback" class="text-xl"></span>
+                <h1 class="text-xl font-bold tracking-wide" id="app-title">Macon_gym_app</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button
+                    id="btn-settings"
+                    class="bg-black/20 p-1.5 rounded text-sm hover:bg-black/30 transition"
+                    onclick="toggleSettingsScreen()">⚙️ Réglages</button>
+                <button
+                    id="btn-back"
+                    class="hidden bg-black/20 px-3 py-1.5 rounded text-sm font-medium hover:bg-black/30 transition"
+                    onclick="goBack()">⬅ Retour</button>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto p-4">
+
+            <!-- ═══════════════════════════════════════ SCREEN SETTINGS ═══ -->
+            <section id="screen-settings" class="hidden space-y-4">
+                <h2 class="text-lg font-semibold text-gray-700">Réglages & Sauvegardes ☁️</h2>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Identité de l'Application :</p>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Nom personnalisé :</label>
+                            <input
+                                type="text"
+                                id="app-name-input"
+                                oninput="changeAppName(this.value)"
+                                placeholder="GymSuivi"
+                                class="w-full p-2 text-xs border border-gray-300 rounded bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Changer le Logo :</label>
+                            <input
+                                type="file"
+                                id="app-logo-input"
+                                accept="image/*"
+                                onchange="changeAppLogo(this)"
+                                class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Synchronisation Google Cloud :</p>
+                    <div id="drive-status" class="text-sm text-amber-600 font-medium">🔴 Non connecté à Google Drive</div>
+                    <div class="flex gap-2">
+                        <button
+                            id="btn-login"
+                            onclick="handleAuthClick()"
+                            class="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded shadow hover:bg-blue-700 transition">Connexion Google</button>
+                        <button
+                            id="btn-logout"
+                            onclick="handleSignoutClick()"
+                            class="hidden flex-1 bg-gray-200 text-gray-700 text-sm font-medium py-2 rounded hover:bg-gray-300 transition">Déconnexion</button>
+                    </div>
+                    <div
+                        id="sync-indicator"
+                        class="hidden text-xs text-green-600 italic text-center">🔄 Synchronisation en cours...</div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Sauvegarde Locale (Fichier JSON) :</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button
+                            onclick="exportDataManual()"
+                            class="bg-amber-600 text-white text-xs font-semibold py-2 rounded shadow hover:bg-amber-700 transition">📦 Exporter</button>
+                        <label
+                            class="bg-gray-600 text-white text-xs font-semibold py-2 rounded shadow hover:bg-gray-700 transition text-center cursor-pointer">
+                            📥 Importer
+                            <input
+                                type="file"
+                                id="import-file"
+                                class="hidden"
+                                onchange="importDataManual(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Personnalisation des Couleurs :</p>
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">Barre de nav / Thème :</label>
+                            <input
+                                type="color"
+                                id="color-header"
+                                onchange="updateCustomColor('header', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">Fédéral A :</label>
+                            <input
+                                type="color"
+                                id="color-fed-a"
+                                onchange="updateCustomColor('fed-a', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">Fédéral B :</label>
+                            <input
+                                type="color"
+                                id="color-fed-b"
+                                onchange="updateCustomColor('fed-b', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">📞 Bouton Appel :</label>
+                            <input
+                                type="color"
+                                id="color-btn-appel"
+                                onchange="updateCustomColor('btn-appel', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">💬 Bouton SMS :</label>
+                            <input
+                                type="color"
+                                id="color-btn-sms"
+                                onchange="updateCustomColor('btn-sms', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                        <div
+                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                            <label class="text-xs font-medium text-gray-700">✉️ Bouton Mail :</label>
+                            <input
+                                type="color"
+                                id="color-btn-mail"
+                                onchange="updateCustomColor('btn-mail', this.value)"
+                                class="w-8 h-7 rounded cursor-pointer">
+                        </div>
+                    </div>
+                    <button
+                        onclick="resetColors()"
+                        class="w-full bg-gray-100 text-gray-600 text-xs font-semibold py-2 rounded border border-gray-200 hover:bg-gray-200 transition">Réinitialiser les couleurs</button>
+                </div>
+
+                <button
+                    onclick="resetAppData()"
+                    class="w-full bg-red-100 text-red-600 text-xs font-semibold py-2 rounded border border-red-200 hover:bg-red-200 transition">⚠️ Réinitialiser toutes les données d'usine</button>
+            </section>
+
+            <!-- ═══════════════════════════════════════ SCREEN LEVELS ═══ -->
+            <section id="screen-levels" class="space-y-4">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Sélectionnez une catégorie :</h2>
+                <div id="levels-list" class="grid grid-cols-1 gap-3"></div>
+            </section>
+
+            <!-- ═════════════════════════════════════ SCREEN GYMNASTES ═══ -->
+            <section id="screen-gymnastes" class="hidden space-y-4">
+                <h2 id="gymnastes-title" class="text-lg font-semibold text-gray-700">Gymnastes</h2>
+                <div id="gymnastes-list" class="grid grid-cols-2 gap-3"></div>
+            </section>
+
+            <!-- ════════════════════════════════════════ SCREEN FICHE ═══ -->
+            <section
+                id="screen-fiche"
+                class="hidden bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <div
+                    id="fiche-header"
+                    class="text-white p-5 flex justify-between items-start transition-colors duration-300">
+                    <div class="flex items-center gap-3">
+                        <div
+                            id="fiche-photo-container"
+                            class="w-14 h-14 bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-inner flex items-center justify-center text-xl">👤</div>
+                        <div>
+                            <h2 id="fiche-name" class="text-xl font-bold">Prénom Nom</h2>
+                            <p id="fiche-category" class="text-white/80 text-xs mt-0.5">Catégorie</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="bg-white/20 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-white/30 transition"
+                            onclick="openEditModal()">✏️ Modifier</button>
+                        <button
+                            class="bg-white/20 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-white/30 transition"
+                            onclick="exportGymnastePDF()">📄 PDF</button>
+                        <button
+                            class="bg-red-500/90 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-red-600 transition shadow-sm"
+                            onclick="deleteGymnaste()">🗑️ Supprimer</button>
+                    </div>
+
+                </div>
+
+                <div class="flex border-b border-gray-200 bg-gray-50 text-xs">
+                    <button
+                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        id="tab-infos"
+                        onclick="switchTab('infos')">Fiche Perso</button>
+                    <button
+                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        id="tab-saisie"
+                        onclick="switchTab('saisie')">Saisie Notes</button>
+                    <button
+                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        id="tab-suivi"
+                        onclick="switchTab('suivi')">Statistiques</button>
+                    <button
+                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        id="tab-mouvements"
+                        onclick="switchTab('mouvements')">Mouvements</button>
+                </div>
+
+                <div class="p-4">
+
+                    <!-- TAB : Infos -->
+                    <div
+                        id="content-infos"
+                        class="tab-content active space-y-3 text-gray-600 text-sm">
+                        <div>
+                            <span class="block text-[10px] uppercase font-semibold text-gray-400">Licence</span>
+                            <p id="info-licence" class="text-gray-800 font-medium"></p>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] uppercase font-semibold text-gray-400">Date de naissance</span>
+                            <p id="info-ddn" class="text-gray-800 font-medium"></p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2.5">
+                            <div>
+                                <span class="block text-[10px] uppercase font-semibold text-gray-400">Numéro de téléphone</span>
+                                <p id="info-tel" class="text-base font-semibold text-gray-800"></p>
+                            </div>
+                            <div class="flex gap-2">
+                                <a
+                                    id="link-call"
+                                    href="#"
+                                    class="flex-1 text-center text-white py-2 rounded-lg text-xs font-bold shadow transition">📞 Appeler</a>
+                                <a
+                                    id="link-sms"
+                                    href="#"
+                                    class="flex-1 text-center text-white py-2 rounded-lg text-xs font-bold shadow transition">💬 SMS</a>
+                            </div>
+                            <div id="box-email" class="pt-2 border-t border-gray-200 hidden">
+                                <span class="block text-[10px] uppercase font-semibold text-gray-400">E-mail</span>
+                                <p id="info-email" class="text-xs text-gray-700 mb-1.5 truncate"></p>
+                                <a
+                                    id="link-email"
+                                    href="#"
+                                    class="block text-center text-white py-2 rounded-lg text-xs font-bold shadow transition">✉️ Mail</a>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] uppercase font-semibold text-gray-400">Notes / Objectifs</span>
+                            <p
+                                id="info-notes"
+                                class="text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs italic"></p>
+                        </div>
+                    </div>
+
+                    <!-- TAB : Saisie Notes -->
+                    <div id="content-saisie" class="tab-content space-y-3">
+                        <h3
+                            id="title-form-score"
+                            class="text-xs font-bold uppercase tracking-wider text-gray-400">Saisie des résultats de compétition / test</h3>
+                        <form id="form-score" onsubmit="saveScore(event)" class="space-y-3">
+                            <input type="hidden" id="edit-score-id">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700">Type d'évaluation</label>
+                                <select
+                                    id="score-type"
+                                    class="w-full p-2 text-xs border border-gray-300 rounded-md bg-white">
+                                    <option>Entraînement</option>
+                                    <option>Test Interne</option>
+                                    <option>Compétition</option>
+                                </select>
+                            </div>
+                            <div class="bg-red-50/40 p-2 rounded-lg border border-red-100 space-y-1.5">
+                                <span class="text-xs font-bold text-red-700 uppercase">Saut 🤸‍♀️</span>
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Note Départ (D)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-saut-d"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Fautes (E)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-saut-f"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500 font-bold">Note Finale</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-saut"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs font-bold"></div>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50/40 p-2 rounded-lg border border-blue-100 space-y-1.5">
+                                <span class="text-xs font-bold text-blue-700 uppercase">Barres 💈</span>
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Note Départ (D)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-barres-d"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Fautes (E)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-barres-f"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500 font-bold">Note Finale</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-barres"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs font-bold"></div>
+                                </div>
+                            </div>
+                            <div class="bg-amber-50/40 p-2 rounded-lg border border-amber-100 space-y-1.5">
+                                <span class="text-xs font-bold text-amber-700 uppercase">Poutre 🪵</span>
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Note Départ (D)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-poutre-d"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Fautes (E)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-poutre-f"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500 font-bold">Note Finale</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-poutre"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs font-bold"></div>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-emerald-50/40 p-2 rounded-lg border border-emerald-100 space-y-1.5">
+                                <span class="text-xs font-bold text-emerald-700 uppercase">Sol 🟥</span>
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Note Départ (D)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-sol-d"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500">Fautes (E)</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-sol-f"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs"></div>
+                                    <div>
+                                        <label class="block text-[9px] text-gray-500 font-bold">Note Finale</label><input
+                                            type="number"
+                                            step="0.01"
+                                            id="score-sol"
+                                            class="w-full p-1 border border-gray-300 rounded text-xs font-bold"></div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    id="btn-cancel-score-edit"
+                                    class="hidden flex-1 bg-gray-200 text-gray-700 py-2 rounded text-xs font-medium"
+                                    onclick="cancelScoreEdit()">Annuler</button>
+                                <button
+                                    type="submit"
+                                    id="btn-submit-score"
+                                    class="flex-2 bg-purple-600 text-white py-2 rounded text-xs font-medium shadow w-full">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- TAB : Statistiques -->
+                    <div id="content-suivi" class="tab-content space-y-4">
+                        <div
+                            class="bg-white p-2 border border-gray-100 rounded-xl shadow-inner space-y-2">
+                            <select
+                                id="chart-datatype"
+                                onchange="buildChart()"
+                                class="w-full p-1.5 text-xs border border-gray-300 rounded bg-gray-50 font-medium text-gray-700">
+                                <option value="final">Notes Finales (Courbe globale)</option>
+                                <option value="depart">Notes de Départ (Complexité D)</option>
+                                <option value="fautes">Suivi des Fautes (Déductions d'exécution)</option>
+                            </select>
+                            <canvas id="chartProgression" width="400" height="260"></canvas>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Historique des Saisies</h3>
+                            <div id="scores-history-list" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- TAB : Mouvements -->
+                    <div id="content-mouvements" class="tab-content space-y-3">
+                        <div class="flex bg-gray-100 p-1 rounded-lg gap-1 text-xs">
+                            <button
+                                id="btn-mvt-saut"
+                                onclick="switchMvtAgres('Saut')"
+                                class="flex-1 py-1 rounded text-center bg-white shadow-sm font-semibold">Saut</button>
+                            <button
+                                id="btn-mvt-barres"
+                                onclick="switchMvtAgres('Barres')"
+                                class="flex-1 py-1 rounded text-center">Barres</button>
+                            <button
+                                id="btn-mvt-poutre"
+                                onclick="switchMvtAgres('Poutre')"
+                                class="flex-1 py-1 rounded text-center">Poutre</button>
+                            <button
+                                id="btn-mvt-sol"
+                                onclick="switchMvtAgres('Sol')"
+                                class="flex-1 py-1 rounded text-center">Sol</button>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-semibold text-gray-500 mb-1"
+                                id="lbl-mvt-title">Composition - Saut :</label>
+                            <textarea
+                                id="txt-mouvement-content"
+                                class="w-full p-2 border border-gray-300 rounded-lg text-xs"
+                                rows="4"
+                                placeholder="Écrivez le mouvement ou insérez les sigles..."></textarea>
+                            <button
+                                onclick="saveMouvementData()"
+                                class="w-full mt-1 bg-green-600 text-white py-1.5 rounded text-xs font-medium shadow hover:bg-green-700 transition">Enregistrer l'enchaînement</button>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span
+                                    class="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Palette de vos Sigles :</span>
+                                <button
+                                    onclick="openCustomSigleModal()"
+                                    class="text-[10px] text-pink-600 font-bold bg-pink-50 px-2 py-0.5 rounded border border-pink-200 hover:bg-pink-100">➕ Gérer / Ajouter</button>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2" id="keyboard-container"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════ SCREEN COMPETITION ═══ -->
+            <section id="screen-competition" class="hidden space-y-4">
+                <h2 class="text-lg font-bold text-gray-700">Compétitions & Équipes 🏆</h2>
+                <p class="text-xs text-gray-400">Créez plusieurs compositions d'équipes et analysez les simulations de match.</p>
+                <div id="teams-grid" class="grid grid-cols-1 gap-3"></div>
+                <button
+                    onclick="openTeamModalForCreation()"
+                    class="w-full py-3 bg-purple-100 border border-purple-300 text-purple-700 rounded-xl font-bold text-xs hover:bg-purple-200 transition">
+                    ➕ Créer une nouvelle équipe
+                </button>
+                <div class="flex justify-between items-center mb-1">
+                    <h3
+                        id="simulation-team-title"
+                        class="text-xs font-bold uppercase text-purple-700">Simulation Match : -</h3>
+                    <div class="flex gap-2">
+                        <button
+                            onclick="exportCompetitionPDF()"
+                            class="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded border border-purple-200 hover:bg-purple-200 transition">📄 Exporter PDF</button>
+                        <button
+                            onclick="document.getElementById('simulation-matrix-box').classList.add('hidden')"
+                            class="text-[10px] text-gray-400 font-medium">Masquer ✕</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 font-bold">
+                                <th class="p-2 border border-gray-200 text-left">Gymnaste</th>
+                                <th class="p-2 border border-gray-200">Saut</th>
+                                <th class="p-2 border border-gray-200">Barres</th>
+                                <th class="p-2 border border-gray-200">Poutre</th>
+                                <th class="p-2 border border-gray-200">Sol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-comp-matrix-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════ FAB BUTTON ═══ -->
+    <!-- FIX 7 : masqué par défaut, visible seulement sur screen-gymnastes -->
+    <button
+        id="btn-add-gym"
+        class="hidden fixed bottom-6 right-6 bg-pink-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl text-2xl font-bold hover:bg-pink-700 transition"
+        onclick="openAddModal()">+</button>
+
+    <!-- ══════════════════════════════════════════ MODAL GYMNASTE ═══ -->
+    <div
+        id="modal-add"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div
+                id="modal-header"
+                class="bg-pink-600 text-white p-4 font-bold text-sm flex justify-between">
+                <span id="modal-title">Fiche Gymnaste</span>
+                <button onclick="closeAddModal()" class="text-white">✕</button>
+            </div>
+            <form
+                id="form-add-gym"
+                onsubmit="handleGymFormSubmit(event)"
+                class="p-4 space-y-3 text-xs overflow-y-auto max-h-[80vh]">
+                <input type="hidden" id="edit-gym-id">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-gray-700">Nom</label>
+                        <input
+                            type="text"
+                            id="gym-nom"
+                            required="required"
+                            class="w-full p-2 border border-gray-300 rounded-md"></div>
+                    <div>
+                        <label class="block font-medium text-gray-700">Prénom</label>
+                        <input
+                            type="text"
+                            id="gym-prenom"
+                            required="required"
+                            class="w-full p-2 border border-gray-300 rounded-md"></div>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700">Date de naissance</label>
+                    <input
+                        type="date"
+                        id="gym-ddn"
+                        required="required"
+                        class="w-full p-2 border border-gray-300 rounded-md bg-white"></div>
+                <div>
+                    <label class="block font-medium text-gray-700">Filière / Niveau</label>
+                    <select
+                        id="gym-niveau"
+                        class="w-full p-2 border border-gray-300 rounded-md bg-white"></select>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700">N° Licence</label>
+                    <input
+                        type="text"
+                        id="gym-licence"
+                        class="w-full p-2 border border-gray-300 rounded-md"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-medium text-gray-700">Tél Responsable</label>
+                        <input
+                            type="tel"
+                            id="gym-tel"
+                            required="required"
+                            class="w-full p-2 border border-gray-300 rounded-md"></div>
+                    <div>
+                        <label class="block font-medium text-gray-700">E-mail</label>
+                        <input
+                            type="email"
+                            id="gym-email"
+                            class="w-full p-2 border border-gray-300 rounded-md"></div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                    <label class="block font-bold text-gray-600 mb-1">📷 Photo du profil :</label>
+                    <input
+                        type="file"
+                        id="gym-photo-input"
+                        accept="image/*"
+                        onchange="previewImageUpload(event)"
+                        class="w-full text-xs">
+                    <!-- FIX 8 : Aperçu photo ajouté -->
+                    <img
+                        id="gym-photo-preview"
+                        src=""
+                        alt="Aperçu"
+                        class="hidden mt-2 w-16 h-16 rounded-full object-cover border-2 border-gray-300 mx-auto block">
+                    <input type="hidden" id="gym-photo-base64">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700">Objectifs / Remarques</label>
+                    <textarea
+                        id="gym-notes"
+                        class="w-full p-2 border border-gray-300 rounded-md"
+                        rows="2"></textarea>
+                </div>
+                <button
+                    type="submit"
+                    class="w-full bg-pink-600 text-white py-2 rounded font-medium shadow hover:opacity-90 transition">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════ MODAL ÉQUIPE ═══ -->
+    <div
+        id="modal-team"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden text-xs">
+            <div class="bg-purple-600 text-white p-4 font-bold flex justify-between">
+                <span id="team-modal-title">Configuration de l'Équipe</span>
+                <button onclick="closeTeamModal()" class="text-white">✕</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <input type="hidden" id="edit-team-id">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Nom de l'équipe :</label>
+                    <input
+                        type="text"
+                        id="team-name-input"
+                        placeholder="Ex: Fédérale A Équipe 1"
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Composition (Cochez les membres) :</label>
+                    <div
+                        id="team-gymnasts-checklist"
+                        class="space-y-1.5 max-h-44 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-md"></div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button
+                        onclick="closeTeamModal()"
+                        class="flex-1 py-2 bg-gray-200 text-gray-700 font-medium rounded-md">Annuler</button>
+                    <button
+                        onclick="saveTeamForm()"
+                        class="flex-1 py-2 bg-purple-600 text-white font-medium rounded-md shadow hover:bg-purple-700">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ MODAL CUSTOM SIGLE ═══ -->
+    <div
+        id="modal-custom-sigle"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden text-xs">
+            <div class="bg-pink-600 text-white p-4 font-bold flex justify-between">
+                <span>Créer un Sigle Personnalisé</span>
+                <button onclick="closeCustomSigleModal()" class="text-white">✕</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Abréviation / Code (ex: TSU) :</label>
+                    <input
+                        type="text"
+                        id="sigle-abrev-input"
+                        placeholder="Ex: TSU"
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Nom de l'élément (ex: Tsukahara) :</label>
+                    <input
+                        type="text"
+                        id="sigle-nom-input"
+                        placeholder="Ex: Tsukahara"
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Icône / Logo du sigle :</label>
+                    <input
+                        type="file"
+                        id="sigle-image-file"
+                        accept="image/*"
+                        class="w-full text-xs">
+                </div>
+                <button
+                    onclick="saveCustomSigle()"
+                    class="w-full py-2 bg-pink-600 text-white font-medium rounded-md shadow hover:bg-pink-700">Ajouter à ma bibliothèque</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ SCRIPT ═══ -->
+    <script>
+
+        // ────────────────────────────────────────────────────────────── CONFIGURATION
+        // ──────────────────────────────────────────────────────────────
+        const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+
+        // FIX 9 : deux flags distincts pour éviter la double initialisation
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        let googleAccessToken = null;
+        let driveFileId = null;
+        let syncInProgress = false; // FIX 2 : garde contre la race condition
+
+        // ────────────────────────────────────────────────────────────── DONNÉES
+        // ──────────────────────────────────────────────────────────────
+        let data = {
+            levels: [
+                {
+                    id: "NIV-A",
+                    name: "Fédéral A"
+                }, {
+                    id: "NIV-B",
+                    name: "Fédéral B"
+                }, {
+                    id: "COMP-ZONE",
+                    name: "🏆 Compétition & Équipes"
+                }
+            ],
+            gymnastes: [],
+            scores: [],
+            mouvements: {},
+            teams: [],
+            customSigles: [],
+            appName: "GymSuivi",
+            appLogo: ""
+        };
+        // Fonction globale pour compresser et redimensionner une image avant stockage
+        function compressImage(file, maxWidth, maxHeight, quality, callback) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Maintien du ratio original
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Exportation en JPEG compressé (qualité entre 0.0 et 1.0)
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    callback(compressedBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Restauration depuis localStorage avec protection contre la corruption
+        (function restoreLocalData() {
+            const raw = localStorage.getItem('gym_master_data_v3');
+            if (!raw) 
+                return;
+            try {
+                const parsed = JSON.parse(raw);
+                data = {
+                    ...data,
+                    ...parsed
+                };
+                if (!data.mouvements) 
+                    data.mouvements = {};
+                if (!data.teams) 
+                    data.teams = [];
+                if (!data.customSigles) 
+                    data.customSigles = [];
+                }
+            catch (e) {
+                console.error('[GymSuivi] Erreur lecture localStorage :', e);
+            }
+        })();
+
+        function saveAllData() {
+            localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+            if (googleAccessToken) 
+                uploadDataToDrive();
+            }
+        
+        // ────────────────────────────────────────────────────────────── IDENTITÉ APP
+        // (FIX 4 : cohérence emoji / titre)
+        // ──────────────────────────────────────────────────────────────
+        function changeAppName(val) {
+            const finalName = val.trim() || "GymSuivi";
+            data.appName = finalName;
+            // Même logique que applyCustomAppIdentity — pas d'emoji ajouté deux fois
+            document
+                .getElementById('app-title')
+                .innerText = finalName;
+            document
+                .getElementById('page-title')
+                .innerText = finalName;
+            localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+        }
+
+        function changeAppLogo(input) {
+            if (!input.files || !input.files[0]) 
+                return;
+            
+            // Le logo s'affiche en tout petit, 200px suffisent largement
+            compressImage(input.files[0], 200, 200, 0.8, function (compressedBase64) {
+                data.appLogo = compressedBase64;
+                applyCustomAppIdentity();
+                saveAllData();
+            });
+        }
+
+        function applyCustomAppIdentity() {
+            const name = data.appName || "GymSuivi";
+            document
+                .getElementById('app-title')
+                .innerText = name;
+            document
+                .getElementById('page-title')
+                .innerText = name;
+            document
+                .getElementById('app-name-input')
+                .value = name;
+
+            const imgEl = document.getElementById('app-logo');
+            const fallbackEl = document.getElementById('app-logo-fallback');
+            if (data.appLogo) {
+                imgEl.src = data.appLogo;
+                imgEl
+                    .classList
+                    .remove('hidden');
+                fallbackEl
+                    .classList
+                    .add('hidden');
+            } else {
+                imgEl
+                    .classList
+                    .add('hidden');
+                fallbackEl
+                    .classList
+                    .remove('hidden');
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────── EXPORT /
+        // IMPORT MANUEL ──────────────────────────────────────────────────────────────
+        function exportDataManual() {
+            const dataStr = "data:text/json;charset=utf-8," +
+                    encodeURIComponent(JSON.stringify(data, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "gymsuivi_export.json");
+            document
+                .body
+                .appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function importDataManual(event) {
+            const file = event
+                .target
+                .files[0];
+            if (!file) 
+                return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.gymnastes && imported.scores) {
+                        data = {
+                            ...data,
+                            ...imported
+                        };
+                        if (!data.mouvements) 
+                            data.mouvements = {};
+                        if (!data.teams) 
+                            data.teams = [];
+                        if (!data.customSigles) 
+                            data.customSigles = [];
+                        saveAllData();
+                        renderLevels();
+                        applyCustomAppIdentity();
+                        alert("🟢 Données restaurées avec succès !");
+                        showScreen('screen-levels');
+                    } else {
+                        alert("❌ Fichier non conforme (gymnastes ou scores manquants).");
+                    }
+                } catch  {
+                    alert("❌ Erreur lors de la lecture du fichier JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
+        // AUTH FIX 1 : refresh silencieux du token (plus d'expiration silencieuse) FIX
+        // 9 : checkAuthStates n'agit que quand les DEUX libs sont prêtes
+        // ──────────────────────────────────────────────────────────────
+        function gapiLoaded() {
+            gapi.load('client', async () => {
+                await gapi
+                    .client
+                    .init(
+                        {discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}
+                    );
+                gapiInited = true;
+                checkAuthStates();
+            });
+        }
+
+        function gisLoaded() {
+            tokenClient = google
+                .accounts
+                .oauth2
+                .initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error) {
+                            console.error('[GymSuivi] OAuth error :', resp.error);
+                            updateDriveStatusUI(false);
+                            return;
+                        }
+                        googleAccessToken = resp.access_token;
+                        localStorage.setItem('drive_access_token_v3', googleAccessToken);
+                        gapi
+                            .client
+                            .setToken({access_token: googleAccessToken});
+                        updateDriveStatusUI(true);
+                        await syncWithDrive();
+                    }
+                });
+            gisInited = true;
+            checkAuthStates();
+        }
+
+        // FIX 9 : double garde — on attend que les deux soient prêts
+        function checkAuthStates() {
+            if (!gapiInited || !gisInited) 
+                return;
+            const stored = localStorage.getItem('drive_access_token_v3');
+            if (stored) {
+                // FIX 1 : refresh silencieux — prompt:'' ne redemande pas le consentement si la
+                // session Google est encore active, le callback reçoit un nouveau token
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        function updateDriveStatusUI(connected) {
+            const statusEl = document.getElementById('drive-status');
+            const btnLogin = document.getElementById('btn-login');
+            const btnLogout = document.getElementById('btn-logout');
+            if (connected) {
+                statusEl.innerText = "🟢 Connecté à Google Drive";
+                statusEl.className = "text-sm text-green-600 font-medium";
+                btnLogin
+                    .classList
+                    .add('hidden');
+                btnLogout
+                    .classList
+                    .remove('hidden');
+            } else {
+                statusEl.innerText = "🔴 Non connecté à Google Drive";
+                statusEl.className = "text-sm text-amber-600 font-medium";
+                btnLogin
+                    .classList
+                    .remove('hidden');
+                btnLogout
+                    .classList
+                    .add('hidden');
+            }
+        }
+
+        function handleAuthClick() {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        }
+
+        function handleSignoutClick() {
+            gapi
+                .client
+                .setToken(null);
+            googleAccessToken = null;
+            driveFileId = null;
+            localStorage.removeItem('drive_access_token_v3');
+            updateDriveStatusUI(false);
+        }
+
+        function setSyncIndicator(visible) {
+            document
+                .getElementById('sync-indicator')
+                .classList
+                .toggle('hidden', !visible);
+        }
+
+        // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
+        // SYNC ──────────────────────────────────────────────────────────────
+        async function syncWithDrive() {
+            if (syncInProgress) 
+                return; // FIX 2 : un seul sync à la fois
+            syncInProgress = true;
+            setSyncIndicator(true);
+            try {
+                const response = await gapi
+                    .client
+                    .drive
+                    .files
+                    .list({spaces: 'appData', fields: 'files(id, name)', orderBy: 'createdTime'});
+                const files = response.result.files;
+                if (files && files.length > 0) {
+                    driveFileId = files[0].id;
+                    // Supprimer les doublons éventuels (laissés par un bug antérieur)
+                    if (files.length > 1) {
+                        for (let i = 1; i < files.length; i++) {
+                            await gapi
+                                .client
+                                .drive
+                                .files
+                                .delete({fileId: files[i].id})
+                                .catch(() => {});
+                        }
+                    }
+                    const fileData = await gapi
+                        .client
+                        .drive
+                        .files
+                        .get({fileId: driveFileId, alt: 'media'});
+                    if (fileData.body) {
+                        const remote = JSON.parse(fileData.body);
+                        data = {
+                            ...data,
+                            ...remote
+                        };
+                        if (!data.mouvements) 
+                            data.mouvements = {};
+                        if (!data.teams) 
+                            data.teams = [];
+                        if (!data.customSigles) 
+                            data.customSigles = [];
+                        localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+                        renderLevels();
+                        applyCustomAppIdentity();
+                    }
+                } else {
+                    // Aucun fichier sur Drive : on en crée un
+                    await uploadDataToDrive(true);
+                }
+            } catch (err) {
+                console.error('[GymSuivi] Erreur sync Drive :', err);
+            } finally {
+                syncInProgress = false;
+                setSyncIndicator(false);
+            }
+        }
+
+        // FIX 2 + FIX 6 : recherche l'ID si absent, correction du Content-Type et
+        // suppression de parents en mode PATCH
+        async function uploadDataToDrive(isCreation = false) {
+            if (!googleAccessToken) 
+                return;
+            
+            // FIX 2 : si driveFileId est inconnu, on interroge Drive avant de créer un
+            // doublon
+            if (!isCreation && !driveFileId) {
+                try {
+                    const res = await gapi
+                        .client
+                        .drive
+                        .files
+                        .list({spaces: 'appData', fields: 'files(id)', orderBy: 'createdTime'});
+                    const files = res.result.files;
+                    if (files && files.length > 0) {
+                        driveFileId = files[0].id;
+                    } else {
+                        isCreation = true;
+                    }
+                } catch (err) {
+                    console.error('[GymSuivi] Impossible de récupérer l\'ID Drive :', err);
+                    return;
+                }
+            }
+
+            setSyncIndicator(true);
+
+            const boundary = 'gymsuivi_boundary_v3';
+            const delim = `\r\n--${boundary}\r\n`;
+            const closing = `\r\n--${boundary}--`;
+
+            // FIX 6 : parents uniquement à la création — jamais dans un PATCH
+            const metadata = isCreation
+                ? {
+                    name: 'gym_cloud_data_v3.json',
+                    parents: ['appDataFolder']
+                }
+                : {
+                    name: 'gym_cloud_data_v3.json'
+                };
+
+            const body = delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(
+                metadata
+            ) + delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) +
+                    closing;
+
+            try {
+                if (isCreation || !driveFileId) {
+                    const res = await gapi
+                        .client
+                        .request({
+                            path: '/upload/drive/v3/files',
+                            method: 'POST',
+                            params: {
+                                uploadType: 'multipart'
+                            },
+                            headers: {
+                                'Content-Type': `multipart/related; boundary=${boundary}`
+                            },
+                            body
+                        });
+                    driveFileId = res.result.id;
+                } else {
+                    await gapi
+                        .client
+                        .request({
+                            path: `/upload/drive/v3/files/${driveFileId}`,
+                            method: 'PATCH',
+                            params: {
+                                uploadType: 'multipart'
+                            },
+                            headers: {
+                                'Content-Type': `multipart/related; boundary=${boundary}`
+                            },
+                            body
+                        });
+                }
+            } catch (err) {
+                console.error('[GymSuivi] Erreur upload Drive :', err);
+            } finally {
+                setSyncIndicator(false);
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────── COULEURS
+        // ──────────────────────────────────────────────────────────────
+        const defaultColors = {
+            header: '#0f766e',
+            'fed-a': '#ffffff',
+            'fed-b': '#ffffff',
+            'btn-appel': '#22c55e',
+            'btn-sms': '#3b82f6',
+            'btn-mail': '#a855f7'
+        };
+        let userColors = {
+            ...defaultColors,
+            ...JSON.parse(localStorage.getItem('gym_colors_v3') || '{}')
+        };
+
+        function initColorsInSettings() {
+            document
+                .getElementById('color-header')
+                .value = userColors.header;
+            document
+                .getElementById('color-fed-a')
+                .value = userColors['fed-a'] || '#ffffff';
+            document
+                .getElementById('color-fed-b')
+                .value = userColors['fed-b'] || '#ffffff';
+            document
+                .getElementById('color-btn-appel')
+                .value = userColors['btn-appel'];
+            document
+                .getElementById('color-btn-sms')
+                .value = userColors['btn-sms'];
+            document
+                .getElementById('color-btn-mail')
+                .value = userColors['btn-mail'];
+        }
+
+        function updateCustomColor(zone, value) {
+            userColors[zone] = value;
+            localStorage.setItem('gym_colors_v3', JSON.stringify(userColors));
+            applyCustomColors();
+            renderLevels();
+        }
+
+        function resetColors() {
+            userColors = {
+                ...defaultColors
+            };
+            localStorage.setItem('gym_colors_v3', JSON.stringify(userColors));
+            initColorsInSettings();
+            applyCustomColors();
+            renderLevels();
+        }
+
+        function applyCustomColors() {
+            document
+                .getElementById('app-header')
+                .style
+                .backgroundColor = userColors.header;
+            const ficheHdr = document.getElementById('fiche-header');
+            if (ficheHdr) 
+                ficheHdr.style.backgroundColor = userColors.header;
+            const linkCall = document.getElementById('link-call');
+            const linkSms = document.getElementById('link-sms');
+            const linkEmail = document.getElementById('link-email');
+            if (linkCall) 
+                linkCall.style.backgroundColor = userColors['btn-appel'];
+            if (linkSms) 
+                linkSms.style.backgroundColor = userColors['btn-sms'];
+            if (linkEmail) 
+                linkEmail.style.backgroundColor = userColors['btn-mail'];
+            }
+        
+        // ────────────────────────────────────────────────────────────── CATÉGORIES —
+        // FIX 3 : calcul d'âge exact (tient compte du mois/jour)
+        // ──────────────────────────────────────────────────────────────
+        function calculateAge(birthDateString) {
+            if (!birthDateString) 
+                return null;
+            const today = new Date();
+            const b = new Date(birthDateString);
+            let age = today.getFullYear() - b.getFullYear();
+            // On soustrait 1 si l'anniversaire n'est pas encore passé cette année
+            if (today < new Date(today.getFullYear(), b.getMonth(), b.getDate())) 
+                age--;
+            return age;
+        }
+
+        function calculateCategory(birthDateString) {
+            if (!birthDateString) 
+                return "Non renseignée";
+            const age = calculateAge(birthDateString);
+            if (age >= 7 && age <= 9) 
+                return `Poussine (${age} ans)`;
+            if (age >= 10 && age <= 11) 
+                return `Benjamine (${age} ans)`;
+            if (age >= 12 && age <= 13) 
+                return `Minime (${age} ans)`;
+            return `Junior / Senior (${age} ans)`;
+        }
+
+        // ────────────────────────────────────────────────────────────── NAVIGATION FIX
+        // 7 : le bouton + n'apparaît que sur screen-gymnastes
+        // ──────────────────────────────────────────────────────────────
+        let currentLevelId = null;
+        let currentGymId = null;
+        let myChart = null;
+        let currentMvtAgres = "Saut";
+        let screenHistory = ['screen-levels'];
+
+        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-settings'];
+
+        function showScreen(screenId) {
+            ALL_SCREENS.forEach(id => document.getElementById(id).classList.add('hidden'));
+            document
+                .getElementById(screenId)
+                .classList
+                .remove('hidden');
+
+            const btnBack = document.getElementById('btn-back');
+            const btnSettings = document.getElementById('btn-settings');
+            const btnAdd = document.getElementById('btn-add-gym');
+
+            if (screenId === 'screen-levels') {
+                btnBack
+                    .classList
+                    .add('hidden');
+                btnSettings
+                    .classList
+                    .remove('hidden');
+                btnAdd
+                    .classList
+                    .add('hidden');
+                screenHistory = ['screen-levels'];
+            } else {
+                btnBack
+                    .classList
+                    .remove('hidden');
+                btnSettings
+                    .classList
+                    .add('hidden');
+                if (screenHistory[screenHistory.length - 1] !== screenId) 
+                    screenHistory.push(screenId);
+                
+                // FIX 7 : visible seulement sur la liste des gymnastes
+                btnAdd
+                    .classList
+                    .toggle('hidden', screenId !== 'screen-gymnastes');
+            }
+        }
+
+        function toggleSettingsScreen() {
+            if (!document.getElementById('screen-settings').classList.contains('hidden')) {
+                showScreen('screen-levels');
+            } else {
+                showScreen('screen-settings');
+                initColorsInSettings();
+            }
+        }
+
+        function goBack() {
+            if (screenHistory.length > 1) {
+                screenHistory.pop();
+                const prev = screenHistory[screenHistory.length - 1];
+                showScreen(prev);
+                if (prev === 'screen-gymnastes') 
+                    renderGymnastes();
+                if (prev === 'screen-levels') 
+                    renderLevels();
+                if (prev === 'screen-competition') 
+                    renderTeamsList();
+                }
+            }
+
+        // ────────────────────────────────────────────────────────────── RENDU DES
+        // NIVEAUX ──────────────────────────────────────────────────────────────
+        function renderLevels() {
+            const list = document.getElementById('levels-list');
+            list.innerHTML = '';
+            data
+                .levels
+                .forEach(lvl => {
+                    const count = data
+                        .gymnastes
+                        .filter(g => g.niveauId === lvl.id)
+                        .length;
+                    const badge = lvl.id === 'COMP-ZONE'
+                        ? '🌟 Gestion Multi-Équipes'
+                        : `${count} gymnaste(s)`;
+
+                    let styleStr = '';
+                    if (lvl.id === 'NIV-A' && userColors['fed-a']) 
+                        styleStr = `background-color:${userColors['fed-a']};`;
+                    if (lvl.id === 'NIV-B' && userColors['fed-b']) 
+                        styleStr = `background-color:${userColors['fed-b']};`;
+                    
+                    list.innerHTML += `
+                <button onclick="openLevel('${lvl.id}', '${lvl.name}')"
+                    class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition"
+                    style="${styleStr}">
+                    <div>
+                        <span class="block font-bold text-gray-800 text-base">${lvl.name}</span>
+                        <span class="text-xs text-gray-600">${badge}</span>
+                    </div>
+                    <span class="text-gray-600 text-lg">▶</span>
+                </button>`;
+                });
+
+            const niveauSel = document.getElementById('gym-niveau');
+            if (niveauSel) {
+                niveauSel.innerHTML = data
+                    .levels
+                    .filter(l => l.id !== 'COMP-ZONE')
+                    .map(l => `<option value="${l.id}">${l.name}</option>`)
+                    .join('');
+            }
+        }
+
+        function openLevel(id, name) {
+            if (id === 'COMP-ZONE') {
+                renderTeamsList();
+                showScreen('screen-competition');
+                return;
+            }
+            currentLevelId = id;
+            document
+                .getElementById('gymnastes-title')
+                .innerText = `Gymnastes — ${name}`;
+            renderGymnastes();
+            showScreen('screen-gymnastes');
+        }
+
+        // ────────────────────────────────────────────────────────────── RENDU DES
+        // GYMNASTES ──────────────────────────────────────────────────────────────
+        function renderGymnastes() {
+            const list = document.getElementById('gymnastes-list');
+            list.innerHTML = '';
+            const filtered = data
+                .gymnastes
+                .filter(g => g.niveauId === currentLevelId);
+            if (filtered.length === 0) {
+                list.innerHTML = `<p class="text-gray-400 text-center col-span-2 py-4 italic text-xs">Aucune gymnaste. Appuyez sur + pour en ajouter une.</p>`;
+                return;
+            }
+            filtered.forEach(g => {
+                const pic = g.photo
+                    ? `<img src="${g.photo}" class="w-7 h-7 rounded-full object-cover">`
+                    : `<div class="w-7 h-7 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-xs font-bold">${g.prenom[0]}</div>`;
+                list.innerHTML += `
+                <button onclick="openFiche('${g
+                    .id}')"
+                    class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between items-start text-left hover:border-pink-300 transition h-24">
+                    <div class="flex items-center gap-2 w-full">
+                        ${pic}
+                        <span class="font-bold text-gray-800 text-xs truncate block flex-1">${g
+                    .prenom} ${g
+                    .nom[0]}.</span>
+                    </div>
+                    <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-medium truncate w-full">${calculateCategory(
+                        g.ddn
+                    )}</span>
+                </button>`;
+            });
+        }
+
+        // ────────────────────────────────────────────────────────────── FICHE GYMNASTE
+        // ──────────────────────────────────────────────────────────────
+        function openFiche(id) {
+            currentGymId = id;
+            const g = data
+                .gymnastes
+                .find(gym => gym.id === id);
+            if (!g) 
+                return;
+            
+            document
+                .getElementById('fiche-name')
+                .innerText = `${g.prenom} ${g.nom}`;
+            document
+                .getElementById('fiche-category')
+                .innerText = `Groupe : ${calculateCategory(g.ddn)}`;
+            document
+                .getElementById('info-licence')
+                .innerText = g.licence || 'Non renseignée';
+            document
+                .getElementById('info-ddn')
+                .innerText = g.ddn
+                    ? new Date(g.ddn).toLocaleDateString('fr-FR')
+                    : 'Non renseignée';
+            document
+                .getElementById('info-notes')
+                .innerText = g.notes || 'Aucun objectif.';
+
+            const avatar = document.getElementById('fiche-photo-container');
+            avatar.innerHTML = g.photo
+                ? `<img src="${g.photo}" class="w-full h-full object-cover">`
+                : "👤";
+
+            document
+                .getElementById('info-tel')
+                .innerText = g.tel || 'Non renseigné';
+            document
+                .getElementById('link-call')
+                .setAttribute(
+                    'href',
+                    g.tel
+                        ? `tel:${g.tel}`
+                        : '#'
+                );
+            document
+                .getElementById('link-sms')
+                .setAttribute(
+                    'href',
+                    g.tel
+                        ? `sms:${g.tel}`
+                        : '#'
+                );
+
+            const boxEmail = document.getElementById('box-email');
+            if (g.email && g.email.trim() !== "") {
+                boxEmail
+                    .classList
+                    .remove('hidden');
+                document
+                    .getElementById('info-email')
+                    .innerText = g.email;
+                document
+                    .getElementById('link-email')
+                    .setAttribute('href', `mailto:${g.email}`);
+            } else {
+                boxEmail
+                    .classList
+                    .add('hidden');
+            }
+
+            applyCustomColors();
+            cancelScoreEdit();
+            switchTab('infos');
+            showScreen('screen-fiche');
+            buildChart();
+            renderScoresHistory();
+            initMouvementsTab();
+        }
+
+        function switchTab(tabName) {
+            document
+                .querySelectorAll('#screen-fiche button[id^="tab-"]')
+                .forEach(b => {
+                    b.style.borderColor = 'transparent';
+                    b.style.color = '#6b7280';
+                    b.style.fontWeight = 'normal';
+                });
+            document
+                .querySelectorAll('.tab-content')
+                .forEach(c => c.classList.remove('active'));
+            document
+                .getElementById(`content-${tabName}`)
+                .classList
+                .add('active');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.style.borderColor = userColors.header;
+                activeBtn.style.color = userColors.header;
+                activeBtn.style.fontWeight = 'bold';
+            }
+        }
+
+        // FIX 8 : aperçu visuel de la photo dans la modale
+        function previewImageUpload(event) {
+            const file = event
+                .target
+                .files[0];
+            if (!file) 
+                return;
+            
+            // Max 300px de large/haut, qualité à 70% (Divise le poids par ~50)
+            compressImage(file, 300, 300, 0.7, function (compressedBase64) {
+                document
+                    .getElementById('gym-photo-base64')
+                    .value = compressedBase64;
+                const preview = document.getElementById('gym-photo-preview');
+                if (preview) {
+                    preview.src = compressedBase64;
+                    preview
+                        .classList
+                        .remove('hidden');
+                }
+            });
+        }
+
+        // ────────────────────────────────────────────────────────────── SCORES —
+        // HISTORIQUE ──────────────────────────────────────────────────────────────
+        function renderScoresHistory() {
+            const container = document.getElementById('scores-history-list');
+            container.innerHTML = '';
+            const gScores = data
+                .scores
+                .filter(s => s.gymId === currentGymId)
+                .reverse();
+            if (gScores.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-[11px] text-center italic py-2">Aucune saisie.</p>`;
+                return;
+            }
+            const fmt = v => (v !== null && v !== undefined)
+                ? v
+                : '-';
+            gScores.forEach(s => {
+                container.innerHTML += `
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 space-y-1 text-xs">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                        <span class="font-bold text-gray-700">${s.date} — ${s.type}</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <button onclick="setupScoreEdit('${s.id}')" class="text-blue-600 font-bold">Modifier</button>
+                            <button onclick="deleteScore('${s.id}')" class="text-red-500 font-bold">Supprimer</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1 text-center text-[10px]">
+                        <div class="bg-white p-1 rounded border"><b>Saut</b><br>D:${fmt(
+                    s.saut_d
+                )} | F:${fmt(s.saut_f)}<br><span class="font-bold text-red-600">${fmt(s.saut)}</span></div>
+                        <div class="bg-white p-1 rounded border"><b>Barres</b><br>D:${fmt(
+                    s.barres_d
+                )} | F:${fmt(s.barres_f)}<br><span class="font-bold text-blue-600">${fmt(
+                    s.barres
+                )}</span></div>
+                        <div class="bg-white p-1 rounded border"><b>Poutre</b><br>D:${fmt(
+                    s.poutre_d
+                )} | F:${fmt(s.poutre_f)}<br><span class="font-bold text-amber-600">${fmt(
+                    s.poutre
+                )}</span></div>
+                        <div class="bg-white p-1 rounded border"><b>Sol</b><br>D:${fmt(
+                    s.sol_d
+                )} | F:${fmt(s.sol_f)}<br><span class="font-bold text-emerald-600">${fmt(s.sol)}</span></div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function parseNullableFloat(val) {
+            if (val === "" || val === null || val === undefined) 
+                return null;
+            const n = parseFloat(val);
+            return isNaN(n)
+                ? null
+                : n;
+        }
+
+        function saveScore(e) {
+            e.preventDefault();
+            const targetId = document
+                .getElementById('edit-score-id')
+                .value;
+            const agres = ['saut', 'barres', 'poutre', 'sol'];
+            const scoreObj = {};
+            agres.forEach(a => {
+                scoreObj[a] = parseNullableFloat(document.getElementById(`score-${a}`).value);
+                scoreObj[`${a}_d`] = parseNullableFloat(
+                    document.getElementById(`score-${a}-d`).value
+                );
+                scoreObj[`${a}_f`] = parseNullableFloat(
+                    document.getElementById(`score-${a}-f`).value
+                );
+            });
+
+            if (targetId) {
+                const idx = data
+                    .scores
+                    .findIndex(s => s.id === targetId);
+                if (idx !== -1) 
+                    Object.assign(data.scores[idx], {
+                        type: document
+                            .getElementById('score-type')
+                            .value,
+                        ...scoreObj
+                    });
+                }
+            else {
+                const now = new Date();
+                data
+                    .scores
+                    .push({
+                        id: "SCR-" + Date.now(),
+                        gymId: currentGymId,
+                        date: `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(
+                            2,
+                            '0'
+                        )}`,
+                        type: document
+                            .getElementById('score-type')
+                            .value,
+                        ...scoreObj
+                    });
+            }
+            saveAllData();
+            cancelScoreEdit();
+            switchTab('suivi');
+            buildChart();
+            renderScoresHistory();
+        }
+
+        function setupScoreEdit(id) {
+            const s = data
+                .scores
+                .find(x => x.id === id);
+            if (!s) 
+                return;
+            document
+                .getElementById('edit-score-id')
+                .value = s.id;
+            document
+                .getElementById('score-type')
+                .value = s
+                .type;
+            ['saut', 'barres', 'poutre', 'sol'].forEach(a => {
+                document
+                    .getElementById(`score-${a}`)
+                    .value = s[a] !== null
+                        ? s[a]
+                        : '';
+                document
+                    .getElementById(`score-${a}-d`)
+                    .value = s[`${a}_d`] !== null
+                        ? s[`${a}_d`]
+                        : '';
+                document
+                    .getElementById(`score-${a}-f`)
+                    .value = s[`${a}_f`] !== null
+                        ? s[`${a}_f`]
+                        : '';
+            });
+            document
+                .getElementById('btn-cancel-score-edit')
+                .classList
+                .remove('hidden');
+            switchTab('saisie');
+        }
+
+        function cancelScoreEdit() {
+            document
+                .getElementById('edit-score-id')
+                .value = '';
+            document
+                .getElementById('form-score')
+                .reset();
+            document
+                .getElementById('btn-cancel-score-edit')
+                .classList
+                .add('hidden');
+        }
+
+        function deleteScore(id) {
+            if (confirm("Supprimer cette saisie ?")) {
+                data.scores = data
+                    .scores
+                    .filter(x => x.id !== id);
+                saveAllData();
+                buildChart();
+                renderScoresHistory();
+            }
+        }
+
+        function buildChart() {
+            const gScores = data
+                .scores
+                .filter(s => s.gymId === currentGymId);
+            const labels = gScores.map(s => s.date);
+            if (myChart) 
+                myChart.destroy();
+            const mode = document
+                .getElementById('chart-datatype')
+                .value;
+
+            let sData,
+                bData,
+                pData,
+                solData,
+                maxVal;
+            if (mode === 'final') {
+                sData = gScores.map(x => x.saut);
+                bData = gScores.map(x => x.barres);
+                pData = gScores.map(x => x.poutre);
+                solData = gScores.map(x => x.sol);
+                maxVal = 20;
+            } else if (mode === 'depart') {
+                sData = gScores.map(x => x.saut_d);
+                bData = gScores.map(x => x.barres_d);
+                pData = gScores.map(x => x.poutre_d);
+                solData = gScores.map(x => x.sol_d);
+                maxVal = 10;
+            } else {
+                sData = gScores.map(x => x.saut_f);
+                bData = gScores.map(x => x.barres_f);
+                pData = gScores.map(x => x.poutre_f);
+                solData = gScores.map(x => x.sol_f);
+                maxVal = 5;
+            }
+
+            const ctx = document
+                .getElementById('chartProgression')
+                .getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Saut',
+                            data: sData,
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            tension: 0.3,
+                            spanGaps: true
+                        }, {
+                            label: 'Barres',
+                            data: bData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            tension: 0.3,
+                            spanGaps: true
+                        }, {
+                            label: 'Poutre',
+                            data: pData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: '#f59e0b',
+                            tension: 0.3,
+                            spanGaps: true
+                        }, {
+                            label: 'Sol',
+                            data: solData,
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            tension: 0.3,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: maxVal
+                        }
+                    }
+                }
+            });
+        }
+
+        // ────────────────────────────────────────────────────────────── MOUVEMENTS &
+        // SIGLES ──────────────────────────────────────────────────────────────
+        const defaultSiglesGym = [
+            {
+                symbole: "↷",
+                abrev: "BSC",
+                nom: "Bascule"
+            }, {
+                symbole: "⥁",
+                abrev: "½ PV",
+                nom: "Demi-pivot"
+            }, {
+                symbole: "↩",
+                abrev: "RTY",
+                nom: "Rétroversion"
+            }, {
+                symbole: "↻",
+                abrev: "FFL",
+                nom: "Flip-Flap"
+            }, {
+                symbole: "⤾",
+                abrev: "RND",
+                nom: "Rondade"
+            }, {
+                symbole: "🤸",
+                abrev: "SLA",
+                nom: "Salto Arrière"
+            }, {
+                symbole: "🩰",
+                abrev: "GRJ",
+                nom: "Grand Jeté"
+            }, {
+                symbole: "🌙",
+                abrev: "LNE",
+                nom: "Lune"
+            }, {
+                symbole: "🌪️",
+                abrev: "TSU",
+                nom: "Tsukahara"
+            }
+        ];
+
+        function initMouvementsTab() {
+            if (!data.mouvements[currentGymId]) 
+                data.mouvements[currentGymId] = {
+                    Saut: "",
+                    Barres: "",
+                    Poutre: "",
+                    Sol: ""
+                };
+            switchMvtAgres(currentMvtAgres);
+            renderSiglesPalette();
+        }
+
+        function renderSiglesPalette() {
+            const kbd = document.getElementById('keyboard-container');
+            kbd.innerHTML = '';
+            defaultSiglesGym.forEach(item => {
+                kbd.innerHTML += `
+                <button type="button" onclick="insertSigleToken('${item.symbole} (${item.abrev})')"
+                    class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
+                    <span class="font-bold text-gray-800 text-sm block">${item.symbole}</span>
+                    <span class="text-[8px] text-gray-400 font-semibold truncate w-full block">${item.abrev}</span>
+                </button>`;
+            });
+            data
+                .customSigles
+                .forEach(item => {
+                    kbd.innerHTML += `
+                <button type="button" onclick="insertSigleToken('[${item.abrev}]')"
+                    class="bg-white border border-pink-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-pink-50 transition">
+                    <img src="${item.img}" class="w-5 h-5 object-contain">
+                    <span class="text-[8px] text-pink-600 font-bold truncate w-full block mt-0.5">${item.abrev}</span>
+                </button>`;
+                });
+        }
+
+        function openCustomSigleModal() {
+            document
+                .getElementById('sigle-abrev-input')
+                .value = '';
+            document
+                .getElementById('sigle-nom-input')
+                .value = '';
+            document
+                .getElementById('sigle-image-file')
+                .value = '';
+            document
+                .getElementById('modal-custom-sigle')
+                .classList
+                .remove('hidden');
+        }
+
+        function closeCustomSigleModal() {
+            document
+                .getElementById('modal-custom-sigle')
+                .classList
+                .add('hidden');
+        }
+
+        function saveCustomSigle() {
+            const abrev = document
+                .getElementById('sigle-abrev-input')
+                .value
+                .trim()
+                .toUpperCase();
+            const nom = document
+                .getElementById('sigle-nom-input')
+                .value
+                .trim();
+            const fileInput = document.getElementById('sigle-image-file');
+            if (!abrev || !nom) 
+                return alert("Veuillez remplir l'abréviation et le nom.");
+            if (!fileInput.files[0]) 
+                return alert("Veuillez charger un logo pour ce sigle.");
+            
+            // Compresse le logo du sigle (très petit format : 100x100px)
+            compressImage(fileInput.files[0], 100, 100, 0.8, function (compressedBase64) {
+                data
+                    .customSigles
+                    .push({abrev, nom, img: compressedBase64});
+                saveAllData();
+                closeCustomSigleModal();
+                renderSiglesPalette();
+            });
+        }
+
+        function switchMvtAgres(agres) {
+            currentMvtAgres = agres;
+            ['Saut', 'Barres', 'Poutre', 'Sol'].forEach(a => {
+                const btn = document.getElementById(`btn-mvt-${a.toLowerCase()}`);
+                if (btn) 
+                    btn.className = (a === agres)
+                        ? 'flex-1 py-1 rounded text-center bg-white shadow-sm font-semibold text-gray-800'
+                        : 'flex-1 py-1 rounded text-center text-gray-500';
+                }
+            );
+            document
+                .getElementById('lbl-mvt-title')
+                .innerText = `Composition — ${agres} :`;
+            document
+                .getElementById('txt-mouvement-content')
+                .value = (
+                    data.mouvements[currentGymId] && data.mouvements[currentGymId][agres]
+                ) || "";
+        }
+
+        function insertSigleToken(token) {
+            const area = document.getElementById('txt-mouvement-content');
+            const start = area.selectionStart,
+                end = area.selectionEnd;
+            area.value = area
+                .value
+                .substring(0, start) + " " + token + " " + area
+                .value
+                .substring(end);
+            area.focus();
+            area.selectionStart = area.selectionEnd = start + token.length + 2;
+        }
+
+        function saveMouvementData() {
+            data.mouvements[currentGymId][currentMvtAgres] = document
+                .getElementById(
+                    'txt-mouvement-content'
+                )
+                .value;
+            saveAllData();
+            alert("🟢 Enchaînement enregistré !");
+        }
+
+        // ────────────────────────────────────────────────────────────── MODALES
+        // GYMNASTE ──────────────────────────────────────────────────────────────
+        function openAddModal() {
+            document
+                .getElementById('modal-title')
+                .innerText = "Créer une nouvelle Fiche";
+            document
+                .getElementById('edit-gym-id')
+                .value = '';
+            document
+                .getElementById('form-add-gym')
+                .reset();
+            document
+                .getElementById('gym-photo-base64')
+                .value = '';
+            const preview = document.getElementById('gym-photo-preview');
+            if (preview) 
+                preview
+                    .classList
+                    .add('hidden');
+            if (currentLevelId && currentLevelId !== 'COMP-ZONE') 
+                document
+                    .getElementById('gym-niveau')
+                    .value = currentLevelId;
+            document
+                .getElementById('modal-add')
+                .classList
+                .remove('hidden');
+        }
+
+        function openEditModal() {
+            const g = data
+                .gymnastes
+                .find(x => x.id === currentGymId);
+            if (!g) 
+                return;
+            document
+                .getElementById('modal-title')
+                .innerText = "Modifier la Fiche";
+            document
+                .getElementById('edit-gym-id')
+                .value = g.id;
+            document
+                .getElementById('gym-nom')
+                .value = g.nom;
+            document
+                .getElementById('gym-prenom')
+                .value = g.prenom;
+            document
+                .getElementById('gym-ddn')
+                .value = g.ddn || '';
+            document
+                .getElementById('gym-niveau')
+                .value = g.niveauId;
+            document
+                .getElementById('gym-licence')
+                .value = g.licence || '';
+            document
+                .getElementById('gym-tel')
+                .value = g.tel;
+            document
+                .getElementById('gym-email')
+                .value = g.email || '';
+            document
+                .getElementById('gym-notes')
+                .value = g.notes || '';
+            document
+                .getElementById('gym-photo-base64')
+                .value = g.photo || '';
+            const preview = document.getElementById('gym-photo-preview');
+            if (preview) {
+                if (g.photo) {
+                    preview.src = g.photo;
+                    preview
+                        .classList
+                        .remove('hidden');
+                } else 
+                    preview
+                        .classList
+                        .add('hidden');
+                }
+            document
+                .getElementById('modal-add')
+                .classList
+                .remove('hidden');
+        }
+
+        function closeAddModal() {
+            document
+                .getElementById('modal-add')
+                .classList
+                .add('hidden');
+        }
+
+        function handleGymFormSubmit(e) {
+            e.preventDefault();
+            const targetId = document
+                .getElementById('edit-gym-id')
+                .value;
+            const obj = {
+                nom: document
+                    .getElementById('gym-nom')
+                    .value
+                    .toUpperCase(),
+                prenom: document
+                    .getElementById('gym-prenom')
+                    .value,
+                ddn: document
+                    .getElementById('gym-ddn')
+                    .value,
+                niveauId: document
+                    .getElementById('gym-niveau')
+                    .value,
+                licence: document
+                    .getElementById('gym-licence')
+                    .value,
+                tel: document
+                    .getElementById('gym-tel')
+                    .value,
+                email: document
+                    .getElementById('gym-email')
+                    .value,
+                notes: document
+                    .getElementById('gym-notes')
+                    .value,
+                photo: document
+                    .getElementById('gym-photo-base64')
+                    .value || ''
+            };
+            if (targetId) {
+                const idx = data
+                    .gymnastes
+                    .findIndex(x => x.id === targetId);
+                if (idx !== -1) 
+                    data.gymnastes[idx] = {
+                        id: targetId,
+                        ...obj
+                    };
+            } else {
+                data
+                    .gymnastes
+                    .push({
+                        id: "GYM-" + Date.now(),
+                        ...obj
+                    });
+            }
+            saveAllData();
+            closeAddModal();
+            if (targetId) 
+                openFiche(targetId);
+            else {
+                renderLevels();
+                if (currentLevelId === obj.niveauId) 
+                    renderGymnastes();
+                }
+            }
+        function deleteGymnaste() {
+            // On s'assure qu'une gymnaste est bien ciblée
+            if (!currentGymId) 
+                return;
+            
+            // Demande de confirmation pour éviter les mauvaises manipulations
+            if (confirm(
+                "⚠️ Êtes-vous sûr de vouloir supprimer définitivement cette gymnaste ? Toutes s" +
+                "es notes, ses enchaînements et son affectation aux équipes seront perdus."
+            )) {
+
+                // 1. Suppression du profil de la gymnaste
+                data.gymnastes = data
+                    .gymnastes
+                    .filter(g => g.id !== currentGymId);
+
+                // 2. Suppression de tous ses scores/statistiques
+                data.scores = data
+                    .scores
+                    .filter(s => s.gymId !== currentGymId);
+
+                // 3. Suppression de ses enchaînements (mouvements)
+                if (data.mouvements[currentGymId]) {
+                    delete data.mouvements[currentGymId];
+                }
+
+                // 4. Retrait de la gymnaste de toutes les équipes (competition)
+                data
+                    .teams
+                    .forEach(team => {
+                        team.members = team
+                            .members
+                            .filter(id => id !== currentGymId);
+                    });
+
+                // On sauvegarde le grand nettoyage et on retourne à la liste
+                saveAllData();
+                goBack();
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────── ÉQUIPES
+        // ──────────────────────────────────────────────────────────────
+        function renderTeamsList() {
+            const grid = document.getElementById('teams-grid');
+            grid.innerHTML = '';
+            if (data.teams.length === 0) {
+                grid.innerHTML = `<p class="text-gray-400 text-center py-4 italic text-xs">Aucune équipe créée.</p>`;
+                return;
+            }
+            data
+                .teams
+                .forEach(team => {
+                    const names = team
+                        .members
+                        .map(id => data.gymnastes.find(x => x.id === id))
+                        .filter(Boolean)
+                        .map(g => g.prenom)
+                        .join(', ') || "Aucune gymnaste";
+
+                    grid.innerHTML += `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:border-purple-300 transition">
+                    <div>
+                        <span class="block font-bold text-gray-800 text-sm">🏆 ${team.name}</span>
+                        <span class="text-[10px] text-gray-400 mt-0.5 block"><b>Composition :</b> ${names}</span>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="runSimulationForTeam('${team.id}')" class="flex-1 py-1 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold rounded-md hover:bg-purple-100 transition">📊 Match</button>
+                        <button onclick="openTeamModalForEdition('${team.id}')" class="px-2 py-1 bg-gray-50 text-gray-600 border border-gray-200 text-[10px] font-bold rounded-md hover:bg-gray-100 transition">✏️ Modifier</button>
+                        <button onclick="deleteTeam('${team.id}')" class="px-2 py-1 bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold rounded-md hover:bg-red-100 transition">✕</button>
+                    </div>
+                </div>`;
+                });
+        }
+
+        function openTeamModalForCreation() {
+            document
+                .getElementById('team-modal-title')
+                .innerText = "Créer une Équipe";
+            document
+                .getElementById('edit-team-id')
+                .value = '';
+            document
+                .getElementById('team-name-input')
+                .value = '';
+            buildGymnastsChecklist([]);
+            document
+                .getElementById('modal-team')
+                .classList
+                .remove('hidden');
+        }
+
+        function openTeamModalForEdition(teamId) {
+            const team = data
+                .teams
+                .find(t => t.id === teamId);
+            if (!team) 
+                return;
+            document
+                .getElementById('team-modal-title')
+                .innerText = "Modifier la Composition";
+            document
+                .getElementById('edit-team-id')
+                .value = team.id;
+            document
+                .getElementById('team-name-input')
+                .value = team.name;
+            buildGymnastsChecklist(team.members);
+            document
+                .getElementById('modal-team')
+                .classList
+                .remove('hidden');
+        }
+
+        function buildGymnastsChecklist(selectedIds) {
+            const container = document.getElementById('team-gymnasts-checklist');
+            container.innerHTML = '';
+            if (data.gymnastes.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 italic text-[11px]">Créez d'abord des gymnastes.</p>`;
+                return;
+            }
+            data
+                .gymnastes
+                .forEach(g => {
+                    const checked = selectedIds.includes(g.id)
+                        ? 'checked'
+                        : '';
+                    container.innerHTML += `
+                <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                    <input type="checkbox" value="${g.id}" ${checked} class="rounded text-purple-600">
+                    ${g.prenom} ${g.nom}
+                </label>`;
+                });
+        }
+
+        function closeTeamModal() {
+            document
+                .getElementById('modal-team')
+                .classList
+                .add('hidden');
+        }
+
+        function saveTeamForm() {
+            const name = document
+                .getElementById('team-name-input')
+                .value
+                .trim();
+            const targetId = document
+                .getElementById('edit-team-id')
+                .value;
+            if (!name) 
+                return alert("Veuillez attribuer un nom à l'équipe.");
+            const members = Array
+                .from(
+                    document.querySelectorAll('#team-gymnasts-checklist input[type="checkbox"]:checked')
+                )
+                .map(cb => cb.value);
+
+            if (targetId) {
+                const idx = data
+                    .teams
+                    .findIndex(t => t.id === targetId);
+                if (idx !== -1) 
+                    data.teams[idx] = {
+                        id: targetId,
+                        name,
+                        members
+                    };
+            } else {
+                data
+                    .teams
+                    .push({
+                        id: "TEAM-" + Date.now(),
+                        name,
+                        members
+                    });
+            }
+            saveAllData();
+            closeTeamModal();
+            renderTeamsList();
+        }
+
+        function deleteTeam(id) {
+            if (confirm("Supprimer cette équipe ?")) {
+                data.teams = data
+                    .teams
+                    .filter(t => t.id !== id);
+                saveAllData();
+                renderTeamsList();
+                document
+                    .getElementById('simulation-matrix-box')
+                    .classList
+                    .add('hidden');
+            }
+        }
+
+        // FIX 5 : calcTop3 utilise une copie du tableau pour ne pas muter l'original
+        function runSimulationForTeam(teamId) {
+            const team = data
+                .teams
+                .find(t => t.id === teamId);
+            if (!team) 
+                return;
+            document
+                .getElementById('simulation-team-title')
+                .innerText = `Simulation Match : ${team.name}`;
+            document
+                .getElementById('simulation-matrix-box')
+                .classList
+                .remove('hidden');
+
+            const body = document.getElementById('table-comp-matrix-body');
+            body.innerHTML = '';
+            let sList = [],
+                bList = [],
+                pList = [],
+                solList = [];
+
+            team
+                .members
+                .forEach(id => {
+                    const g = data
+                        .gymnastes
+                        .find(x => x.id === id);
+                    if (!g) 
+                        return;
+                    const gScores = data
+                        .scores
+                        .filter(s => s.gymId === id);
+                    const best = key => gScores.length
+                        ? Math.max(...gScores.map(
+                            s => s[key] !== null
+                                ? s[key]
+                                : 0
+                        ), 0)
+                        : 0;
+                    const bS = best('saut'),
+                        bB = best('barres'),
+                        bP = best('poutre'),
+                        bSol = best('sol');
+                    sList.push(bS);
+                    bList.push(bB);
+                    pList.push(bP);
+                    solList.push(bSol);
+                    body.innerHTML += `
+                <tr class="text-gray-700 hover:bg-gray-50 border-b border-gray-100">
+                    <td class="p-2 font-medium text-left truncate max-w-[90px]">${g.prenom}</td>
+                    <td class="p-2">${bS > 0
+                        ? bS.toFixed(2)
+                        : '-'}</td>
+                    <td class="p-2">${bB > 0
+                            ? bB.toFixed(2)
+                            : '-'}</td>
+                    <td class="p-2">${bP > 0
+                                ? bP.toFixed(2)
+                                : '-'}</td>
+                    <td class="p-2">${bSol > 0
+                                    ? bSol.toFixed(2)
+                                    : '-'}</td>
+                </tr>`;
+                });
+
+            // FIX 5 : [...arr] évite la mutation de sList/bList/pList/solList
+            const calcTop3 = arr => [...arr]
+                .sort((a, b) => b - a)
+                .slice(0, 3)
+                .reduce((x, y) => x + y, 0);
+
+            body.innerHTML += `
+            <tr class="bg-purple-50 text-purple-700 font-bold border-t-2 border-purple-200">
+                <td class="p-2 text-left text-[11px] uppercase">Total Top 3 :</td>
+                <td class="p-2">${calcTop3(
+                sList
+            ).toFixed(2)}</td>
+                <td class="p-2">${calcTop3(bList).toFixed(2)}</td>
+                <td class="p-2">${calcTop3(
+                pList
+            ).toFixed(2)}</td>
+                <td class="p-2">${calcTop3(solList).toFixed(
+                2
+            )}</td>
+            </tr>`;
+        }
+
+        // ────────────────────────────────────────────────────────────── RESET USINE
+        // ──────────────────────────────────────────────────────────────
+        // ────────────────────────────────────────────────────────────── EXPORTS PDF
+        // (GYMNASTE & COMPÉTITION)
+        // ──────────────────────────────────────────────────────────────
+        function exportGymnastePDF() {
+            const g = data
+                .gymnastes
+                .find(x => x.id === currentGymId);
+            if (!g) 
+                return;
+            
+            // Capture propre du graphique Chart.js en image Base64 haute définition
+            let chartImgHtml = '';
+            if (myChart) {
+                const chartBase64 = myChart.toBase64Image();
+                chartImgHtml = `<div style="text-align:center; margin:20px 0;"><img src="${chartBase64}" style="max-width:100%; height:auto; border:1px solid #e5e7eb; padding:10px; border-radius:8px;"/></div>`;
+            }
+
+            // Génération de l'historique des notes sous forme de tableau propre pour le PDF
+            const gScores = data
+                .scores
+                .filter(s => s.gymId === currentGymId)
+                .reverse();
+            let scoresHtml = '<p style="color:#9ca3af; font-style:italic; font-size:12px;">Aucune note saisi' +
+                    'e.</p>';
+            if (gScores.length > 0) {
+                scoresHtml = '<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size' +
+                        ':11px;"><thead><tr style="background-color:#f3f4f6; text-align:center; font-we' +
+                        'ight:bold;"><th style="border:1px solid #e5e7eb; padding:8px; text-align:left;' +
+                        '">Date / Type</th><th style="border:1px solid #e5e7eb; padding:8px; color:#ef4' +
+                        '444;">Saut</th><th style="border:1px solid #e5e7eb; padding:8px; color:#3b82f6' +
+                        ';">Barres</th><th style="border:1px solid #e5e7eb; padding:8px; color:#f59e0b;' +
+                        '">Poutre</th><th style="border:1px solid #e5e7eb; padding:8px; color:#10b981;"' +
+                        '>Sol</th></tr></thead><tbody>';
+
+                const fmt = v => (v !== null && v !== undefined)
+                    ? v.toFixed(2)
+                    : '-';
+
+                gScores.forEach(s => {
+                    scoresHtml += `<tr style="border-bottom:1px solid #e5e7eb; text-align:center;">` +
+                            `<td style="border:1px solid #e5e7eb; padding:8px; text-align:left; font-weight:bold;">${s.date} - ${s.type}</td>` +
+                            `<td style="border:1px solid #e5e7eb; padding:8px;"><span style="font-weight:bold; color:#ef4444;">${fmt(
+                        s.saut
+                    )}</span><br><span style="font-size:8px; color:#6b7280;">D:${s.saut_d || '-'}|F:${s.saut_f || '-'}</span></td>` +
+                            `<td style="border:1px solid #e5e7eb; padding:8px;"><span style="font-weight:bold; color:#3b82f6;">${fmt(
+                        s.barres
+                    )}</span><br><span style="font-size:8px; color:#6b7280;">D:${s.barres_d || '-'}|F:${s.barres_f || '-'}</span></td>` +
+                            `<td style="border:1px solid #e5e7eb; padding:8px;"><span style="font-weight:bold; color:#f59e0b;">${fmt(
+                        s.poutre
+                    )}</span><br><span style="font-size:8px; color:#6b7280;">D:${s.poutre_d || '-'}|F:${s.poutre_f || '-'}</span></td>` +
+                            `<td style="border:1px solid #e5e7eb; padding:8px;"><span style="font-weight:bold; color:#10b981;">${fmt(
+                        s.sol
+                    )}</span><br><span style="font-size:8px; color:#6b7280;">D:${s.sol_d || '-'}|F:${s.sol_f || '-'}</span></td>` + `</tr>`;
+                });
+                scoresHtml += '</tbody></table>';
+            }
+
+            // Construction d'une mise en page HTML virtuelle dédiée à l'impression PDF (A4)
+            const element = document.createElement('div');
+            element.style.padding = '30px';
+            element.style.fontFamily = '"Segoe UI", system-ui, sans-serif';
+            element.style.color = '#374151';
+
+            element.innerHTML = `
+                <div style="background-color:${userColors.header || '#0f766e'}; color:white; padding:20px; border-radius:12px; margin-bottom:20px;">
+                    <h1 style="margin:0; font-size:24px; font-weight:bold;">${g.prenom} ${g.nom}</h1>
+                    <p style="margin:5px 0 0 0; opacity:0.9; font-size:14px;">${calculateCategory(
+                g.ddn
+            )}</p>
+                </div>
+                
+                <div style="margin-bottom:20px; font-size:13px; line-height:1.6;">
+                    <p><strong>N° Licence :</strong> ${g.licence || 'Non renseignée'}</p>
+                    <p><strong>Date de naissance :</strong> ${g.ddn
+                ? new Date(g.ddn).toLocaleDateString('fr-FR')
+                : 'Non renseignée'}</p>
+                    <p><strong>Téléphone Responsable :</strong> ${g.tel || 'Non renseigné'}</p>
+                    <p><strong>E-mail :</strong> ${g.email || 'Non renseigné'}</p>
+                    <div style="background-color:#f9fafb; border:1px solid #e5e7eb; padding:12px; border-radius:8px; margin-top:10px;">
+                        <strong style="font-size:10px; text-transform:uppercase; color:#6b7280; display:block; margin-bottom:4px;">Objectifs / Remarques :</strong>
+                        <span style="font-style:italic;">${g.notes || 'Aucun objectif spécifié.'}</span>
+                    </div>
+                </div>
+
+                <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:25px;">📈 Évolution des Performances</h2>
+                ${chartImgHtml}
+
+                <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:35px;">🏆 Historique des Évaluations</h2>
+                ${scoresHtml}
+            `;
+
+            const opt = {
+                margin: 12,
+                filename: `Fiche_${g.prenom}_${g.nom}.pdf`,
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait'
+                }
+            };
+
+            html2pdf()
+                .from(element)
+                .save();
+        }
+
+        function exportCompetitionPDF() {
+            const matrixBox = document.getElementById('simulation-matrix-box');
+            if (matrixBox.classList.contains('hidden')) 
+                return;
+            
+            const teamTitle = document
+                .getElementById('simulation-team-title')
+                .innerText;
+            const tableBody = document
+                .getElementById('table-comp-matrix-body')
+                .innerHTML;
+
+            const element = document.createElement('div');
+            element.style.padding = '30px';
+            element.style.fontFamily = '"Segoe UI", system-ui, sans-serif';
+            element.style.color = '#374151';
+
+            element.innerHTML = `
+                <div style="background-color:#7c3aed; color:white; padding:20px; border-radius:12px; margin-bottom:25px; text-align:center;">
+                    <h1 style="margin:0; font-size:22px; font-weight:bold;">🏆 ${teamTitle}</h1>
+                    <p style="margin:5px 0 0 0; opacity:0.9; font-size:13px;">Rapport de simulation de Match Équipe (Top 3)</p>
+                </div>
+                
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:center;">
+                    <thead>
+                        <tr style="background-color:#f3f4f6; color:#4b5563; font-weight:bold;">
+                            <th style="padding:12px; border:1px solid #e5e7eb; text-align:left;">Gymnaste</th>
+                            <th style="padding:12px; border:1px solid #e5e7eb;">Saut</th>
+                            <th style="padding:12px; border:1px solid #e5e7eb;">Barres</th>
+                            <th style="padding:12px; border:1px solid #e5e7eb;">Poutre</th>
+                            <th style="padding:12px; border:1px solid #e5e7eb;">Sol</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableBody}
+                    </tbody>
+                </table>
+            `;
+
+            // On force des bordures et paddings propres sur les lignes copiées (vu que
+            // Tailwind saute sur l'élément virtuel)
+            element
+                .querySelectorAll('td, th')
+                .forEach(cell => {
+                    cell.style.border = '1px solid #e5e7eb';
+                    cell.style.padding = '10px';
+                });
+            element
+                .querySelectorAll('tbody tr')
+                .forEach(row => {
+                    const firstTd = row.querySelector('td');
+                    if (firstTd) 
+                        firstTd.style.textAlign = 'left';
+                    }
+                );
+
+            const opt = {
+                margin: 15,
+                filename: `Simulation_${teamTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait'
+                }
+            };
+
+            html2pdf()
+                .from(element)
+                .save();
+        }
+
+        function resetAppData() {
+            if (confirm(
+                "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
+                "s."
+            )) {
+                localStorage.clear();
+                window
+                    .location
+                    .reload();
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────── INITIALISATION
+        // ──────────────────────────────────────────────────────────────
+        renderLevels();
+        applyCustomColors();
+        applyCustomAppIdentity();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator
+                    .serviceWorker
+                    .register('./service-worker.js')
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+
+</body>
+</html>
