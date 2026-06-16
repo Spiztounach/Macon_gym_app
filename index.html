@@ -1052,7 +1052,7 @@
                     .client
                     .drive
                     .files
-                    .list({spaces: 'appData', fields: 'files(id, name)', orderBy: 'createdTime'});
+                    .list({spaces: 'appDataFolder', fields: 'files(id, name)', orderBy: 'createdTime'});
                 const files = response.result.files;
                 if (files && files.length > 0) {
                     driveFileId = files[0].id;
@@ -1114,7 +1114,7 @@
                         .client
                         .drive
                         .files
-                        .list({spaces: 'appData', fields: 'files(id)', orderBy: 'createdTime'});
+                        .list({spaces: 'appDataFolder', fields: 'files(id)', orderBy: 'createdTime'});
                     const files = res.result.files;
                     if (files && files.length > 0) {
                         driveFileId = files[0].id;
