@@ -945,23 +945,10 @@
         // 9 : checkAuthStates n'agit que quand les DEUX libs sont prêtes
         // ──────────────────────────────────────────────────────────────
         function gapiLoaded() {
-            gapi.load('client', async () => {
-                await gapi
-                    .client
-                    .init(
-                        {discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}
-                    );
-                gapiInited = true;
-                checkAuthStates();
-            });
-        }
-        // ✅ Attend que gapi.client soit prêt avant d'agir
-function waitForGapiClient() {
-    return new Promise(resolve => {
-        if (gapiInited) { resolve(); return; }
-        const check = setInterval(() => {
-            if (gapiInited) { clearInterval(check); resolve(); }
-        }, 100);
+    gapi.load('client', async () => {
+        await gapi.client.init({});
+        gapiInited = true;
+        checkAuthStates();
     });
 }
 
@@ -977,11 +964,6 @@ function waitForGapiClient() {
             }
             googleAccessToken = resp.access_token;
             localStorage.setItem('drive_access_token_v3', googleAccessToken);
-
-            // ✅ On attend que gapi.client soit initialisé avant setToken
-            await waitForGapiClient();
-
-            gapi.client.setToken({access_token: googleAccessToken});
             updateDriveStatusUI(true);
             await syncWithDrive();
         }
@@ -990,17 +972,12 @@ function waitForGapiClient() {
     checkAuthStates();
 }
 
-        // FIX 9 : double garde — on attend que les deux soient prêts
+
         function checkAuthStates() {
-            if (!gapiInited || !gisInited) 
-                return;
-            const stored = localStorage.getItem('drive_access_token_v3');
-            if (stored) {
-                // FIX 1 : refresh silencieux — prompt:'' ne redemande pas le consentement si la
-                // session Google est encore active, le callback reçoit un nouveau token
-                tokenClient.requestAccessToken({prompt: ''});
-            }
-        }
+    if (!gisInited) return;
+    const stored = localStorage.getItem('drive_access_token_v3');
+    if (stored) tokenClient.requestAccessToken({prompt: ''});
+}
 
         function updateDriveStatusUI(connected) {
             const statusEl = document.getElementById('drive-status');
@@ -1036,14 +1013,10 @@ function waitForGapiClient() {
 }
 
         function handleSignoutClick() {
-            gapi
-                .client
-                .setToken(null);
-            googleAccessToken = null;
-            driveFileId = null;
-            localStorage.removeItem('drive_access_token_v3');
-            updateDriveStatusUI(false);
-        }
+    googleAccessToken = null;
+    driveFileId = null;
+    localStorage.removeItem('drive_access_token_v3');
+    updateDriveStatusUI(false);
 
         function setSyncIndicator(visible) {
             document
@@ -1055,148 +1028,125 @@ function waitForGapiClient() {
         // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
         // SYNC ──────────────────────────────────────────────────────────────
         async function syncWithDrive() {
-            if (syncInProgress) 
-                return; // FIX 2 : un seul sync à la fois
-            syncInProgress = true;
-            setSyncIndicator(true);
-            try {
-                const response = await gapi
-                    .client
-                    .drive
-                    .files
-                    .list({spaces: 'appDataFolder', fields: 'files(id, name)', orderBy: 'createdTime'});
-                const files = response.result.files;
-                if (files && files.length > 0) {
-                    driveFileId = files[0].id;
-                    // Supprimer les doublons éventuels (laissés par un bug antérieur)
-                    if (files.length > 1) {
-                        for (let i = 1; i < files.length; i++) {
-                            await gapi
-                                .client
-                                .drive
-                                .files
-                                .delete({fileId: files[i].id})
-                                .catch(() => {});
-                        }
-                    }
-                    const fileData = await gapi
-                        .client
-                        .drive
-                        .files
-                        .get({fileId: driveFileId, alt: 'media'});
-                    if (fileData.body) {
-                        const remote = JSON.parse(fileData.body);
-                        data = {
-                            ...data,
-                            ...remote
-                        };
-                        if (!data.mouvements) 
-                            data.mouvements = {};
-                        if (!data.teams) 
-                            data.teams = [];
-                        if (!data.customSigles) 
-                            data.customSigles = [];
-                        localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
-                        renderLevels();
-                        applyCustomAppIdentity();
-                    }
-                } else {
-                    // Aucun fichier sur Drive : on en crée un
-                    await uploadDataToDrive(true);
-                }
-            } catch (err) {
-                console.error('[GymSuivi] Erreur sync Drive :', err);
-            } finally {
-                syncInProgress = false;
-                setSyncIndicator(false);
+    if (syncInProgress) return;
+    syncInProgress = true;
+    setSyncIndicator(true);
+    try {
+        const res = await fetch(
+            'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&orderBy=createdTime',
+            { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+        );
+        const json = await res.json();
+        if (json.error) throw new Error(json.error.message);
+        const files = json.files || [];
+
+        if (files.length > 0) {
+            driveFileId = files[0].id;
+            // Suppression des doublons éventuels
+            for (let i = 1; i < files.length; i++) {
+                await fetch(`https://www.googleapis.com/drive/v3/files/${files[i].id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+                }).catch(() => {});
             }
+            // Lecture du contenu
+            const fileRes = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+                { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+            );
+            const remote = await fileRes.json();
+            data = { ...data, ...remote };
+            if (!data.mouvements) data.mouvements = {};
+            if (!data.teams) data.teams = [];
+            if (!data.customSigles) data.customSigles = [];
+            localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+            renderLevels();
+            applyCustomAppIdentity();
+        } else {
+            await uploadDataToDrive(true);
         }
+    } catch (err) {
+        console.error('[GymSuivi] Erreur sync Drive :', err);
+    } finally {
+        syncInProgress = false;
+        setSyncIndicator(false);
+    }
+}
 
         // FIX 2 + FIX 6 : recherche l'ID si absent, correction du Content-Type et
         // suppression de parents en mode PATCH
-        async function uploadDataToDrive(isCreation = false) {
-            if (!googleAccessToken) 
-                return;
-            
-            // FIX 2 : si driveFileId est inconnu, on interroge Drive avant de créer un
-            // doublon
-            if (!isCreation && !driveFileId) {
-                try {
-                    const res = await gapi
-                        .client
-                        .drive
-                        .files
-                        .list({spaces: 'appDataFolder', fields: 'files(id)', orderBy: 'createdTime'});
-                    const files = res.result.files;
-                    if (files && files.length > 0) {
-                        driveFileId = files[0].id;
-                    } else {
-                        isCreation = true;
-                    }
-                } catch (err) {
-                    console.error('[GymSuivi] Impossible de récupérer l\'ID Drive :', err);
-                    return;
-                }
-            }
+        // 6. uploadDataToDrive — 100% fetch
+async function uploadDataToDrive(isCreation = false) {
+    if (!googleAccessToken) return;
 
-            setSyncIndicator(true);
-
-            const boundary = 'gymsuivi_boundary_v3';
-            const delim = `\r\n--${boundary}\r\n`;
-            const closing = `\r\n--${boundary}--`;
-
-            // FIX 6 : parents uniquement à la création — jamais dans un PATCH
-            const metadata = isCreation
-                ? {
-                    name: 'gym_cloud_data_v3.json',
-                    parents: ['appDataFolder']
-                }
-                : {
-                    name: 'gym_cloud_data_v3.json'
-                };
-
-            const body = delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(
-                metadata
-            ) + delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) +
-                    closing;
-
-            try {
-                if (isCreation || !driveFileId) {
-                    const res = await gapi
-                        .client
-                        .request({
-                            path: '/upload/drive/v3/files',
-                            method: 'POST',
-                            params: {
-                                uploadType: 'multipart'
-                            },
-                            headers: {
-                                'Content-Type': `multipart/related; boundary=${boundary}`
-                            },
-                            body
-                        });
-                    driveFileId = res.result.id;
-                } else {
-                    await gapi
-                        .client
-                        .request({
-                            path: `/upload/drive/v3/files/${driveFileId}`,
-                            method: 'PATCH',
-                            params: {
-                                uploadType: 'multipart'
-                            },
-                            headers: {
-                                'Content-Type': `multipart/related; boundary=${boundary}`
-                            },
-                            body
-                        });
-                }
-            } catch (err) {
-                console.error('[GymSuivi] Erreur upload Drive :', err);
-            } finally {
-                setSyncIndicator(false);
-            }
+    if (!isCreation && !driveFileId) {
+        try {
+            const res = await fetch(
+                'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id)&orderBy=createdTime',
+                { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+            );
+            const json = await res.json();
+            const files = json.files || [];
+            if (files.length > 0) driveFileId = files[0].id;
+            else isCreation = true;
+        } catch (err) {
+            console.error('[GymSuivi] Impossible de récupérer l\'ID Drive :', err);
+            return;
         }
+    }
+
+    setSyncIndicator(true);
+
+    const boundary = 'gymsuivi_boundary_v3';
+    const delim = `\r\n--${boundary}\r\n`;
+    const closing = `\r\n--${boundary}--`;
+
+    const metadata = isCreation
+        ? { name: 'gym_cloud_data_v3.json', parents: ['appDataFolder'] }
+        : { name: 'gym_cloud_data_v3.json' };
+
+    const body =
+        delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
+        delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) +
+        closing;
+
+    try {
+        if (isCreation || !driveFileId) {
+            const res = await fetch(
+                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${googleAccessToken}`,
+                        'Content-Type': `multipart/related; boundary=${boundary}`
+                    },
+                    body
+                }
+            );
+            const json = await res.json();
+            if (json.error) throw new Error(json.error.message);
+            driveFileId = json.id;
+        } else {
+            const res = await fetch(
+                `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${googleAccessToken}`,
+                        'Content-Type': `multipart/related; boundary=${boundary}`
+                    },
+                    body
+                }
+            );
+            const json = await res.json();
+            if (json.error) throw new Error(json.error.message);
+        }
+    } catch (err) {
+        console.error('[GymSuivi] Erreur upload Drive :', err);
+    } finally {
+        setSyncIndicator(false);
+    }
+}
 
         // ────────────────────────────────────────────────────────────── COULEURS
         // ──────────────────────────────────────────────────────────────
