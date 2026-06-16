@@ -955,32 +955,40 @@
                 checkAuthStates();
             });
         }
+        // ✅ Attend que gapi.client soit prêt avant d'agir
+function waitForGapiClient() {
+    return new Promise(resolve => {
+        if (gapiInited) { resolve(); return; }
+        const check = setInterval(() => {
+            if (gapiInited) { clearInterval(check); resolve(); }
+        }, 100);
+    });
+}
 
         function gisLoaded() {
-            tokenClient = google
-                .accounts
-                .oauth2
-                .initTokenClient({
-                    client_id: CLIENT_ID,
-                    scope: SCOPES,
-                    callback: async (resp) => {
-                        if (resp.error) {
-                            console.error('[GymSuivi] OAuth error :', resp.error);
-                            updateDriveStatusUI(false);
-                            return;
-                        }
-                        googleAccessToken = resp.access_token;
-                        localStorage.setItem('drive_access_token_v3', googleAccessToken);
-                        gapi
-                            .client
-                            .setToken({access_token: googleAccessToken});
-                        updateDriveStatusUI(true);
-                        await syncWithDrive();
-                    }
-                });
-            gisInited = true;
-            checkAuthStates();
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (resp) => {
+            if (resp.error) {
+                console.error('[GymSuivi] OAuth error :', resp.error);
+                updateDriveStatusUI(false);
+                return;
+            }
+            googleAccessToken = resp.access_token;
+            localStorage.setItem('drive_access_token_v3', googleAccessToken);
+
+            // ✅ On attend que gapi.client soit initialisé avant setToken
+            await waitForGapiClient();
+
+            gapi.client.setToken({access_token: googleAccessToken});
+            updateDriveStatusUI(true);
+            await syncWithDrive();
         }
+    });
+    gisInited = true;
+    checkAuthStates();
+}
 
         // FIX 9 : double garde — on attend que les deux soient prêts
         function checkAuthStates() {
@@ -1020,8 +1028,12 @@
         }
 
         function handleAuthClick() {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        }
+    if (!gisInited || !tokenClient) {
+        alert("⏳ Les services Google ne sont pas encore chargés. Attendez quelques secondes et réessayez.");
+        return;
+    }
+    tokenClient.requestAccessToken({prompt: 'consent'});
+}
 
         function handleSignoutClick() {
             gapi
