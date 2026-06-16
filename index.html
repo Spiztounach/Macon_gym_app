@@ -7,11 +7,6 @@
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script
-            src="https://apis.google.com/js/api.js"
-            async="async"
-            defer="defer"
-            onload="gapiLoaded()"></script>
-        <script
             src="https://accounts.google.com/gsi/client"
             async="async"
             defer="defer"
@@ -734,7 +729,6 @@
 
         // FIX 9 : deux flags distincts pour éviter la double initialisation
         let tokenClient;
-        let gapiInited = false;
         let gisInited = false;
         let googleAccessToken = null;
         let driveFileId = null;
@@ -944,15 +938,8 @@
         // AUTH FIX 1 : refresh silencieux du token (plus d'expiration silencieuse) FIX
         // 9 : checkAuthStates n'agit que quand les DEUX libs sont prêtes
         // ──────────────────────────────────────────────────────────────
-        function gapiLoaded() {
-    gapi.load('client', async () => {
-        await gapi.client.init({});
-        gapiInited = true;
-        checkAuthStates();
-    });
-}
-
         function gisLoaded() {
+    console.log('[GymSuivi] gisLoaded ✅');
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
@@ -969,73 +956,57 @@
         }
     });
     gisInited = true;
-    checkAuthStates();
-}
-
-
-        function checkAuthStates() {
-    if (!gisInited) return;
+    // Refresh silencieux si un token était déjà stocké
     const stored = localStorage.getItem('drive_access_token_v3');
     if (stored) tokenClient.requestAccessToken({prompt: ''});
 }
 
-        function updateDriveStatusUI(connected) {
-            const statusEl = document.getElementById('drive-status');
-            const btnLogin = document.getElementById('btn-login');
-            const btnLogout = document.getElementById('btn-logout');
-            if (connected) {
-                statusEl.innerText = "🟢 Connecté à Google Drive";
-                statusEl.className = "text-sm text-green-600 font-medium";
-                btnLogin
-                    .classList
-                    .add('hidden');
-                btnLogout
-                    .classList
-                    .remove('hidden');
-            } else {
-                statusEl.innerText = "🔴 Non connecté à Google Drive";
-                statusEl.className = "text-sm text-amber-600 font-medium";
-                btnLogin
-                    .classList
-                    .remove('hidden');
-                btnLogout
-                    .classList
-                    .add('hidden');
-            }
-        }
-
-        function handleAuthClick() {
+function handleAuthClick() {
     if (!gisInited || !tokenClient) {
-        alert("⏳ Les services Google ne sont pas encore chargés. Attendez quelques secondes et réessayez.");
+        alert("⏳ Google n'est pas encore chargé. Patientez quelques secondes.");
         return;
     }
     tokenClient.requestAccessToken({prompt: 'consent'});
 }
 
-        function handleSignoutClick() {
+function handleSignoutClick() {
     googleAccessToken = null;
     driveFileId = null;
     localStorage.removeItem('drive_access_token_v3');
     updateDriveStatusUI(false);
+}
 
-        function setSyncIndicator(visible) {
-            document
-                .getElementById('sync-indicator')
-                .classList
-                .toggle('hidden', !visible);
-        }
+function setSyncIndicator(visible) {
+    document.getElementById('sync-indicator').classList.toggle('hidden', !visible);
+}
+
+function updateDriveStatusUI(connected) {
+    const statusEl = document.getElementById('drive-status');
+    const btnLogin  = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
+    if (connected) {
+        statusEl.innerText   = "🟢 Connecté à Google Drive";
+        statusEl.className   = "text-sm text-green-600 font-medium";
+        btnLogin.classList.add('hidden');
+        btnLogout.classList.remove('hidden');
+    } else {
+        statusEl.innerText   = "🔴 Non connecté à Google Drive";
+        statusEl.className   = "text-sm text-amber-600 font-medium";
+        btnLogin.classList.remove('hidden');
+        btnLogout.classList.add('hidden');
     }
+}
 
         // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
         // SYNC ──────────────────────────────────────────────────────────────
-        async function syncWithDrive() {
+       async function syncWithDrive() {
     if (syncInProgress) return;
     syncInProgress = true;
     setSyncIndicator(true);
     try {
-        const res = await fetch(
+        const res  = await fetch(
             'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&orderBy=createdTime',
-            { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+            { headers: { Authorization: `Bearer ${googleAccessToken}` } }
         );
         const json = await res.json();
         if (json.error) throw new Error(json.error.message);
@@ -1043,22 +1014,21 @@
 
         if (files.length > 0) {
             driveFileId = files[0].id;
-            // Suppression des doublons éventuels
+            // Nettoyage des éventuels doublons
             for (let i = 1; i < files.length; i++) {
                 await fetch(`https://www.googleapis.com/drive/v3/files/${files[i].id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+                    headers: { Authorization: `Bearer ${googleAccessToken}` }
                 }).catch(() => {});
             }
-            // Lecture du contenu
             const fileRes = await fetch(
                 `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
-                { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+                { headers: { Authorization: `Bearer ${googleAccessToken}` } }
             );
             const remote = await fileRes.json();
             data = { ...data, ...remote };
-            if (!data.mouvements) data.mouvements = {};
-            if (!data.teams) data.teams = [];
+            if (!data.mouvements)   data.mouvements  = {};
+            if (!data.teams)        data.teams        = [];
             if (!data.customSigles) data.customSigles = [];
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
             renderLevels();
@@ -1074,74 +1044,51 @@
     }
 }
 
-        // FIX 2 + FIX 6 : recherche l'ID si absent, correction du Content-Type et
-        // suppression de parents en mode PATCH
-        // 6. uploadDataToDrive — 100% fetch
 async function uploadDataToDrive(isCreation = false) {
     if (!googleAccessToken) return;
 
     if (!isCreation && !driveFileId) {
         try {
-            const res = await fetch(
+            const res   = await fetch(
                 'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id)&orderBy=createdTime',
-                { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+                { headers: { Authorization: `Bearer ${googleAccessToken}` } }
             );
-            const json = await res.json();
+            const json  = await res.json();
             const files = json.files || [];
             if (files.length > 0) driveFileId = files[0].id;
             else isCreation = true;
         } catch (err) {
-            console.error('[GymSuivi] Impossible de récupérer l\'ID Drive :', err);
+            console.error('[GymSuivi] ID Drive introuvable :', err);
             return;
         }
     }
 
     setSyncIndicator(true);
-
     const boundary = 'gymsuivi_boundary_v3';
-    const delim = `\r\n--${boundary}\r\n`;
-    const closing = `\r\n--${boundary}--`;
-
     const metadata = isCreation
         ? { name: 'gym_cloud_data_v3.json', parents: ['appDataFolder'] }
         : { name: 'gym_cloud_data_v3.json' };
-
     const body =
-        delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
-        delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) +
-        closing;
+        `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n` + JSON.stringify(metadata) +
+        `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n` + JSON.stringify(data) +
+        `\r\n--${boundary}--`;
 
     try {
-        if (isCreation || !driveFileId) {
-            const res = await fetch(
-                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${googleAccessToken}`,
-                        'Content-Type': `multipart/related; boundary=${boundary}`
-                    },
-                    body
-                }
-            );
-            const json = await res.json();
-            if (json.error) throw new Error(json.error.message);
-            driveFileId = json.id;
-        } else {
-            const res = await fetch(
-                `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${googleAccessToken}`,
-                        'Content-Type': `multipart/related; boundary=${boundary}`
-                    },
-                    body
-                }
-            );
-            const json = await res.json();
-            if (json.error) throw new Error(json.error.message);
-        }
+        const url = isCreation || !driveFileId
+            ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+            : `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
+        const method = isCreation || !driveFileId ? 'POST' : 'PATCH';
+        const res  = await fetch(url, {
+            method,
+            headers: {
+                Authorization:  `Bearer ${googleAccessToken}`,
+                'Content-Type': `multipart/related; boundary=${boundary}`
+            },
+            body
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error.message);
+        if (isCreation || !driveFileId) driveFileId = json.id;
     } catch (err) {
         console.error('[GymSuivi] Erreur upload Drive :', err);
     } finally {
