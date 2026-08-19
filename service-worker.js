@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymsuivi-v7';
+const CACHE_NAME = 'gymsuivi-v8';
 
 const URLS_TO_CACHE = [
   './',

@@ -771,7 +771,8 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.2.1';
+        const APP_VERSION = '1.2.2';
+        const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -1336,31 +1337,53 @@
             }
         
         // ────────────────────────────────────────────────────────────── CATÉGORIES —
-        // FIX 3 : calcul d'âge exact (tient compte du mois/jour)
+        // Âge sportif FFGym : âge atteint pendant l'année de fin de saison.
+        // La saison bascule automatiquement au 1er août.
         // ──────────────────────────────────────────────────────────────
-        function calculateAge(birthDateString) {
-            if (!birthDateString) 
-                return null;
-            const today = new Date();
-            const b = new Date(birthDateString);
-            let age = today.getFullYear() - b.getFullYear();
-            // On soustrait 1 si l'anniversaire n'est pas encore passé cette année
-            if (today < new Date(today.getFullYear(), b.getMonth(), b.getDate())) 
-                age--;
-            return age;
+        function getSportSeasonEndYear(referenceDate = new Date()) {
+            const date = referenceDate instanceof Date
+                ? referenceDate
+                : new Date(referenceDate);
+            if (Number.isNaN(date.getTime()))
+                return new Date().getFullYear();
+            return date.getMonth() >= SPORT_SEASON_START_MONTH
+                ? date.getFullYear() + 1
+                : date.getFullYear();
         }
 
-        function calculateCategory(birthDateString) {
-            if (!birthDateString) 
+        function calculateAge(birthDateString, referenceDate = new Date()) {
+            if (!birthDateString)
+                return null;
+            const match = String(birthDateString).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!match)
+                return null;
+            const birthDate = new Date(`${birthDateString}T00:00:00`);
+            const birthYear = Number(match[1]);
+            const seasonEndYear = getSportSeasonEndYear(referenceDate);
+            if (Number.isNaN(birthDate.getTime()) || birthYear < 1900 || birthYear > seasonEndYear)
+                return null;
+            return seasonEndYear - birthYear;
+        }
+
+        function calculateCategory(birthDateString, referenceDate = new Date()) {
+            if (!birthDateString)
                 return "Non renseignée";
-            const age = calculateAge(birthDateString);
-            if (age >= 7 && age <= 9) 
+            const age = calculateAge(birthDateString, referenceDate);
+            if (age === null)
+                return "Non renseignée";
+            if (age < 7)
+                return `Moins de 7 ans (${age} ans)`;
+            if (age <= 9)
                 return `Poussine (${age} ans)`;
-            if (age >= 10 && age <= 11) 
+            if (age <= 11)
                 return `Benjamine (${age} ans)`;
-            if (age >= 12 && age <= 13) 
+            if (age <= 13)
                 return `Minime (${age} ans)`;
-            return `Junior / Senior (${age} ans)`;
+            if (age <= 15)
+                return `Cadette (${age} ans)`;
+            if (age <= 17)
+                return `Junior (${age} ans)`;
+            return `Senior (${age} ans)`;
         }
 
         // ────────────────────────────────────────────────────────────── NAVIGATION FIX
@@ -1543,7 +1566,7 @@
                 .innerText = `${g.prenom} ${g.nom}`;
             document
                 .getElementById('fiche-category')
-                .innerText = `Groupe : ${calculateCategory(g.ddn)}`;
+                .innerText = `Catégorie : ${calculateCategory(g.ddn)}`;
             document
                 .getElementById('info-licence')
                 .innerText = g.licence || 'Non renseignée';
