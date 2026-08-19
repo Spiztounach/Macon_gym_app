@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymsuivi-v5';
+const CACHE_NAME = 'gymsuivi-v7';
 
 const URLS_TO_CACHE = [
   './',
@@ -20,6 +20,12 @@ self.addEventListener('install', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.endsWith('/version.json')) {
+    event.respondWith(fetch(event.request, {cache: 'no-store'}));
+    return;
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(

@@ -40,6 +40,12 @@
     </head>
     <body class="pb-24">
 
+        <div
+            id="app-update-toast"
+            class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl">
+            🔄 Mise à jour installée — redémarrage…
+        </div>
+
         <!-- ═══════════════════════════════════════════════ HEADER ═══ -->
         <header
             id="app-header"
@@ -528,6 +534,11 @@
                                     onclick="exportCompetitionPDF()"
                                     class="text-[10px] bg-purple-600 text-white font-bold px-3 py-1.5 rounded-lg shadow hover:bg-purple-700 disabled:opacity-50 disabled:cursor-wait">📄 Exporter le match</button>
                                 <button
+                                    id="btn-export-blank-sheet-pdf"
+                                    type="button"
+                                    onclick="exportBlankTeamSheetPDF()"
+                                    class="text-[10px] bg-white text-purple-700 font-bold px-3 py-1.5 rounded-lg border border-purple-300 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-wait">📝 Feuille vierge</button>
+                                <button
                                     type="button"
                                     onclick="document.getElementById('simulation-matrix-box').classList.add('hidden')"
                                     class="text-[10px] text-gray-400 font-medium px-2 py-1">Masquer ✕</button>
@@ -760,6 +771,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
+        const APP_VERSION = '1.2.1';
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -2965,6 +2977,137 @@
             }
         }
 
+        async function exportBlankTeamSheetPDF() {
+            const team = data.teams.find(item => item.id === currentCompetitionTeamId);
+            if (!team) {
+                alert("⚠️ Ouvrez d'abord le match d'une équipe pour créer sa feuille vierge.");
+                return;
+            }
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
+                return;
+            }
+
+            const rows = buildTeamMatchRows(team);
+            if (rows.length === 0) {
+                alert("⚠️ Cette équipe ne contient aucune gymnaste.");
+                return;
+            }
+            ensureTeamPassageOrders(team, rows);
+
+            const blankButton = document.getElementById('btn-export-blank-sheet-pdf');
+            const matchButton = document.getElementById('btn-export-competition-pdf');
+            const status = document.getElementById('pdf-export-status');
+            blankButton.disabled = true;
+            matchButton.disabled = true;
+            status.innerText = 'Création de la feuille vierge…';
+            status.classList.remove('hidden');
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                const {jsPDF} = window.jspdf;
+                const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+                if (typeof doc.autoTable !== 'function') 
+                    throw new Error('Le module de tableau PDF est indisponible.');
+
+                doc.setFillColor(124, 58, 237);
+                doc.rect(0, 0, 297, 25, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(17);
+                doc.text("Composition d'équipe — Feuille de match", 12, 11);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(team.name, 12, 19);
+
+                doc.setTextColor(55, 65, 81);
+                doc.setFontSize(9);
+                doc.text('Compétition : ______________________________', 12, 33);
+                doc.text('Date : __________________', 112, 33);
+                doc.text('Lieu : ______________________________', 176, 33);
+                doc.text('Entraîneur : __________________________', 12, 41);
+
+                const passageRankByApparatus = Object.fromEntries(
+                    MATCH_APPARATUS.map(apparatus => [
+                        apparatus.key,
+                        new Map((team.passageOrders[apparatus.key] || [])
+                            .map((id, index) => [id, index + 1]))
+                    ])
+                );
+                const groupedHeader = [
+                    {content: 'Gymnaste', rowSpan: 2},
+                    ...MATCH_APPARATUS.map(apparatus => ({content: apparatus.label, colSpan: 4}))
+                ];
+                const detailHeader = MATCH_APPARATUS.flatMap(() => [
+                    'Ordre', 'D', 'Fautes', 'Finale'
+                ]);
+                const body = rows.map(row => [
+                    row.name,
+                    ...MATCH_APPARATUS.flatMap(apparatus => [
+                        String(passageRankByApparatus[apparatus.key].get(row.id) || ''),
+                        '',
+                        '',
+                        ''
+                    ])
+                ]);
+                const bodyRowHeight = Math.max(4.5, Math.min(15, 126 / rows.length));
+                const columnStyles = {0: {cellWidth: 45, halign: 'left', fontStyle: 'bold'}};
+                MATCH_APPARATUS.forEach((apparatus, index) => {
+                    const firstColumn = 1 + index * 4;
+                    columnStyles[firstColumn] = {cellWidth: 10};
+                    columnStyles[firstColumn + 1] = {cellWidth: 11};
+                    columnStyles[firstColumn + 2] = {cellWidth: 16};
+                    columnStyles[firstColumn + 3] = {cellWidth: 19};
+                });
+
+                doc.autoTable({
+                    startY: 48,
+                    head: [groupedHeader, detailHeader],
+                    body,
+                    theme: 'grid',
+                    styles: {
+                        fontSize: bodyRowHeight < 6 ? 5.5 : 7,
+                        cellPadding: 1.4,
+                        minCellHeight: bodyRowHeight,
+                        halign: 'center',
+                        valign: 'middle',
+                        lineColor: [156, 163, 175],
+                        lineWidth: 0.25
+                    },
+                    headStyles: {
+                        fillColor: [237, 233, 254],
+                        textColor: [91, 33, 182],
+                        fontStyle: 'bold',
+                        fontSize: 7.5,
+                        minCellHeight: 7
+                    },
+                    columnStyles,
+                    margin: {left: 14, right: 14, bottom: 12},
+                    rowPageBreak: 'avoid'
+                });
+
+                doc.setFontSize(7.5);
+                doc.setTextColor(107, 114, 128);
+                doc.text('D : note de départ • Fautes : pénalités • Finale : note finale', 14, 202);
+                doc.text('Mâcon Gym Suivi — feuille unique', 283, 202, {align: 'right'});
+
+                const safeName = team.name
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9_-]+/g, '_');
+                doc.save(`Feuille_match_vierge_${safeName || 'Equipe'}.pdf`);
+                status.innerText = 'Feuille vierge téléchargée ✓';
+            } catch (err) {
+                console.error('[GymSuivi] Erreur export feuille vierge :', err);
+                status.innerText = 'Échec de l’export';
+                alert(`❌ Impossible de créer la feuille vierge : ${err.message}`);
+            } finally {
+                blankButton.disabled = false;
+                matchButton.disabled = false;
+                setTimeout(() => status.classList.add('hidden'), 1800);
+            }
+        }
+
         function resetAppData() {
             if (confirm(
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
@@ -2986,12 +3129,52 @@
     </script>
 
     <script>
+        const APP_UPDATE_CHECK_MS = 15 * 60 * 1000;
+        let appReloading = false;
+
+        function reloadForAppUpdate() {
+            if (appReloading) return;
+            appReloading = true;
+            const toast = document.getElementById('app-update-toast');
+            if (toast) toast.classList.remove('hidden');
+            setTimeout(() => window.location.reload(), 700);
+        }
+
+        async function checkForAppUpdate(registration) {
+            try {
+                const response = await fetch('./version.json', {cache: 'no-store'});
+                if (!response.ok) return;
+                const remote = await response.json();
+                const reloadKey = 'gym_update_reload_version';
+                if (remote.version === APP_VERSION) {
+                    sessionStorage.removeItem(reloadKey);
+                    return;
+                }
+                if (remote.version && remote.version !== APP_VERSION) {
+                    if (sessionStorage.getItem(reloadKey) === remote.version) return;
+                    sessionStorage.setItem(reloadKey, remote.version);
+                    await registration.update().catch(() => {});
+                    setTimeout(reloadForAppUpdate, 500);
+                }
+            } catch (_) {
+                // Hors connexion : la version déjà installée reste disponible.
+            }
+        }
+
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator
-                    .serviceWorker
-                    .register('./service-worker.js')
-                    .catch(err => console.error('Service Worker registration failed:', err));
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('./service-worker.js');
+                    navigator.serviceWorker.addEventListener('controllerchange', reloadForAppUpdate);
+                    await checkForAppUpdate(registration);
+                    setInterval(() => checkForAppUpdate(registration), APP_UPDATE_CHECK_MS);
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible')
+                            checkForAppUpdate(registration);
+                    });
+                } catch (err) {
+                    console.error('Service Worker registration failed:', err);
+                }
             });
         }
     </script>

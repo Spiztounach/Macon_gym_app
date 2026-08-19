@@ -1,6 +1,7 @@
 {
   "name": "Mâcon Gym Suivi",
   "short_name": "GymSuivi",
+  "id": "/Macon_gym_app/",
   "start_url": "/Macon_gym_app/",
   "scope": "/Macon_gym_app/",
   "display": "standalone",
