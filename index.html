@@ -839,7 +839,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.5.1';
+        const APP_VERSION = '1.5.2';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -3521,14 +3521,25 @@
             const chartRows = Array.isArray(rows) ? rows : [];
             if (chartRows.length === 0)
                 return;
-            const scaleMax = 20;
-            const barX = 76;
-            const barWidth = 190;
+            const apparatusSeries = [
+                {key: 'saut', label: 'Saut', color: [239, 68, 68]},
+                {key: 'barres', label: 'Barres', color: [59, 130, 246]},
+                {key: 'poutre', label: 'Poutre', color: [245, 158, 11]},
+                {key: 'sol', label: 'Sol', color: [16, 185, 129]}
+            ];
+            const averageValues = chartRows.flatMap(row => apparatusSeries
+                .map(series => row.apparatus[series.key].average)
+                .filter(value => Number.isFinite(value))
+            );
+            const observedMax = averageValues.length ? Math.max(...averageValues) : 1;
+            const scaleMax = Math.max(2, Math.ceil(observedMax / 2) * 2);
+            const barX = 78;
+            const barWidth = 174;
             let offset = 0;
             let chartPage = 0;
             while (offset < chartRows.length) {
                 const firstPage = chartPage === 0;
-                const capacity = firstPage ? 16 : 18;
+                const capacity = firstPage ? 14 : 17;
                 const pageRows = chartRows.slice(offset, offset + capacity);
                 if (!firstPage) {
                     doc.addPage('a4', 'landscape');
@@ -3537,27 +3548,38 @@
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(13);
-                    doc.text('Graphique des moyennes globales - suite', 14, 11);
+                    doc.text('Graphique des moyennes par agrès - suite', 14, 11);
                 }
-                const chartTop = firstPage ? 59 : 34;
-                const titleY = chartTop - 9;
-                const chartBottom = chartTop + pageRows.length * 8;
+                const chartTop = firstPage ? 66 : 41;
+                const titleY = chartTop - 16;
+                const legendY = chartTop - 10;
+                const chartBottom = chartTop + pageRows.length * 8.5;
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(10);
-                doc.text('Moyenne globale par gymnaste - notes finales sur 20', 14, titleY);
+                doc.text('Moyennes des scores finaux par agrès', 14, titleY);
+                apparatusSeries.forEach((series, index) => {
+                    const x = 78 + index * 42;
+                    doc.setFillColor(...series.color);
+                    doc.rect(x, legendY - 2, 5, 2.5, 'F');
+                    doc.setTextColor(55, 65, 81);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.text(series.label, x + 7, legendY);
+                });
                 doc.setDrawColor(209, 213, 219);
                 doc.setLineWidth(0.2);
-                [0, 5, 10, 15, 20].forEach(tick => {
+                [0, 0.25, 0.5, 0.75, 1].forEach(ratio => {
+                    const tick = scaleMax * ratio;
                     const x = barX + (tick / scaleMax) * barWidth;
                     doc.line(x, chartTop - 3, x, chartBottom);
                     doc.setTextColor(107, 114, 128);
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7);
-                    doc.text(String(tick), x, chartTop - 5, {align: 'center'});
+                    doc.text(Number.isInteger(tick) ? String(tick) : tick.toFixed(1), x, chartTop - 5, {align: 'center'});
                 });
                 pageRows.forEach((row, index) => {
-                    const y = chartTop + index * 8 + 4.5;
+                    const y = chartTop + index * 8.5 + 4.2;
                     const shortName = row.name.length > 29
                         ? `${row.name.slice(0, 27)}...`
                         : row.name;
@@ -3565,20 +3587,27 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(7.5);
                     doc.text(shortName, 14, y);
-                    if (Number.isFinite(row.overallAverage)) {
-                        const value = Math.max(0, Math.min(scaleMax, row.overallAverage));
+                    let drawnScoreCount = 0;
+                    apparatusSeries.forEach((series, seriesIndex) => {
+                        const average = row.apparatus[series.key].average;
+                        if (!Number.isFinite(average))
+                            return;
+                        drawnScoreCount++;
+                        const value = Math.max(0, Math.min(scaleMax, average));
                         const width = (value / scaleMax) * barWidth;
-                        doc.setFillColor(...color);
-                        doc.rect(barX, y - 3.6, Math.max(width, 0.7), 4.8, 'F');
+                        const barY = y - 3.9 + seriesIndex * 1.65;
+                        doc.setFillColor(...series.color);
+                        doc.rect(barX, barY, Math.max(width, 0.7), 1.25, 'F');
                         doc.setTextColor(55, 65, 81);
                         doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(7.5);
-                        doc.text(formatLevelStat(row.overallAverage), Math.min(barX + width + 2, 286), y);
-                    } else {
+                        doc.setFontSize(5.3);
+                        doc.text(formatLevelStat(average), Math.min(barX + width + 1.5, 286), barY + 1.15);
+                    });
+                    if (drawnScoreCount === 0) {
                         doc.setTextColor(156, 163, 175);
                         doc.setFont('helvetica', 'italic');
                         doc.setFontSize(7.5);
-                        doc.text('Aucune note', barX + 2, y);
+                        doc.text('Aucun score renseigné', barX + 2, y);
                     }
                 });
                 offset += pageRows.length;
@@ -3628,7 +3657,11 @@
                 doc.setFont('helvetica', 'bold');
                 doc.text(`Gymnastes : ${stats.gymnastCount}`, 14, 36);
                 doc.text(`Évaluations : ${stats.evaluationCount}`, 66, 36);
-                doc.text(`Moyenne globale : ${formatLevelStat(stats.overallAverage)}`, 126, 36);
+                doc.text(
+                    `Moyennes - Saut : ${formatLevelStat(stats.categoryApparatus.saut.average)}  |  Barres : ${formatLevelStat(stats.categoryApparatus.barres.average)}  |  Poutre : ${formatLevelStat(stats.categoryApparatus.poutre.average)}  |  Sol : ${formatLevelStat(stats.categoryApparatus.sol.average)}`,
+                    116,
+                    36
+                );
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
                 doc.text('Les moyennes utilisent uniquement les notes finales réellement renseignées.', 14, 43);
@@ -3647,7 +3680,7 @@
                         'Gymnaste', 'Catégorie âge', 'Éval.',
                         'Saut\nMoy. / Max', 'Barres\nMoy. / Max',
                         'Poutre\nMoy. / Max', 'Sol\nMoy. / Max',
-                        'Moyenne\nglobale', 'Évolution\n1re -> dernière'
+                        'Moyenne\ndes scores', 'Évolution\n1re -> dernière'
                     ]],
                     body: stats.rows.map(row => [
                         row.name,
