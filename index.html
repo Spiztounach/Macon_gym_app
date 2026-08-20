@@ -228,6 +228,20 @@
             <!-- ═════════════════════════════════════ SCREEN GYMNASTES ═══ -->
             <section id="screen-gymnastes" class="hidden space-y-4">
                 <h2 id="gymnastes-title" class="text-lg font-semibold text-gray-700">Gymnastes</h2>
+                <div id="level-statistics-actions" class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Statistiques globales</p>
+                            <p class="text-[10px] text-gray-400">Moyennes, meilleures notes et évolution de toutes les gymnastes.</p>
+                        </div>
+                        <button
+                            id="btn-export-level-stats-pdf"
+                            type="button"
+                            onclick="exportLevelStatsPDF()"
+                            class="shrink-0 bg-teal-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold shadow hover:bg-teal-700 disabled:opacity-50 disabled:cursor-wait">📄 Exporter PDF</button>
+                    </div>
+                    <p id="level-stats-pdf-status" class="hidden text-[10px] font-semibold text-teal-700"></p>
+                </div>
                 <div id="gymnastes-list" class="grid grid-cols-2 gap-3"></div>
             </section>
 
@@ -323,6 +337,30 @@
                             <p
                                 id="info-notes"
                                 class="text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs italic"></p>
+                        </div>
+                        <div class="bg-purple-50/60 p-3 rounded-xl border border-purple-200 space-y-2.5">
+                            <div>
+                                <span class="block text-[10px] uppercase font-semibold text-purple-500">Musique de la gymnaste</span>
+                                <p id="gym-music-name" class="text-xs font-bold text-gray-700 mt-0.5">Aucune musique enregistrée</p>
+                                <p id="gym-music-status" class="text-[10px] text-gray-500 mt-0.5">La musique reste disponible hors connexion sur cet appareil.</p>
+                            </div>
+                            <audio id="gym-music-player" class="hidden w-full h-10" controls preload="metadata"></audio>
+                            <div class="flex gap-2">
+                                <label class="flex-1 text-center bg-purple-600 text-white py-2 rounded-lg text-xs font-bold shadow cursor-pointer hover:bg-purple-700 transition">
+                                    🎵 Ajouter / Remplacer
+                                    <input
+                                        id="gym-music-file"
+                                        type="file"
+                                        accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg"
+                                        onchange="saveGymnastMusic(event)"
+                                        class="hidden">
+                                </label>
+                                <button
+                                    id="btn-delete-gym-music"
+                                    type="button"
+                                    onclick="deleteGymnastMusic()"
+                                    class="hidden bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
+                            </div>
                         </div>
                     </div>
 
@@ -787,7 +825,7 @@
 
                 <div class="border-t border-gray-200 pt-3 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="font-bold text-gray-700">Images enregistrées</span>
+                        <span class="font-bold text-gray-700">Toutes les images</span>
                         <span id="custom-sigles-count" class="text-[10px] text-gray-400">0 image</span>
                     </div>
                     <div id="custom-sigles-manager-list" class="space-y-2"></div>
@@ -801,10 +839,13 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.4.0';
+        const APP_VERSION = '1.5.0';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
+        const GYM_MUSIC_DB_NAME = 'gymsuivi-media-v1';
+        const GYM_MUSIC_STORE_NAME = 'gymnast-music';
+        const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -836,12 +877,16 @@
             mouvements: {},
             teams: [],
             customSigles: [],
+            deletedDefaultSigles: [],
             appName: "GymSuivi",
             appLogo: "",
             birthdayNotificationsEnabled: false
         };
         let birthdayCheckIntervalId = null;
         let editingCustomSigleIndex = null;
+        let gymMusicDbPromise = null;
+        let gymMusicObjectUrl = null;
+        let gymMusicRenderToken = 0;
         // Fonction globale pour compresser et redimensionner une image avant stockage
         function compressImage(file, maxWidth, maxHeight, quality, callback) {
             const reader = new FileReader();
@@ -896,6 +941,8 @@
                     data.teams = [];
                 if (!data.customSigles) 
                     data.customSigles = [];
+                if (!Array.isArray(data.deletedDefaultSigles))
+                    data.deletedDefaultSigles = [];
                 }
             catch (e) {
                 console.error('[GymSuivi] Erreur lecture localStorage :', e);
@@ -1007,6 +1054,8 @@
                             data.teams = [];
                         if (!data.customSigles) 
                             data.customSigles = [];
+                        if (!Array.isArray(data.deletedDefaultSigles))
+                            data.deletedDefaultSigles = [];
                         saveAllData();
                         renderLevels();
                         applyCustomAppIdentity();
@@ -1189,6 +1238,8 @@
                             data.teams = [];
                         if (!data.customSigles) 
                             data.customSigles = [];
+                        if (!Array.isArray(data.deletedDefaultSigles))
+                            data.deletedDefaultSigles = [];
                         localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
                         renderLevels();
                         applyCustomAppIdentity();
@@ -1708,6 +1759,12 @@
             document
                 .getElementById('gymnastes-title')
                 .innerText = `Gymnastes — ${name}`;
+            const exportButton = document.getElementById('btn-export-level-stats-pdf');
+            if (exportButton)
+                exportButton.innerText = `📄 Statistiques ${id === 'NIV-A' ? 'Fédéral A' : 'Fédéral B'}`;
+            const exportStatus = document.getElementById('level-stats-pdf-status');
+            if (exportStatus)
+                exportStatus.classList.add('hidden');
             renderGymnastes();
             showScreen('screen-gymnastes');
         }
@@ -1822,6 +1879,184 @@
             buildChart();
             renderScoresHistory();
             initMouvementsTab();
+            renderGymnastMusic();
+        }
+
+        // ────────────────────────────────────────────────────────────── MUSIQUE
+        // GYMNASTE (STOCKAGE SÉPARÉ POUR LES FICHIERS VOLUMINEUX)
+        // ──────────────────────────────────────────────────────────────
+        function openGymMusicDatabase() {
+            if (gymMusicDbPromise)
+                return gymMusicDbPromise;
+            gymMusicDbPromise = new Promise((resolve, reject) => {
+                if (!('indexedDB' in window)) {
+                    reject(new Error("Le stockage audio n'est pas pris en charge sur cet appareil."));
+                    return;
+                }
+                const request = indexedDB.open(GYM_MUSIC_DB_NAME, 1);
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(GYM_MUSIC_STORE_NAME))
+                        db.createObjectStore(GYM_MUSIC_STORE_NAME, {keyPath: 'gymId'});
+                };
+                request.onsuccess = () => {
+                    const db = request.result;
+                    db.onversionchange = () => db.close();
+                    resolve(db);
+                };
+                request.onerror = () => reject(request.error || new Error('Stockage audio indisponible.'));
+                request.onblocked = () => reject(new Error('Le stockage audio est bloqué par une autre fenêtre.'));
+            }).catch(error => {
+                gymMusicDbPromise = null;
+                throw error;
+            });
+            return gymMusicDbPromise;
+        }
+
+        async function getGymnastMusic(gymId) {
+            const db = await openGymMusicDatabase();
+            return new Promise((resolve, reject) => {
+                const request = db
+                    .transaction(GYM_MUSIC_STORE_NAME, 'readonly')
+                    .objectStore(GYM_MUSIC_STORE_NAME)
+                    .get(gymId);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error || new Error('Lecture de la musique impossible.'));
+            });
+        }
+
+        async function storeGymnastMusic(gymId, file) {
+            const db = await openGymMusicDatabase();
+            const record = {
+                gymId,
+                name: file.name || 'Musique',
+                type: file.type || 'audio/mpeg',
+                size: file.size,
+                updatedAt: new Date().toISOString(),
+                blob: file.slice(0, file.size, file.type || 'audio/mpeg')
+            };
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(GYM_MUSIC_STORE_NAME, 'readwrite');
+                transaction.objectStore(GYM_MUSIC_STORE_NAME).put(record);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error('Enregistrement audio impossible.'));
+                transaction.onabort = () => reject(transaction.error || new Error('Enregistrement audio annulé.'));
+            });
+            if (navigator.storage && typeof navigator.storage.persist === 'function')
+                navigator.storage.persist().catch(() => {});
+        }
+
+        async function removeGymnastMusic(gymId) {
+            if (!gymId || !('indexedDB' in window))
+                return;
+            const db = await openGymMusicDatabase();
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(GYM_MUSIC_STORE_NAME, 'readwrite');
+                transaction.objectStore(GYM_MUSIC_STORE_NAME).delete(gymId);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error('Suppression audio impossible.'));
+                transaction.onabort = () => reject(transaction.error || new Error('Suppression audio annulée.'));
+            });
+        }
+
+        function clearGymMusicObjectUrl() {
+            if (gymMusicObjectUrl) {
+                URL.revokeObjectURL(gymMusicObjectUrl);
+                gymMusicObjectUrl = null;
+            }
+        }
+
+        async function renderGymnastMusic() {
+            const requestedGymId = currentGymId;
+            const token = ++gymMusicRenderToken;
+            const player = document.getElementById('gym-music-player');
+            const name = document.getElementById('gym-music-name');
+            const status = document.getElementById('gym-music-status');
+            const deleteButton = document.getElementById('btn-delete-gym-music');
+            const fileInput = document.getElementById('gym-music-file');
+            if (!player || !name || !status || !deleteButton)
+                return;
+            player.pause();
+            player.removeAttribute('src');
+            player.load();
+            player.classList.add('hidden');
+            deleteButton.classList.add('hidden');
+            name.innerText = 'Chargement de la musique…';
+            status.innerText = 'Recherche du fichier enregistré sur cet appareil.';
+            if (fileInput)
+                fileInput.value = '';
+            clearGymMusicObjectUrl();
+            try {
+                const record = await getGymnastMusic(requestedGymId);
+                if (token !== gymMusicRenderToken || currentGymId !== requestedGymId)
+                    return;
+                if (!record || !record.blob) {
+                    name.innerText = 'Aucune musique enregistrée';
+                    status.innerText = 'La musique restera disponible hors connexion sur cet appareil.';
+                    return;
+                }
+                gymMusicObjectUrl = URL.createObjectURL(record.blob);
+                player.src = gymMusicObjectUrl;
+                player.classList.remove('hidden');
+                player.load();
+                deleteButton.classList.remove('hidden');
+                name.innerText = record.name || 'Musique de la gymnaste';
+                const sizeMb = Number(record.size || record.blob.size || 0) / (1024 * 1024);
+                status.innerText = `Enregistrée sur cet appareil${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''}.`;
+            } catch (error) {
+                if (token !== gymMusicRenderToken || currentGymId !== requestedGymId)
+                    return;
+                console.error('[GymSuivi] Musique indisponible :', error);
+                name.innerText = 'Musique indisponible';
+                status.innerText = error.message || "Le stockage audio n'est pas accessible.";
+            }
+        }
+
+        async function saveGymnastMusic(event) {
+            const fileInput = event.target;
+            const file = fileInput.files && fileInput.files[0];
+            const gymId = currentGymId;
+            if (!file || !gymId)
+                return;
+            const extensionIsAudio = /\.(mp3|m4a|aac|wav|ogg)$/i.test(file.name || '');
+            if (!(file.type || '').startsWith('audio/') && !extensionIsAudio) {
+                fileInput.value = '';
+                alert("⚠️ Sélectionnez un fichier audio compatible.");
+                return;
+            }
+            if (file.size > MAX_GYM_MUSIC_SIZE_BYTES) {
+                fileInput.value = '';
+                alert('⚠️ Le fichier audio dépasse la limite de 80 Mo.');
+                return;
+            }
+            const status = document.getElementById('gym-music-status');
+            status.innerText = 'Enregistrement de la musique…';
+            try {
+                await storeGymnastMusic(gymId, file);
+                if (currentGymId === gymId)
+                    await renderGymnastMusic();
+            } catch (error) {
+                console.error('[GymSuivi] Enregistrement de la musique impossible :', error);
+                alert(`❌ Impossible d'enregistrer la musique : ${error.message}`);
+                if (currentGymId === gymId)
+                    await renderGymnastMusic();
+            } finally {
+                fileInput.value = '';
+            }
+        }
+
+        async function deleteGymnastMusic() {
+            const gymId = currentGymId;
+            if (!gymId || !confirm('Supprimer la musique enregistrée pour cette gymnaste ?'))
+                return;
+            try {
+                await removeGymnastMusic(gymId);
+                if (currentGymId === gymId)
+                    await renderGymnastMusic();
+            } catch (error) {
+                console.error('[GymSuivi] Suppression de la musique impossible :', error);
+                alert(`❌ Impossible de supprimer la musique : ${error.message}`);
+            }
         }
 
         function switchTab(tabName) {
@@ -2190,7 +2425,7 @@
         function renderSiglesPalette() {
             const kbd = document.getElementById('keyboard-container');
             kbd.innerHTML = '';
-            defaultSiglesGym.forEach(item => {
+            defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item)).forEach(item => {
                 kbd.innerHTML += `
                 <button type="button" onclick="insertSigleToken('${item.symbole} (${item.abrev})')"
                     class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
@@ -2267,13 +2502,25 @@
             const list = document.getElementById('custom-sigles-manager-list');
             const count = document.getElementById('custom-sigles-count');
             if (!list || !count) return;
-            const total = data.customSigles.length;
+            const activeDefaultSigles = defaultSiglesGym
+                .map((item, index) => ({item, index}))
+                .filter(entry => !isDefaultSigleDeleted(entry.item));
+            const deletedDefaultSigles = defaultSiglesGym
+                .map((item, index) => ({item, index}))
+                .filter(entry => isDefaultSigleDeleted(entry.item));
+            const total = activeDefaultSigles.length + data.customSigles.length;
             count.innerText = `${total} image${total === 1 ? '' : 's'}`;
-            if (total === 0) {
-                list.innerHTML = '<p class="text-center text-gray-400 py-4">Aucune image personnalisée enregistrée.</p>';
-                return;
-            }
-            list.innerHTML = data.customSigles.map((item, index) => `
+            const defaultList = activeDefaultSigles.map(({item, index}) => `
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    <span class="w-12 h-12 flex items-center justify-center text-2xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
+                        <p class="text-[10px] text-gray-500 font-semibold">${escapeHtml(item.abrev)} · image intégrée</p>
+                    </div>
+                    <button type="button" onclick="deleteDefaultSigle(${index})" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
+                </div>
+            `).join('');
+            const customList = data.customSigles.map((item, index) => `
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
                     <img src="${escapeHtml(item.img || '')}" alt="${escapeHtml(item.nom)}" class="w-12 h-12 object-contain rounded bg-white border border-gray-100">
                     <div class="min-w-0 flex-1">
@@ -2286,6 +2533,68 @@
                     </div>
                 </div>
             `).join('');
+            const deletedList = deletedDefaultSigles.length
+                ? `
+                    <div class="border-t border-gray-200 pt-2 mt-3">
+                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-2">Images intégrées supprimées</p>
+                        <div class="space-y-2">
+                            ${deletedDefaultSigles.map(({item, index}) => `
+                                <div class="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-2 opacity-75">
+                                    <span class="w-10 h-10 flex items-center justify-center text-xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-bold text-gray-600 truncate">${escapeHtml(item.nom)}</p>
+                                        <p class="text-[10px] text-gray-400 font-semibold">${escapeHtml(item.abrev)}</p>
+                                    </div>
+                                    <button type="button" onclick="restoreDefaultSigle(${index})" class="px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 font-semibold">↩ Restaurer</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`
+                : '';
+            list.innerHTML = `${defaultList}${customList}${deletedList}` ||
+                '<p class="text-center text-gray-400 py-4">Aucune image enregistrée.</p>';
+        }
+
+        function isDefaultSigleDeleted(item) {
+            return Array.isArray(data.deletedDefaultSigles) &&
+                data.deletedDefaultSigles.includes(item.abrev);
+        }
+
+        function deleteDefaultSigle(index) {
+            const item = defaultSiglesGym[index];
+            if (!item || isDefaultSigleDeleted(item)) return;
+            if (!confirm(`Supprimer « ${item.nom} » de la palette ?\n\nLes mouvements déjà enregistrés ne seront pas modifiés.`))
+                return;
+            const previousDeleted = [...data.deletedDefaultSigles];
+            data.deletedDefaultSigles.push(item.abrev);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.deletedDefaultSigles = previousDeleted;
+                console.error('[GymSuivi] Suppression du sigle intégré non enregistrée :', error);
+                alert("❌ La suppression n'a pas pu être enregistrée.");
+                return;
+            }
+            renderSiglesPalette();
+            renderCustomSiglesManager();
+        }
+
+        function restoreDefaultSigle(index) {
+            const item = defaultSiglesGym[index];
+            if (!item || !isDefaultSigleDeleted(item)) return;
+            const previousDeleted = [...data.deletedDefaultSigles];
+            data.deletedDefaultSigles = data.deletedDefaultSigles
+                .filter(abrev => abrev !== item.abrev);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.deletedDefaultSigles = previousDeleted;
+                console.error('[GymSuivi] Restauration du sigle intégré non enregistrée :', error);
+                alert("❌ La restauration n'a pas pu être enregistrée.");
+                return;
+            }
+            renderSiglesPalette();
+            renderCustomSiglesManager();
         }
 
         function editCustomSigle(index) {
@@ -2626,6 +2935,7 @@
                 "⚠️ Êtes-vous sûr de vouloir supprimer définitivement cette gymnaste ? Toutes s" +
                 "es notes, ses enchaînements et son affectation aux équipes seront perdus."
             )) {
+                const deletedGymId = currentGymId;
 
                 // 1. Suppression du profil de la gymnaste
                 data.gymnastes = data
@@ -2641,6 +2951,11 @@
                 if (data.mouvements[currentGymId]) {
                     delete data.mouvements[currentGymId];
                 }
+
+                // 3b. Suppression de sa musique locale sans bloquer le reste de la fiche
+                removeGymnastMusic(deletedGymId).catch(error =>
+                    console.warn('[GymSuivi] Musique locale non supprimée :', error)
+                );
 
                 // 4. Retrait de la gymnaste de toutes les équipes
                 data
@@ -3100,6 +3415,210 @@
         // ────────────────────────────────────────────────────────────── EXPORTS PDF
         // CORRIGÉS (GYMNASTE & COMPÉTITION)
         // ──────────────────────────────────────────────────────────────
+        function getNumericScoreValues(scores, key) {
+            return scores
+                .map(score => score[key])
+                .filter(value => value !== null && value !== undefined && value !== '')
+                .map(value => Number(value))
+                .filter(value => Number.isFinite(value));
+        }
+
+        function getAverage(values) {
+            return values.length
+                ? values.reduce((sum, value) => sum + value, 0) / values.length
+                : null;
+        }
+
+        function getLevelPerformanceStatistics(levelId) {
+            const apparatusKeys = ['saut', 'barres', 'poutre', 'sol'];
+            const gymnasts = data.gymnastes
+                .filter(gymnast => gymnast.niveauId === levelId)
+                .sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+            const rows = gymnasts.map(gymnast => {
+                const scores = data.scores.filter(score => score.gymId === gymnast.id);
+                const apparatus = {};
+                apparatusKeys.forEach(key => {
+                    const values = getNumericScoreValues(scores, key);
+                    apparatus[key] = {
+                        average: getAverage(values),
+                        best: values.length ? Math.max(...values) : null,
+                        count: values.length
+                    };
+                });
+                const allFinalValues = apparatusKeys.flatMap(key => getNumericScoreValues(scores, key));
+                const evaluationAverages = scores
+                    .map(score => getAverage(apparatusKeys
+                        .map(key => score[key])
+                        .filter(value => value !== null && value !== undefined && value !== '')
+                        .map(value => Number(value))
+                        .filter(value => Number.isFinite(value))))
+                    .filter(value => value !== null);
+                const evolution = evaluationAverages.length >= 2
+                    ? evaluationAverages[evaluationAverages.length - 1] - evaluationAverages[0]
+                    : null;
+                return {
+                    id: gymnast.id,
+                    name: `${gymnast.prenom} ${gymnast.nom}`,
+                    ageCategory: calculateCategory(gymnast.ddn),
+                    evaluationCount: scores.length,
+                    apparatus,
+                    overallAverage: getAverage(allFinalValues),
+                    evolution
+                };
+            });
+            const categoryApparatus = {};
+            apparatusKeys.forEach(key => {
+                const values = getNumericScoreValues(
+                    data.scores.filter(score => gymnasts.some(gymnast => gymnast.id === score.gymId)),
+                    key
+                );
+                categoryApparatus[key] = {
+                    average: getAverage(values),
+                    best: values.length ? Math.max(...values) : null,
+                    count: values.length
+                };
+            });
+            const allCategoryValues = apparatusKeys.flatMap(key => {
+                const values = [];
+                rows.forEach(row => {
+                    const gymnastScores = data.scores.filter(score => score.gymId === row.id);
+                    values.push(...getNumericScoreValues(gymnastScores, key));
+                });
+                return values;
+            });
+            return {
+                rows,
+                gymnastCount: rows.length,
+                evaluationCount: rows.reduce((sum, row) => sum + row.evaluationCount, 0),
+                categoryApparatus,
+                overallAverage: getAverage(allCategoryValues)
+            };
+        }
+
+        function formatLevelStat(value, signed = false) {
+            if (!Number.isFinite(value))
+                return '-';
+            const formatted = value.toFixed(2);
+            return signed && value > 0 ? `+${formatted}` : formatted;
+        }
+
+        async function exportLevelStatsPDF() {
+            if (!['NIV-A', 'NIV-B'].includes(currentLevelId)) {
+                alert("⚠️ Ouvrez d'abord la catégorie Fédéral A ou Fédéral B.");
+                return;
+            }
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
+                return;
+            }
+            const stats = getLevelPerformanceStatistics(currentLevelId);
+            if (stats.gymnastCount === 0) {
+                alert("⚠️ Cette catégorie ne contient aucune gymnaste.");
+                return;
+            }
+            const button = document.getElementById('btn-export-level-stats-pdf');
+            const status = document.getElementById('level-stats-pdf-status');
+            button.disabled = true;
+            status.innerText = 'Création du PDF…';
+            status.classList.remove('hidden');
+            try {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                const {jsPDF} = window.jspdf;
+                const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+                if (typeof doc.autoTable !== 'function')
+                    throw new Error('Le module de tableau PDF est indisponible.');
+                const levelName = currentLevelId === 'NIV-A' ? 'Fédéral A' : 'Fédéral B';
+                const color = currentLevelId === 'NIV-A' ? [236, 72, 153] : [14, 165, 233];
+                doc.setFillColor(...color);
+                doc.rect(0, 0, 297, 26, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.text(`Statistiques globales - ${levelName}`, 14, 11);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text(`Toutes les gymnastes - Export du ${new Date().toLocaleDateString('fr-FR')}`, 14, 19);
+
+                doc.setTextColor(55, 65, 81);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Gymnastes : ${stats.gymnastCount}`, 14, 36);
+                doc.text(`Évaluations : ${stats.evaluationCount}`, 66, 36);
+                doc.text(`Moyenne globale : ${formatLevelStat(stats.overallAverage)}`, 126, 36);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.text('Les moyennes utilisent uniquement les notes finales réellement renseignées.', 14, 43);
+
+                doc.autoTable({
+                    startY: 49,
+                    head: [[
+                        'Gymnaste', 'Catégorie âge', 'Éval.',
+                        'Saut\nMoy. / Max', 'Barres\nMoy. / Max',
+                        'Poutre\nMoy. / Max', 'Sol\nMoy. / Max',
+                        'Moyenne\nglobale', 'Évolution\n1re -> dernière'
+                    ]],
+                    body: stats.rows.map(row => [
+                        row.name,
+                        row.ageCategory,
+                        String(row.evaluationCount),
+                        `${formatLevelStat(row.apparatus.saut.average)} / ${formatLevelStat(row.apparatus.saut.best)}`,
+                        `${formatLevelStat(row.apparatus.barres.average)} / ${formatLevelStat(row.apparatus.barres.best)}`,
+                        `${formatLevelStat(row.apparatus.poutre.average)} / ${formatLevelStat(row.apparatus.poutre.best)}`,
+                        `${formatLevelStat(row.apparatus.sol.average)} / ${formatLevelStat(row.apparatus.sol.best)}`,
+                        formatLevelStat(row.overallAverage),
+                        formatLevelStat(row.evolution, true)
+                    ]),
+                    foot: [[
+                        'MOYENNES CATÉGORIE', '', String(stats.evaluationCount),
+                        `${formatLevelStat(stats.categoryApparatus.saut.average)} / ${formatLevelStat(stats.categoryApparatus.saut.best)}`,
+                        `${formatLevelStat(stats.categoryApparatus.barres.average)} / ${formatLevelStat(stats.categoryApparatus.barres.best)}`,
+                        `${formatLevelStat(stats.categoryApparatus.poutre.average)} / ${formatLevelStat(stats.categoryApparatus.poutre.best)}`,
+                        `${formatLevelStat(stats.categoryApparatus.sol.average)} / ${formatLevelStat(stats.categoryApparatus.sol.best)}`,
+                        formatLevelStat(stats.overallAverage), ''
+                    ]],
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 7.5,
+                        cellPadding: 2.1,
+                        halign: 'center',
+                        valign: 'middle',
+                        lineColor: [209, 213, 219],
+                        lineWidth: 0.2
+                    },
+                    headStyles: {fillColor: color, textColor: 255, fontStyle: 'bold', fontSize: 7.5},
+                    footStyles: {fillColor: [243, 244, 246], textColor: [31, 41, 55], fontStyle: 'bold'},
+                    columnStyles: {
+                        0: {cellWidth: 38, halign: 'left', fontStyle: 'bold'},
+                        1: {cellWidth: 35, halign: 'left'},
+                        2: {cellWidth: 13},
+                        7: {fontStyle: 'bold'}
+                    },
+                    margin: {left: 10, right: 10, bottom: 14},
+                    rowPageBreak: 'avoid'
+                });
+
+                const pageCount = doc.getNumberOfPages();
+                for (let page = 1; page <= pageCount; page++) {
+                    doc.setPage(page);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.setTextColor(107, 114, 128);
+                    doc.text('Mâcon Gym Suivi - statistiques de performance globale', 10, 203);
+                    doc.text(`Page ${page} / ${pageCount}`, 287, 203, {align: 'right'});
+                }
+                const safeLevel = currentLevelId === 'NIV-A' ? 'Federal_A' : 'Federal_B';
+                doc.save(`Statistiques_globales_${safeLevel}.pdf`);
+                status.innerText = 'PDF téléchargé ✓';
+            } catch (error) {
+                console.error('[GymSuivi] Erreur export statistiques catégorie :', error);
+                status.innerText = 'Échec de l’export';
+                alert(`❌ Impossible de créer le PDF : ${error.message}`);
+            } finally {
+                button.disabled = false;
+                setTimeout(() => status.classList.add('hidden'), 1800);
+            }
+        }
+
         function exportGymnastePDF() {
             if (typeof html2pdf === 'undefined') {
                 alert("❌ La bibliothèque PDF n'est pas encore chargée. Vérifiez votre connexion internet et rechargez la page.");
