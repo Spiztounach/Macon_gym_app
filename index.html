@@ -839,7 +839,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.5.0';
+        const APP_VERSION = '1.5.1';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1776,7 +1776,15 @@
             list.innerHTML = '';
             const filtered = data
                 .gymnastes
-                .filter(g => g.niveauId === currentLevelId);
+                .filter(g => g.niveauId === currentLevelId)
+                .sort((a, b) => {
+                    const byLastName = String(a.nom || '').localeCompare(
+                        String(b.nom || ''), 'fr', {sensitivity: 'base'}
+                    );
+                    return byLastName || String(a.prenom || '').localeCompare(
+                        String(b.prenom || ''), 'fr', {sensitivity: 'base'}
+                    );
+                });
             if (filtered.length === 0) {
                 list.innerHTML = `<p class="text-gray-400 text-center col-span-2 py-4 italic text-xs">Aucune gymnaste. Appuyez sur + pour en ajouter une.</p>`;
                 return;
@@ -3433,7 +3441,14 @@
             const apparatusKeys = ['saut', 'barres', 'poutre', 'sol'];
             const gymnasts = data.gymnastes
                 .filter(gymnast => gymnast.niveauId === levelId)
-                .sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+                .sort((a, b) => {
+                    const byLastName = String(a.nom || '').localeCompare(
+                        String(b.nom || ''), 'fr', {sensitivity: 'base'}
+                    );
+                    return byLastName || String(a.prenom || '').localeCompare(
+                        String(b.prenom || ''), 'fr', {sensitivity: 'base'}
+                    );
+                });
             const rows = gymnasts.map(gymnast => {
                 const scores = data.scores.filter(score => score.gymId === gymnast.id);
                 const apparatus = {};
@@ -3502,6 +3517,75 @@
             return signed && value > 0 ? `+${formatted}` : formatted;
         }
 
+        function drawLevelPerformanceChart(doc, rows, color) {
+            const chartRows = Array.isArray(rows) ? rows : [];
+            if (chartRows.length === 0)
+                return;
+            const scaleMax = 20;
+            const barX = 76;
+            const barWidth = 190;
+            let offset = 0;
+            let chartPage = 0;
+            while (offset < chartRows.length) {
+                const firstPage = chartPage === 0;
+                const capacity = firstPage ? 16 : 18;
+                const pageRows = chartRows.slice(offset, offset + capacity);
+                if (!firstPage) {
+                    doc.addPage('a4', 'landscape');
+                    doc.setFillColor(...color);
+                    doc.rect(0, 0, 297, 17, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(13);
+                    doc.text('Graphique des moyennes globales - suite', 14, 11);
+                }
+                const chartTop = firstPage ? 59 : 34;
+                const titleY = chartTop - 9;
+                const chartBottom = chartTop + pageRows.length * 8;
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('Moyenne globale par gymnaste - notes finales sur 20', 14, titleY);
+                doc.setDrawColor(209, 213, 219);
+                doc.setLineWidth(0.2);
+                [0, 5, 10, 15, 20].forEach(tick => {
+                    const x = barX + (tick / scaleMax) * barWidth;
+                    doc.line(x, chartTop - 3, x, chartBottom);
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.text(String(tick), x, chartTop - 5, {align: 'center'});
+                });
+                pageRows.forEach((row, index) => {
+                    const y = chartTop + index * 8 + 4.5;
+                    const shortName = row.name.length > 29
+                        ? `${row.name.slice(0, 27)}...`
+                        : row.name;
+                    doc.setTextColor(31, 41, 55);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(7.5);
+                    doc.text(shortName, 14, y);
+                    if (Number.isFinite(row.overallAverage)) {
+                        const value = Math.max(0, Math.min(scaleMax, row.overallAverage));
+                        const width = (value / scaleMax) * barWidth;
+                        doc.setFillColor(...color);
+                        doc.rect(barX, y - 3.6, Math.max(width, 0.7), 4.8, 'F');
+                        doc.setTextColor(55, 65, 81);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(7.5);
+                        doc.text(formatLevelStat(row.overallAverage), Math.min(barX + width + 2, 286), y);
+                    } else {
+                        doc.setTextColor(156, 163, 175);
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(7.5);
+                        doc.text('Aucune note', barX + 2, y);
+                    }
+                });
+                offset += pageRows.length;
+                chartPage++;
+            }
+        }
+
         async function exportLevelStatsPDF() {
             if (!['NIV-A', 'NIV-B'].includes(currentLevelId)) {
                 alert("⚠️ Ouvrez d'abord la catégorie Fédéral A ou Fédéral B.");
@@ -3549,8 +3633,16 @@
                 doc.setFontSize(8);
                 doc.text('Les moyennes utilisent uniquement les notes finales réellement renseignées.', 14, 43);
 
+                drawLevelPerformanceChart(doc, stats.rows, color);
+
+                doc.addPage('a4', 'landscape');
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text(`Détail statistique - ${levelName} - ordre alphabétique`, 10, 11);
+
                 doc.autoTable({
-                    startY: 49,
+                    startY: 16,
                     head: [[
                         'Gymnaste', 'Catégorie âge', 'Éval.',
                         'Saut\nMoy. / Max', 'Barres\nMoy. / Max',
