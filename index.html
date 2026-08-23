@@ -559,6 +559,20 @@
             <!-- ══════════════════════════════════════ SCREEN COMPETITION ═══ -->
             <section id="screen-competition" class="hidden space-y-4">
                 <h2 class="text-lg font-bold text-gray-700">Compétitions & Équipes 🏆</h2>
+                <div class="grid grid-cols-2 gap-1 bg-gray-200 p-1 rounded-xl text-xs">
+                    <button
+                        id="btn-competition-tab-match"
+                        type="button"
+                        onclick="switchCompetitionTab('match')"
+                        class="py-2 rounded-lg bg-white text-purple-700 shadow-sm font-bold">📊 Équipes & Matchs</button>
+                    <button
+                        id="btn-competition-tab-live"
+                        type="button"
+                        onclick="switchCompetitionTab('live')"
+                        class="py-2 rounded-lg text-gray-500 font-bold">✍️ Saisie compétition</button>
+                </div>
+
+                <div id="competition-tab-match" class="space-y-4">
                 <p class="text-xs text-gray-500">Comparez les meilleures notes de chaque gymnaste, repérez les trois meilleures par agrès et préparez les ordres de passage.</p>
                 <div id="teams-grid" class="grid grid-cols-1 gap-3"></div>
                 <button
@@ -625,6 +639,116 @@
                             <p class="text-[10px] text-gray-400">L'ordre conseillé place les notes les plus faibles en premier et la meilleure gymnaste en dernière. Utilisez les flèches pour l'adapter.</p>
                         </div>
                         <div id="passage-orders-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+                    </div>
+                </div>
+                </div>
+
+                <div id="competition-tab-live" class="hidden space-y-4">
+                    <div class="bg-white rounded-xl border border-purple-200 shadow-sm p-4 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-purple-700">Saisie des notes en direct</h3>
+                                <p class="text-[10px] text-gray-400">Les résultats sont recalculés et enregistrés automatiquement.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onclick="newLiveCompetition()"
+                                class="bg-purple-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold shadow hover:bg-purple-700">➕ Nouvelle compétition</button>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Compétition enregistrée</label>
+                            <select
+                                id="live-competition-select"
+                                onchange="selectLiveCompetition(this.value)"
+                                class="w-full p-2 border border-gray-300 rounded-lg bg-white text-xs"></select>
+                        </div>
+
+                        <p id="live-competition-empty" class="text-center text-xs text-gray-400 italic py-3">Créez une compétition pour commencer la saisie.</p>
+
+                        <div id="live-competition-editor" class="hidden space-y-3 border-t border-gray-100 pt-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 mb-1">Nom de la compétition</label>
+                                    <input
+                                        id="live-competition-name"
+                                        type="text"
+                                        oninput="updateLiveCompetitionMeta()"
+                                        class="w-full p-2 border border-gray-300 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 mb-1">Date</label>
+                                    <input
+                                        id="live-competition-date"
+                                        type="date"
+                                        onchange="updateLiveCompetitionMeta()"
+                                        class="w-full p-2 border border-gray-300 rounded-lg text-xs bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 mb-1">Équipe</label>
+                                    <select
+                                        id="live-competition-team"
+                                        onchange="updateLiveCompetitionMeta(true)"
+                                        class="w-full p-2 border border-gray-300 rounded-lg text-xs bg-white"></select>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span id="live-save-status" class="text-[10px] text-green-600 font-semibold">Enregistré automatiquement</span>
+                                <button
+                                    type="button"
+                                    onclick="deleteLiveCompetition()"
+                                    class="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 font-bold">🗑️ Supprimer cette compétition</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="live-score-panel" class="hidden space-y-4">
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-700">Notes par agrès</h3>
+                                <p class="text-[10px] text-gray-400">Note finale calculée automatiquement : note de départ - fautes.</p>
+                            </div>
+                            <div id="live-apparatus-tabs" class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-lg text-[10px]"></div>
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="w-full min-w-[650px] text-center text-xs border-collapse bg-white">
+                                    <thead>
+                                        <tr class="bg-gray-100 text-gray-600 font-bold">
+                                            <th class="p-2 border border-gray-200 w-12">Ordre</th>
+                                            <th class="p-2 border border-gray-200 text-left min-w-[180px]">Gymnaste</th>
+                                            <th class="p-2 border border-gray-200 w-28">Départ (D)</th>
+                                            <th class="p-2 border border-gray-200 w-28">Fautes</th>
+                                            <th class="p-2 border border-gray-200 w-28 bg-purple-50 text-purple-700">Note finale</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="live-score-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl border border-purple-200 shadow-sm p-4 space-y-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-purple-700">Résultats en direct</h3>
+                                <p class="text-[10px] text-gray-400">Classement provisoire et total des trois meilleures notes par agrès.</p>
+                            </div>
+                            <div id="live-top3-summary" class="grid grid-cols-2 lg:grid-cols-5 gap-2"></div>
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="w-full min-w-[760px] text-center text-xs border-collapse bg-white">
+                                    <thead>
+                                        <tr class="bg-gray-100 text-gray-600 font-bold">
+                                            <th class="p-2 border border-gray-200 w-10">#</th>
+                                            <th class="p-2 border border-gray-200 text-left min-w-[170px]">Gymnaste</th>
+                                            <th class="p-2 border border-gray-200">Saut</th>
+                                            <th class="p-2 border border-gray-200">Barres</th>
+                                            <th class="p-2 border border-gray-200">Poutre</th>
+                                            <th class="p-2 border border-gray-200">Sol</th>
+                                            <th class="p-2 border border-gray-200 bg-purple-50 text-purple-700">Total provisoire</th>
+                                            <th class="p-2 border border-gray-200">Agrès saisis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="live-results-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -839,7 +963,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.5.2';
+        const APP_VERSION = '1.6.0';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -876,6 +1000,7 @@
             scores: [],
             mouvements: {},
             teams: [],
+            competitionSessions: [],
             customSigles: [],
             deletedDefaultSigles: [],
             appName: "GymSuivi",
@@ -939,6 +1064,8 @@
                     data.mouvements = {};
                 if (!data.teams) 
                     data.teams = [];
+                if (!Array.isArray(data.competitionSessions))
+                    data.competitionSessions = [];
                 if (!data.customSigles) 
                     data.customSigles = [];
                 if (!Array.isArray(data.deletedDefaultSigles))
@@ -1052,6 +1179,8 @@
                             data.mouvements = {};
                         if (!data.teams) 
                             data.teams = [];
+                        if (!Array.isArray(data.competitionSessions))
+                            data.competitionSessions = [];
                         if (!data.customSigles) 
                             data.customSigles = [];
                         if (!Array.isArray(data.deletedDefaultSigles))
@@ -1236,6 +1365,8 @@
                             data.mouvements = {};
                         if (!data.teams) 
                             data.teams = [];
+                        if (!Array.isArray(data.competitionSessions))
+                            data.competitionSessions = [];
                         if (!data.customSigles) 
                             data.customSigles = [];
                         if (!Array.isArray(data.deletedDefaultSigles))
@@ -1639,6 +1770,10 @@
         let myChart = null;
         let currentMvtAgres = "Saut";
         let currentCompetitionTeamId = null;
+        let currentCompetitionTab = 'match';
+        let currentLiveCompetitionId = null;
+        let currentLiveApparatus = 'saut';
+        let liveCompetitionSaveTimer = null;
         let screenHistory = ['screen-levels'];
 
         const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-settings'];
@@ -1700,8 +1835,10 @@
                     renderGymnastes();
                 if (prev === 'screen-levels') 
                     renderLevels();
-                if (prev === 'screen-competition') 
+                if (prev === 'screen-competition') {
                     renderTeamsList();
+                    switchCompetitionTab(currentCompetitionTab);
+                }
                 }
             }
 
@@ -1752,6 +1889,7 @@
         function openLevel(id, name) {
             if (id === 'COMP-ZONE') {
                 renderTeamsList();
+                switchCompetitionTab(currentCompetitionTab);
                 showScreen('screen-competition');
                 return;
             }
@@ -2974,6 +3112,12 @@
                             .filter(id => id !== currentGymId);
                     });
 
+                // 5. Retrait de ses saisies dans les compétitions enregistrées
+                data.competitionSessions.forEach(session => {
+                    if (session.scores && session.scores[currentGymId])
+                        delete session.scores[currentGymId];
+                });
+
                 // Enregistrement des modifications
                 saveAllData();
 
@@ -3344,6 +3488,14 @@
                         passageOrders: {}
                     });
             }
+            if (targetId) {
+                data.competitionSessions
+                    .filter(session => session.teamId === targetId)
+                    .forEach(session => {
+                        ensureLiveCompetitionScoreStructure(session);
+                        syncLiveCompetitionToScoreHistory(session);
+                    });
+            }
             saveAllData();
             closeTeamModal();
             renderTeamsList();
@@ -3352,12 +3504,24 @@
         }
 
         function deleteTeam(id) {
-            if (confirm("Supprimer cette équipe ?")) {
+            const linkedSessionIds = data.competitionSessions
+                .filter(session => session.teamId === id)
+                .map(session => session.id);
+            const warning = linkedSessionIds.length
+                ? `Supprimer cette équipe et ses ${linkedSessionIds.length} compétition(s) enregistrée(s) ?`
+                : "Supprimer cette équipe ?";
+            if (confirm(warning)) {
                 data.teams = data
                     .teams
                     .filter(t => t.id !== id);
+                data.competitionSessions = data.competitionSessions
+                    .filter(session => session.teamId !== id);
+                data.scores = data.scores
+                    .filter(score => !linkedSessionIds.includes(score.competitionSessionId));
                 if (currentCompetitionTeamId === id) 
                     currentCompetitionTeamId = null;
+                if (linkedSessionIds.includes(currentLiveCompetitionId))
+                    currentLiveCompetitionId = null;
                 saveAllData();
                 renderTeamsList();
                 document
@@ -3416,6 +3580,387 @@
             team.passageOrders[apparatusKey] = getRecommendedPassageOrder(rows, apparatusKey);
             saveAllData();
             renderPassageOrders(team, rows);
+        }
+
+        // ────────────────────────────────────────────────────────────── SAISIE EN DIRECT
+        // Les compétitions restent séparées du match comparatif, mais leurs notes finales
+        // alimentent aussi l'historique et les statistiques de chaque gymnaste.
+        // ──────────────────────────────────────────────────────────────
+        function switchCompetitionTab(tab) {
+            currentCompetitionTab = tab === 'live' ? 'live' : 'match';
+            const isLive = currentCompetitionTab === 'live';
+            document.getElementById('competition-tab-match').classList.toggle('hidden', isLive);
+            document.getElementById('competition-tab-live').classList.toggle('hidden', !isLive);
+
+            const matchButton = document.getElementById('btn-competition-tab-match');
+            const liveButton = document.getElementById('btn-competition-tab-live');
+            matchButton.className = `py-2 rounded-lg font-bold ${!isLive ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`;
+            liveButton.className = `py-2 rounded-lg font-bold ${isLive ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`;
+
+            if (isLive)
+                renderLiveCompetitionControls();
+        }
+
+        function getCurrentLiveCompetition() {
+            return data.competitionSessions.find(session => session.id === currentLiveCompetitionId) || null;
+        }
+
+        function getTodayInputDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function newLiveCompetition() {
+            if (!data.teams.length) {
+                alert("Créez d'abord une équipe avant de saisir les notes d'une compétition.");
+                switchCompetitionTab('match');
+                return;
+            }
+            const date = getTodayInputDate();
+            const session = {
+                id: `LIVE-${Date.now()}`,
+                name: `Compétition ${date.split('-').reverse().join('/')}`,
+                date,
+                teamId: data.teams[0].id,
+                scores: {}
+            };
+            data.competitionSessions.push(session);
+            currentLiveCompetitionId = session.id;
+            currentLiveApparatus = 'saut';
+            ensureLiveCompetitionScoreStructure(session);
+            persistLiveCompetitionData();
+            renderLiveCompetitionControls();
+        }
+
+        function selectLiveCompetition(sessionId) {
+            currentLiveCompetitionId = sessionId || null;
+            currentLiveApparatus = 'saut';
+            renderLiveCompetitionControls();
+        }
+
+        function deleteLiveCompetition() {
+            const session = getCurrentLiveCompetition();
+            if (!session || !confirm(`Supprimer la compétition « ${session.name || 'Sans nom'} » et toutes ses notes ?`))
+                return;
+            data.competitionSessions = data.competitionSessions.filter(item => item.id !== session.id);
+            data.scores = data.scores.filter(score => score.competitionSessionId !== session.id);
+            currentLiveCompetitionId = null;
+            persistLiveCompetitionData();
+            renderLiveCompetitionControls();
+        }
+
+        function parseLiveScoreValue(value) {
+            if (value === '' || value === null || value === undefined)
+                return null;
+            const number = Number.parseFloat(String(value).replace(',', '.'));
+            return Number.isFinite(number) ? Math.max(0, number) : null;
+        }
+
+        function calculateLiveFinal(startValue, faultsValue) {
+            const start = parseLiveScoreValue(startValue);
+            if (start === null)
+                return null;
+            const faults = parseLiveScoreValue(faultsValue) ?? 0;
+            return Math.round(Math.max(0, start - faults) * 1000) / 1000;
+        }
+
+        function ensureLiveCompetitionScoreStructure(session) {
+            if (!session || typeof session !== 'object')
+                return false;
+            let changed = false;
+            if (!session.scores || typeof session.scores !== 'object' || Array.isArray(session.scores)) {
+                session.scores = {};
+                changed = true;
+            }
+            const team = data.teams.find(item => item.id === session.teamId);
+            (team?.members || []).forEach(gymId => {
+                if (!session.scores[gymId] || typeof session.scores[gymId] !== 'object') {
+                    session.scores[gymId] = {};
+                    changed = true;
+                }
+                MATCH_APPARATUS.forEach(apparatus => {
+                    const existing = session.scores[gymId][apparatus.key];
+                    const d = parseLiveScoreValue(existing?.d);
+                    const f = parseLiveScoreValue(existing?.f);
+                    const final = calculateLiveFinal(d, f);
+                    if (!existing || existing.d !== d || existing.f !== f || existing.final !== final) {
+                        session.scores[gymId][apparatus.key] = {d, f, final};
+                        changed = true;
+                    }
+                });
+            });
+            return changed;
+        }
+
+        function formatLiveDateForScore(value) {
+            const parts = String(value || '').split('-');
+            return parts.length === 3
+                ? `${parts[2]}/${parts[1]}/${parts[0]}`
+                : String(value || '');
+        }
+
+        function syncLiveCompetitionToScoreHistory(session) {
+            if (!session)
+                return;
+            const team = data.teams.find(item => item.id === session.teamId);
+            const memberIds = new Set(team?.members || []);
+            data.scores = data.scores.filter(score => score.competitionSessionId !== session.id);
+
+            memberIds.forEach(gymId => {
+                const gymScores = session.scores?.[gymId] || {};
+                const hasFinalScore = MATCH_APPARATUS.some(apparatus =>
+                    Number.isFinite(parseLiveScoreValue(gymScores[apparatus.key]?.final))
+                );
+                if (!hasFinalScore)
+                    return;
+
+                const scoreRecord = {
+                    id: `LIVE-SCORE-${session.id}-${gymId}`,
+                    competitionSessionId: session.id,
+                    gymId,
+                    date: formatLiveDateForScore(session.date),
+                    type: `Compétition - ${session.name || 'Sans nom'}`
+                };
+                MATCH_APPARATUS.forEach(apparatus => {
+                    const score = gymScores[apparatus.key] || {};
+                    scoreRecord[apparatus.key] = parseLiveScoreValue(score.final);
+                    scoreRecord[`${apparatus.key}_d`] = parseLiveScoreValue(score.d);
+                    scoreRecord[`${apparatus.key}_f`] = parseLiveScoreValue(score.f);
+                });
+                data.scores.push(scoreRecord);
+            });
+        }
+
+        function persistLiveCompetitionData() {
+            localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+            const status = document.getElementById('live-save-status');
+            if (status) {
+                status.innerText = 'Enregistrement…';
+                status.className = 'text-[10px] text-amber-600 font-semibold';
+            }
+            clearTimeout(liveCompetitionSaveTimer);
+            liveCompetitionSaveTimer = setTimeout(async () => {
+                if (googleAccessToken)
+                    await uploadDataToDrive();
+                const currentStatus = document.getElementById('live-save-status');
+                if (currentStatus) {
+                    currentStatus.innerText = 'Enregistré automatiquement';
+                    currentStatus.className = 'text-[10px] text-green-600 font-semibold';
+                }
+            }, 650);
+        }
+
+        function updateLiveCompetitionMeta(teamChanged = false) {
+            const session = getCurrentLiveCompetition();
+            if (!session)
+                return;
+            session.name = document.getElementById('live-competition-name').value.trim();
+            session.date = document.getElementById('live-competition-date').value || getTodayInputDate();
+            session.teamId = document.getElementById('live-competition-team').value;
+            ensureLiveCompetitionScoreStructure(session);
+            syncLiveCompetitionToScoreHistory(session);
+            persistLiveCompetitionData();
+
+            const select = document.getElementById('live-competition-select');
+            const selectedOption = Array.from(select.options).find(option => option.value === session.id);
+            if (selectedOption)
+                selectedOption.textContent = `${formatLiveDateForScore(session.date)} — ${session.name || 'Sans nom'}`;
+            if (teamChanged) {
+                renderLiveScoreEntry();
+                renderLiveCompetitionResults();
+            }
+        }
+
+        function renderLiveCompetitionControls() {
+            const select = document.getElementById('live-competition-select');
+            const editor = document.getElementById('live-competition-editor');
+            const empty = document.getElementById('live-competition-empty');
+            const panel = document.getElementById('live-score-panel');
+            const sessions = [...data.competitionSessions].sort((a, b) =>
+                String(b.date || '').localeCompare(String(a.date || '')) || String(b.id).localeCompare(String(a.id))
+            );
+
+            if (!sessions.some(session => session.id === currentLiveCompetitionId))
+                currentLiveCompetitionId = sessions[0]?.id || null;
+            select.innerHTML = sessions.length
+                ? sessions.map(session => `<option value="${session.id}" ${session.id === currentLiveCompetitionId ? 'selected' : ''}>${escapeHtml(formatLiveDateForScore(session.date))} — ${escapeHtml(session.name || 'Sans nom')}</option>`).join('')
+                : '<option value="">Aucune compétition enregistrée</option>';
+
+            const session = getCurrentLiveCompetition();
+            empty.classList.toggle('hidden', Boolean(session));
+            editor.classList.toggle('hidden', !session);
+            panel.classList.toggle('hidden', !session);
+            if (!session)
+                return;
+
+            ensureLiveCompetitionScoreStructure(session);
+            document.getElementById('live-competition-name').value = session.name || '';
+            document.getElementById('live-competition-date').value = session.date || getTodayInputDate();
+            const teamSelect = document.getElementById('live-competition-team');
+            teamSelect.innerHTML = data.teams
+                .map(team => `<option value="${team.id}" ${team.id === session.teamId ? 'selected' : ''}>${escapeHtml(team.name)}</option>`)
+                .join('');
+            renderLiveApparatusTabs();
+            renderLiveScoreEntry();
+            renderLiveCompetitionResults();
+        }
+
+        function switchLiveCompetitionApparatus(apparatusKey) {
+            if (!MATCH_APPARATUS.some(apparatus => apparatus.key === apparatusKey))
+                return;
+            currentLiveApparatus = apparatusKey;
+            renderLiveApparatusTabs();
+            renderLiveScoreEntry();
+        }
+
+        function renderLiveApparatusTabs() {
+            const container = document.getElementById('live-apparatus-tabs');
+            container.innerHTML = MATCH_APPARATUS.map(apparatus => `
+                <button type="button" onclick="switchLiveCompetitionApparatus('${apparatus.key}')"
+                    class="py-2 rounded-md font-bold ${currentLiveApparatus === apparatus.key ? 'bg-purple-600 text-white shadow' : 'text-gray-500 hover:bg-white'}">
+                    ${apparatus.icon} ${apparatus.label}
+                </button>`).join('');
+        }
+
+        function getLiveCompetitionTeamMembers(session, apparatusKey = currentLiveApparatus) {
+            const team = data.teams.find(item => item.id === session?.teamId);
+            if (!team)
+                return [];
+            const memberIds = team.members.filter(id => data.gymnastes.some(gymnast => gymnast.id === id));
+            const savedOrder = (team.passageOrders?.[apparatusKey] || []).filter(id => memberIds.includes(id));
+            const missing = memberIds.filter(id => !savedOrder.includes(id)).sort((a, b) => {
+                const first = data.gymnastes.find(gymnast => gymnast.id === a);
+                const second = data.gymnastes.find(gymnast => gymnast.id === b);
+                const firstName = `${first?.nom || ''} ${first?.prenom || ''}`;
+                const secondName = `${second?.nom || ''} ${second?.prenom || ''}`;
+                return firstName.localeCompare(secondName, 'fr', {sensitivity: 'base'});
+            });
+            return [...savedOrder, ...missing].map(id => data.gymnastes.find(gymnast => gymnast.id === id)).filter(Boolean);
+        }
+
+        function formatLiveScore(value) {
+            const number = parseLiveScoreValue(value);
+            if (number === null)
+                return '—';
+            return number.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+        }
+
+        function renderLiveScoreEntry() {
+            const body = document.getElementById('live-score-table-body');
+            const session = getCurrentLiveCompetition();
+            if (!session) {
+                body.innerHTML = '';
+                return;
+            }
+            ensureLiveCompetitionScoreStructure(session);
+            const gymnasts = getLiveCompetitionTeamMembers(session);
+            if (!gymnasts.length) {
+                body.innerHTML = '<tr><td colspan="5" class="p-5 text-gray-400 italic">Cette équipe ne contient aucune gymnaste.</td></tr>';
+                return;
+            }
+            body.innerHTML = gymnasts.map((gymnast, index) => {
+                const score = session.scores[gymnast.id][currentLiveApparatus];
+                const dValue = score.d === null ? '' : score.d;
+                const fValue = score.f === null ? '' : score.f;
+                return `
+                    <tr class="text-gray-700">
+                        <td class="p-2 border border-gray-200 font-bold text-purple-600">${index + 1}</td>
+                        <td class="p-2 border border-gray-200 text-left font-semibold">${escapeHtml(gymnast.prenom)} ${escapeHtml(gymnast.nom)}</td>
+                        <td class="p-2 border border-gray-200"><input type="number" inputmode="decimal" min="0" step="0.001" value="${dValue}" oninput="updateLiveCompetitionScore('${gymnast.id}', '${currentLiveApparatus}', 'd', this.value)" class="w-full p-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300"></td>
+                        <td class="p-2 border border-gray-200"><input type="number" inputmode="decimal" min="0" step="0.001" value="${fValue}" oninput="updateLiveCompetitionScore('${gymnast.id}', '${currentLiveApparatus}', 'f', this.value)" class="w-full p-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300"></td>
+                        <td class="p-2 border border-gray-200 bg-purple-50"><output id="live-final-${gymnast.id}-${currentLiveApparatus}" class="font-bold text-purple-700">${formatLiveScore(score.final)}</output></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function updateLiveCompetitionScore(gymId, apparatusKey, field, value) {
+            const session = getCurrentLiveCompetition();
+            if (!session || !['d', 'f'].includes(field) || !MATCH_APPARATUS.some(item => item.key === apparatusKey))
+                return;
+            ensureLiveCompetitionScoreStructure(session);
+            const score = session.scores?.[gymId]?.[apparatusKey];
+            if (!score)
+                return;
+            score[field] = parseLiveScoreValue(value);
+            score.final = calculateLiveFinal(score.d, score.f);
+            const output = document.getElementById(`live-final-${gymId}-${apparatusKey}`);
+            if (output)
+                output.textContent = formatLiveScore(score.final);
+            syncLiveCompetitionToScoreHistory(session);
+            persistLiveCompetitionData();
+            renderLiveCompetitionResults();
+        }
+
+        function buildLiveCompetitionResults(session) {
+            const team = data.teams.find(item => item.id === session?.teamId);
+            const rows = (team?.members || []).map(gymId => {
+                const gymnast = data.gymnastes.find(item => item.id === gymId);
+                if (!gymnast)
+                    return null;
+                const scores = {};
+                MATCH_APPARATUS.forEach(apparatus => {
+                    scores[apparatus.key] = parseLiveScoreValue(session.scores?.[gymId]?.[apparatus.key]?.final);
+                });
+                const entered = MATCH_APPARATUS.filter(apparatus => scores[apparatus.key] !== null).length;
+                const total = MATCH_APPARATUS.reduce((sum, apparatus) => sum + (scores[apparatus.key] ?? 0), 0);
+                return {
+                    id: gymId,
+                    name: `${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(),
+                    scores,
+                    entered,
+                    total: Math.round(total * 1000) / 1000
+                };
+            }).filter(Boolean).sort((a, b) =>
+                b.total - a.total || b.entered - a.entered || a.name.localeCompare(b.name, 'fr', {sensitivity: 'base'})
+            );
+
+            const top3 = {};
+            MATCH_APPARATUS.forEach(apparatus => {
+                top3[apparatus.key] = rows
+                    .map(row => row.scores[apparatus.key])
+                    .filter(value => value !== null)
+                    .sort((a, b) => b - a)
+                    .slice(0, 3)
+                    .reduce((sum, value) => sum + value, 0);
+                top3[apparatus.key] = Math.round(top3[apparatus.key] * 1000) / 1000;
+            });
+            const teamTotal = Math.round(MATCH_APPARATUS.reduce((sum, apparatus) => sum + top3[apparatus.key], 0) * 1000) / 1000;
+            return {rows, top3, teamTotal};
+        }
+
+        function renderLiveCompetitionResults() {
+            const session = getCurrentLiveCompetition();
+            const body = document.getElementById('live-results-table-body');
+            const summary = document.getElementById('live-top3-summary');
+            if (!session) {
+                body.innerHTML = '';
+                summary.innerHTML = '';
+                return;
+            }
+            const results = buildLiveCompetitionResults(session);
+            summary.innerHTML = MATCH_APPARATUS.map(apparatus => `
+                <div class="rounded-lg bg-gray-50 border border-gray-200 p-2 text-center">
+                    <span class="block text-[9px] uppercase text-gray-400 font-bold">${apparatus.icon} Top 3 ${apparatus.label}</span>
+                    <span class="text-sm font-bold text-gray-700">${formatLiveScore(results.top3[apparatus.key])}</span>
+                </div>`).join('') + `
+                <div class="rounded-lg bg-purple-100 border border-purple-200 p-2 text-center col-span-2 lg:col-span-1">
+                    <span class="block text-[9px] uppercase text-purple-500 font-bold">Total équipe</span>
+                    <span class="text-sm font-bold text-purple-800">${formatLiveScore(results.teamTotal)}</span>
+                </div>`;
+
+            body.innerHTML = results.rows.length
+                ? results.rows.map((row, index) => `
+                    <tr class="text-gray-700 hover:bg-gray-50">
+                        <td class="p-2 border border-gray-200 font-bold text-gray-400">${index + 1}</td>
+                        <td class="p-2 border border-gray-200 text-left font-semibold">${escapeHtml(row.name)}</td>
+                        ${MATCH_APPARATUS.map(apparatus => `<td class="p-2 border border-gray-200">${formatLiveScore(row.scores[apparatus.key])}</td>`).join('')}
+                        <td class="p-2 border border-gray-200 bg-purple-50 text-purple-700 font-bold">${formatLiveScore(row.total)}</td>
+                        <td class="p-2 border border-gray-200 text-gray-500">${row.entered}/4</td>
+                    </tr>`).join('')
+                : '<tr><td colspan="8" class="p-5 text-gray-400 italic">Aucune gymnaste dans cette équipe.</td></tr>';
         }
 
         // ────────────────────────────────────────────────────────────── RESET USINE
