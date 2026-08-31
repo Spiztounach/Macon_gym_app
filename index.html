@@ -36,6 +36,91 @@
                 margin-left: 50%;
                 transform: translateX(-50%);
             }
+            #app-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            #app-header > div:first-child {
+                min-width: 0;
+            }
+            #app-title {
+                overflow-wrap: anywhere;
+            }
+            /* Garder les boutons des fenêtres accessibles avec une faible hauteur. */
+            #modal-add > div, #modal-team > div, #modal-custom-sigle > div {
+                display: flex;
+                flex-direction: column;
+                max-height: calc(100vh - 2rem);
+                max-height: calc(100dvh - 2rem);
+            }
+            #modal-add > div > :first-child,
+            #modal-team > div > :first-child,
+            #modal-custom-sigle > div > :first-child {
+                flex-shrink: 0;
+            }
+            #form-add-gym, #modal-team > div > :last-child,
+            #modal-custom-sigle > div > :last-child {
+                min-height: 0;
+                overflow-y: auto;
+            }
+            /* La rotation ne reconstruit pas les formulaires : les saisies restent en place. */
+            @media (min-width: 640px) and (orientation: landscape) {
+                #app-main {
+                    width: 100%;
+                    max-width: 1200px;
+                }
+                #screen-competition {
+                    width: 100%;
+                    margin-left: 0;
+                    transform: none;
+                }
+                #screen-settings {
+                    max-width: 720px;
+                    margin-inline: auto;
+                }
+                #levels-list {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+                #gymnastes-list {
+                    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                }
+                #form-score {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 0.75rem;
+                }
+                #form-score > * {
+                    min-width: 0;
+                    margin-block: 0;
+                }
+                #form-score > div:first-of-type, #form-score > div:last-of-type {
+                    grid-column: 1 / -1;
+                }
+                #content-infos.active {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 0.75rem;
+                }
+                #content-infos > * {
+                    min-width: 0;
+                    margin-block: 0;
+                }
+                #keyboard-container {
+                    grid-template-columns: repeat(8, minmax(0, 1fr));
+                }
+                #content-suivi > div:first-child {
+                    max-width: 800px;
+                    margin-inline: auto;
+                }
+            }
+            @media (min-width: 900px) and (orientation: landscape) {
+                #teams-grid, #passage-orders-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                #live-top3-summary {
+                    grid-template-columns: repeat(5, minmax(0, 1fr));
+                }
+            }
         </style>
     </head>
     <body class="pb-24">
@@ -74,11 +159,18 @@
             </div>
         </header>
 
-        <main class="max-w-md mx-auto p-4">
+        <main id="app-main" class="max-w-md mx-auto p-4">
 
             <!-- ═══════════════════════════════════════ SCREEN SETTINGS ═══ -->
             <section id="screen-settings" class="hidden space-y-4">
                 <h2 class="text-lg font-semibold text-gray-700">Réglages & Sauvegardes ☁️</h2>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Affichage portrait / paysage</p>
+                    <p class="text-sm text-gray-700">Tourne la tablette ou le téléphone : l'affichage s'adapte automatiquement, sans quitter la fiche ou la compétition en cours.</p>
+                    <button type="button" onclick="enableAppRotation(true)" class="w-full bg-teal-700 text-white text-sm font-medium py-2 rounded">↻ Activer la rotation</button>
+                    <p id="orientation-status" role="status" aria-live="polite" class="text-xs text-gray-500">Active la rotation automatique dans les réglages de ton appareil.</p>
+                </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
                     <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Identité de l'Application :</p>
@@ -974,7 +1066,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.6.1';
+        const APP_VERSION = '1.6.2';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -4816,6 +4908,27 @@
             }
         }
 
+        async function enableAppRotation(fromButton = false) {
+            const status = document.getElementById('orientation-status');
+            const orientation = window.screen && window.screen.orientation;
+            try {
+                if (!orientation || typeof orientation.lock !== 'function') throw new Error('unsupported');
+                // Aide aussi les PWA déjà installées dont le manifeste portrait n'a pas encore été actualisé.
+                await orientation.lock('any');
+                if (status) status.innerText = 'Rotation autorisée : tourne l’appareil pour passer du portrait au paysage.';
+                return true;
+            } catch (_) {
+                // Certains navigateurs ne permettent pas le contrôle logiciel. Le manifeste reste libre.
+                try {
+                    if (orientation && typeof orientation.unlock === 'function') orientation.unlock();
+                } catch (_) {}
+                if (status) status.innerText = fromButton
+                    ? 'Le navigateur ne permet pas de forcer la rotation ici. Active la rotation automatique de l’appareil, tourne-le, puis ferme et rouvre l’application si nécessaire après la mise à jour.'
+                    : 'Active la rotation automatique dans les réglages de ton appareil, puis tourne-le. Le contrôle par bouton dépend du navigateur.';
+                return false;
+            }
+        }
+
         function resetAppData() {
             if (confirm(
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
@@ -4835,6 +4948,7 @@
         applyCustomColors();
         applyCustomAppIdentity();
         updateBirthdayNotificationUI();
+        enableAppRotation();
     </script>
 
     <script>
