@@ -148,6 +148,8 @@
                 <h1 class="text-xl font-bold tracking-wide" id="app-title">Macon_gym_app</h1>
             </div>
             <div class="flex items-center gap-2">
+                <button id="btn-exit-fullscreen" type="button" onclick="leaveLandscapeFullscreen()"
+                    class="hidden bg-black/20 px-2 py-1.5 rounded text-sm">Quitter le plein écran</button>
                 <button
                     id="btn-settings"
                     class="bg-black/20 p-1.5 rounded text-sm hover:bg-black/30 transition"
@@ -168,7 +170,9 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
                     <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Affichage portrait / paysage</p>
                     <p class="text-sm text-gray-700">Tourne la tablette ou le téléphone : l'affichage s'adapte automatiquement, sans quitter la fiche ou la compétition en cours.</p>
-                    <button type="button" onclick="enableAppRotation(true)" class="w-full bg-teal-700 text-white text-sm font-medium py-2 rounded">↻ Activer la rotation</button>
+                    <button id="btn-auto-rotation" type="button" onclick="enableAppRotation(true)" class="w-full bg-teal-700 text-white text-sm font-medium py-2 rounded disabled:opacity-50">↻ Rotation automatique</button>
+                    <button id="btn-landscape-fullscreen" type="button" onclick="enterLandscapeFullscreen()" class="w-full bg-blue-700 text-white text-sm font-medium py-2 rounded disabled:opacity-50">▭ Paysage — plein écran</button>
+                    <p class="text-xs text-gray-500">Certains navigateurs exigent le plein écran avant d'autoriser le paysage. Ce bouton l'ouvre uniquement à ta demande ; tu peux en sortir depuis la barre du haut.</p>
                     <p id="orientation-status" role="status" aria-live="polite" class="text-xs text-gray-500">Active la rotation automatique dans les réglages de ton appareil.</p>
                 </div>
 
@@ -1066,7 +1070,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.6.2';
+        const APP_VERSION = '1.6.3';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1093,6 +1097,8 @@
         let driveSeenCandidates = [];
         let driveResolution = null;
         let driveAuthRestored = false;
+        let orientationActionPending = false;
+        let landscapeFullscreenActive = false;
 
         // ────────────────────────────────────────────────────────────── DONNÉES
         // ──────────────────────────────────────────────────────────────
@@ -4909,25 +4915,111 @@
         }
 
         async function enableAppRotation(fromButton = false) {
+            if (orientationActionPending) return false;
             const status = document.getElementById('orientation-status');
             const orientation = window.screen && window.screen.orientation;
+            setOrientationBusy(true);
             try {
                 if (!orientation || typeof orientation.lock !== 'function') throw new Error('unsupported');
                 // Aide aussi les PWA déjà installées dont le manifeste portrait n'a pas encore été actualisé.
                 await orientation.lock('any');
                 if (status) status.innerText = 'Rotation autorisée : tourne l’appareil pour passer du portrait au paysage.';
                 return true;
-            } catch (_) {
+            } catch (error) {
                 // Certains navigateurs ne permettent pas le contrôle logiciel. Le manifeste reste libre.
                 try {
                     if (orientation && typeof orientation.unlock === 'function') orientation.unlock();
                 } catch (_) {}
-                if (status) status.innerText = fromButton
-                    ? 'Le navigateur ne permet pas de forcer la rotation ici. Active la rotation automatique de l’appareil, tourne-le, puis ferme et rouvre l’application si nécessaire après la mise à jour.'
-                    : 'Active la rotation automatique dans les réglages de ton appareil, puis tourne-le. Le contrôle par bouton dépend du navigateur.';
+                const fullscreenAvailable = orientation && typeof orientation.lock === 'function' &&
+                    document.fullscreenEnabled !== false && document.documentElement &&
+                    typeof document.documentElement.requestFullscreen === 'function';
+                if (status) status.innerText = fromButton && fullscreenAvailable
+                    ? `Commande refusée dans ce mode (${error.name || 'Erreur'}). Essaie « Paysage — plein écran », ou active la rotation automatique de l’appareil et tourne-le.`
+                    : 'La rotation automatique reste gérée par ton appareil : active-la dans ses réglages, puis tourne-le. Ce navigateur peut ne pas autoriser le contrôle par bouton.';
                 return false;
+            } finally {
+                setOrientationBusy(false);
             }
         }
+
+        function setOrientationBusy(busy) {
+            orientationActionPending = busy;
+            ['btn-auto-rotation', 'btn-landscape-fullscreen'].forEach(id => {
+                const button = document.getElementById(id);
+                if (button) button.disabled = busy;
+            });
+        }
+
+        async function enterLandscapeFullscreen() {
+            if (orientationActionPending) return false;
+            const status = document.getElementById('orientation-status');
+            const orientation = window.screen && window.screen.orientation;
+            if (!orientation || typeof orientation.lock !== 'function') {
+                if (status) status.innerText = 'Ce navigateur ne fournit pas la commande de rotation. Active la rotation automatique de la tablette et tourne-la. Le plein écran ne peut pas ajouter cette fonction au navigateur.';
+                return false;
+            }
+            if (!document.fullscreenElement && (document.fullscreenEnabled === false ||
+                !document.documentElement || typeof document.documentElement.requestFullscreen !== 'function')) {
+                if (status) status.innerText = 'Le plein écran n’est pas disponible dans ce navigateur. Utilise la rotation automatique de la tablette.';
+                return false;
+            }
+            let enteredHere = false;
+            let phase = 'le plein écran';
+            setOrientationBusy(true);
+            try {
+                // Appelé directement depuis le clic pour conserver l'activation utilisateur requise.
+                if (!document.fullscreenElement) {
+                    await document.documentElement.requestFullscreen();
+                    enteredHere = true;
+                }
+                phase = 'la rotation';
+                await orientation.lock('landscape');
+                if (!document.fullscreenElement) throw Object.assign(new Error('fullscreen-exited'), {name: 'AbortError'});
+                landscapeFullscreenActive = true;
+                if (status) status.innerText = 'Mode paysage activé en plein écran. Utilise « Rotation automatique » pour libérer l’orientation ou « Quitter le plein écran » en haut.';
+                return true;
+            } catch (error) {
+                // Ne pas laisser l'utilisateur dans un plein écran ouvert pour une rotation refusée.
+                if (enteredHere && document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+                    try { await document.exitFullscreen(); } catch (_) {}
+                }
+                if (!document.fullscreenElement && typeof orientation.unlock === 'function') {
+                    try { orientation.unlock(); } catch (_) {}
+                }
+                if (status) status.innerText = `Le navigateur a refusé ${phase} (${error.name || 'Erreur'}). Active la rotation automatique de la tablette. Si l’application reste verticale, indique le modèle de tablette, le navigateur et ce message.`;
+                return false;
+            } finally {
+                setOrientationBusy(false);
+                updateFullscreenControls();
+            }
+        }
+
+        async function leaveLandscapeFullscreen() {
+            try {
+                if (document.fullscreenElement && typeof document.exitFullscreen === 'function') await document.exitFullscreen();
+            } catch (_) {
+                const status = document.getElementById('orientation-status');
+                if (status) status.innerText = 'Utilise la commande de sortie du plein écran du navigateur (Retour ou Échap selon l’appareil).';
+            }
+            updateFullscreenControls();
+        }
+
+        function updateFullscreenControls() {
+            const fullscreen = !!document.fullscreenElement;
+            const button = document.getElementById('btn-exit-fullscreen');
+            if (button) button.classList.toggle('hidden', !fullscreen);
+            if (!fullscreen && landscapeFullscreenActive) {
+                landscapeFullscreenActive = false;
+                try {
+                    const orientation = window.screen && window.screen.orientation;
+                    if (orientation && typeof orientation.unlock === 'function') orientation.unlock();
+                } catch (_) {}
+                const status = document.getElementById('orientation-status');
+                if (status) status.innerText = 'Plein écran fermé. La rotation suit à nouveau les réglages de l’appareil.';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', updateFullscreenControls);
 
         function resetAppData() {
             if (confirm(
