@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymsuivi-v15';
+const CACHE_NAME = 'gymsuivi-v16';
 const BIRTHDAY_STATE_URL = new URL('./__birthday_state__', self.registration.scope).href;
 const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
 
@@ -24,6 +24,10 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const requestUrl = new URL(event.request.url);
+  // Seuls les CDN statiques utilisés par l'application restent disponibles hors ligne.
+  // Les réponses Drive/OAuth et toutes les requêtes authentifiées contournent le cache.
+  const staticCdn = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'].includes(requestUrl.hostname);
+  if ((requestUrl.origin !== self.location.origin && !staticCdn) || event.request.headers.has('authorization')) return;
   if (requestUrl.pathname.endsWith('/version.json')) {
     event.respondWith(fetch(event.request, {cache: 'no-store'}));
     return;

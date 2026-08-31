@@ -106,7 +106,7 @@
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
                     <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Synchronisation Google Cloud :</p>
-                    <div id="drive-status" class="text-sm text-amber-600 font-medium">🔴 Non connecté à Google Drive</div>
+                    <div id="drive-status" role="status" aria-live="polite" class="text-sm text-amber-600 font-medium">🔴 Non connecté à Google Drive</div>
                     <div class="flex gap-2">
                         <button
                             id="btn-login"
@@ -117,6 +117,17 @@
                             onclick="handleSignoutClick()"
                             class="hidden flex-1 bg-gray-200 text-gray-700 text-sm font-medium py-2 rounded hover:bg-gray-300 transition">Déconnexion</button>
                     </div>
+                    <button id="btn-drive-sync" onclick="syncWithDrive()" class="hidden w-full bg-teal-700 text-white text-sm py-2 rounded disabled:opacity-50">🔄 Synchroniser maintenant</button>
+                    <div id="drive-conflict" class="hidden border border-amber-300 bg-amber-50 rounded p-3 space-y-2 text-xs">
+                        <p>Plusieurs versions existent. Aucune donnée n'a été remplacée. Choisis une sauvegarde, puis l'action souhaitée.</p>
+                        <label for="drive-candidate">Sauvegarde Google Drive</label>
+                        <select id="drive-candidate" class="w-full border rounded p-2"></select>
+                        <button onclick="resolveDriveConflict('remote')" class="w-full bg-blue-700 text-white rounded p-2">Charger cette sauvegarde Drive</button>
+                        <button onclick="resolveDriveConflict('local')" class="w-full bg-amber-700 text-white rounded p-2">Envoyer les données de cet appareil</button>
+                        <p>Une copie de sécurité est conservée avant le remplacement. Les autres sauvegardes Drive ne sont pas supprimées.</p>
+                    </div>
+                    <button id="btn-drive-local-backup" onclick="exportDriveLocalBackup()" class="hidden w-full border rounded p-2 text-xs">📦 Exporter la copie locale avant synchronisation</button>
+                    <p class="text-[10px] text-gray-500">Utilise le même compte Google sur chaque appareil. Les musiques restent propres à l'appareil.</p>
                     <div
                         id="sync-indicator"
                         class="hidden text-xs text-green-600 italic text-center">🔄 Synchronisation en cours...</div>
@@ -963,7 +974,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.6.0';
+        const APP_VERSION = '1.6.1';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -979,7 +990,17 @@
         let gisInited = false;
         let googleAccessToken = null;
         let driveFileId = null;
-        let syncInProgress = false; // FIX 2 : garde contre la race condition
+        let syncInProgress = false;
+        const DRIVE_DATA_NAME = 'gym_cloud_data_v3.json';
+        const DRIVE_BASELINE_KEY = 'gym_drive_baseline_v3';
+        const DRIVE_BACKUP_KEY = 'gym_before_drive_sync_v3';
+        const DRIVE_TOKEN_EXPIRY_KEY = 'drive_access_token_expires_v3';
+        let driveSyncTask = null;
+        let driveSyncQueued = false;
+        let driveConflictCandidates = [];
+        let driveSeenCandidates = [];
+        let driveResolution = null;
+        let driveAuthRestored = false;
 
         // ────────────────────────────────────────────────────────────── DONNÉES
         // ──────────────────────────────────────────────────────────────
@@ -1007,6 +1028,7 @@
             appLogo: "",
             birthdayNotificationsEnabled: false
         };
+        const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
         let editingCustomSigleIndex = null;
         let gymMusicDbPromise = null;
@@ -1097,7 +1119,7 @@
             document
                 .getElementById('page-title')
                 .innerText = finalName;
-            localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+            saveAllData();
         }
 
         function changeAppLogo(input) {
@@ -1202,279 +1224,402 @@
             reader.readAsText(file);
         }
 
-        // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
-        // AUTH FIX 1 : refresh silencieux du token (plus d'expiration silencieuse) FIX
-        // 9 : checkAuthStates n'agit que quand les DEUX libs sont prêtes
-        // ──────────────────────────────────────────────────────────────
+        // Google Drive : authentification distincte du résultat de synchronisation.
         function gapiLoaded() {
             if (typeof gapi === 'undefined' || !gapi.load) {
-                console.error('[GymSuivi] La bibliothèque Google API est indisponible.');
-                updateDriveStatusUI(false);
+                updateDriveStatusUI(false, 'Google API indisponible. Vérifie la connexion Internet.');
                 return;
             }
             gapi.load('client', async () => {
                 try {
-                    await gapi
-                        .client
-                        .init(
-                            {discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}
-                        );
+                    await gapi.client.init({discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});
                     gapiInited = true;
                     checkAuthStates();
                 } catch (err) {
-                    console.error('[GymSuivi] Initialisation Google API impossible :', err);
-                    updateDriveStatusUI(false);
+                    reportDriveError(err);
                 }
             });
         }
 
         function gisLoaded() {
             if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-                console.error('[GymSuivi] La bibliothèque Google Identity est indisponible.');
-                updateDriveStatusUI(false);
+                updateDriveStatusUI(false, 'Connexion Google indisponible. Recharge la page avec Internet.');
                 return;
             }
-            tokenClient = google
-                .accounts
-                .oauth2
-                .initTokenClient({
-                    client_id: CLIENT_ID,
-                    scope: SCOPES,
-                    callback: async (resp) => {
-                        if (resp.error) {
-                            console.error('[GymSuivi] OAuth error :', resp.error);
-                            updateDriveStatusUI(false);
-                            return;
-                        }
-                        googleAccessToken = resp.access_token;
-                        localStorage.setItem('drive_access_token_v3', googleAccessToken);
-                        gapi
-                            .client
-                            .setToken({access_token: googleAccessToken});
-                        updateDriveStatusUI(true);
-                        await syncWithDrive();
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: async resp => {
+                    if (resp.error || !resp.access_token) {
+                        updateDriveStatusUI(false, 'Connexion Google refusée ou interrompue. Réessaie.');
+                        return;
                     }
-                });
+                    if (resp.scope && !resp.scope.split(' ').includes(SCOPES)) {
+                        updateDriveStatusUI(false, 'Autorise la sauvegarde des données de l’application sur Drive.');
+                        return;
+                    }
+                    googleAccessToken = resp.access_token;
+                    localStorage.setItem('drive_access_token_v3', googleAccessToken);
+                    localStorage.setItem(DRIVE_TOKEN_EXPIRY_KEY, String(Date.now() + (Number(resp.expires_in) || 3600) * 1000));
+                    gapi.client.setToken({access_token: googleAccessToken});
+                    updateDriveStatusUI(true, 'Connecté — vérification de la sauvegarde…');
+                    await syncWithDrive();
+                },
+                error_callback: () => updateDriveStatusUI(false, 'Fenêtre Google fermée ou bloquée. Appuie sur Connexion Google pour réessayer.')
+            });
             gisInited = true;
             checkAuthStates();
         }
 
-        // FIX 9 : double garde — on attend que les deux soient prêts
         function checkAuthStates() {
-            if (!gapiInited || !gisInited) 
-                return;
+            if (!gapiInited || !gisInited || driveAuthRestored) return;
+            driveAuthRestored = true;
             const stored = localStorage.getItem('drive_access_token_v3');
-            if (stored) {
-                // FIX 1 : refresh silencieux — prompt:'' ne redemande pas le consentement si la
-                // session Google est encore active, le callback reçoit un nouveau token
-                tokenClient.requestAccessToken({prompt: ''});
+            const expiresAt = Number(localStorage.getItem(DRIVE_TOKEN_EXPIRY_KEY));
+            // Pas de popup automatique : Google exige une action utilisateur pour renouveler l'accès.
+            if (stored && expiresAt > Date.now() + 60000) {
+                googleAccessToken = stored;
+                gapi.client.setToken({access_token: stored});
+                syncWithDrive();
+            } else {
+                updateDriveStatusUI(false, stored ? 'Accès Google à renouveler — reconnecte-toi pour synchroniser.' : undefined);
             }
         }
 
-        function updateDriveStatusUI(connected) {
-            const statusEl = document.getElementById('drive-status');
-            const btnLogin = document.getElementById('btn-login');
-            const btnLogout = document.getElementById('btn-logout');
-            if (connected) {
-                statusEl.innerText = "🟢 Connecté à Google Drive";
-                statusEl.className = "text-sm text-green-600 font-medium";
-                btnLogin
-                    .classList
-                    .add('hidden');
-                btnLogout
-                    .classList
-                    .remove('hidden');
-            } else {
-                statusEl.innerText = "🔴 Non connecté à Google Drive";
-                statusEl.className = "text-sm text-amber-600 font-medium";
-                btnLogin
-                    .classList
-                    .remove('hidden');
-                btnLogout
-                    .classList
-                    .add('hidden');
+        function updateDriveStatusUI(connected, message, success = false) {
+            const status = document.getElementById('drive-status');
+            if (status) {
+                status.innerText = message || (connected ? 'Connecté — données pas encore vérifiées' : '🔴 Non connecté à Google Drive');
+                status.className = `text-sm font-medium ${success ? 'text-green-700' : 'text-amber-700'}`;
             }
+            const login = document.getElementById('btn-login');
+            const logout = document.getElementById('btn-logout');
+            const sync = document.getElementById('btn-drive-sync');
+            if (login) login.classList.toggle('hidden', connected);
+            if (logout) logout.classList.toggle('hidden', !connected);
+            if (sync) sync.classList.toggle('hidden', !connected);
+            const backup = document.getElementById('btn-drive-local-backup');
+            if (backup) backup.classList.toggle('hidden', !localStorage.getItem(DRIVE_BACKUP_KEY));
         }
 
         function handleAuthClick() {
-            if (!tokenClient) {
-                alert("La connexion Google n'est pas encore disponible. Vérifiez votre connexion puis rechargez la page.");
+            if (!tokenClient || !gapiInited || syncInProgress) {
+                alert('La connexion Google se prépare ou une synchronisation est en cours. Réessaie dans un instant.');
                 return;
             }
-            tokenClient.requestAccessToken({prompt: 'consent'});
+            tokenClient.requestAccessToken({prompt: googleAccessToken ? '' : 'select_account'});
         }
 
         function handleSignoutClick() {
-            if (typeof gapi !== 'undefined' && gapi.client) {
-                gapi
-                    .client
-                    .setToken(null);
-            }
+            if (syncInProgress) return;
+            if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken(null);
             googleAccessToken = null;
             driveFileId = null;
+            driveResolution = null;
+            driveConflictCandidates = [];
+            document.getElementById('drive-conflict').classList.add('hidden');
             localStorage.removeItem('drive_access_token_v3');
+            localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
             updateDriveStatusUI(false);
         }
 
         function setSyncIndicator(visible) {
-            document
-                .getElementById('sync-indicator')
-                .classList
-                .toggle('hidden', !visible);
+            const indicator = document.getElementById('sync-indicator');
+            if (indicator) indicator.classList.toggle('hidden', !visible);
+            ['btn-drive-sync', 'btn-logout', 'btn-login'].forEach(id => {
+                const button = document.getElementById(id);
+                if (button) button.disabled = visible;
+            });
         }
 
-        // ────────────────────────────────────────────────────────────── GOOGLE DRIVE —
-        // SYNC ──────────────────────────────────────────────────────────────
+        function reportDriveError(err) {
+            const code = Number(err.status || (err.result && err.result.error && err.result.error.code));
+            if (code === 401) {
+                googleAccessToken = null;
+                if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken(null);
+                localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
+            }
+            const detail = code === 401 ? 'Accès Google expiré : reconnecte-toi.'
+                : code === 403 ? 'Accès Drive refusé : vérifie l’autorisation Google et que Drive API est activée.'
+                : navigator.onLine === false ? 'Hors connexion : les données restent sur cet appareil.'
+                : err.gymMessage || `Synchronisation impossible${code ? ` (erreur ${code})` : ''}. Réessaie avec Internet.`;
+            updateDriveStatusUI(!!googleAccessToken, `⚠️ ${detail} Données non synchronisées.`);
+            // Ne pas journaliser la réponse OAuth ou le contenu des fiches.
+            console.warn('[GymSuivi] Synchronisation interrompue', code || err.name || 'Drive');
+        }
+
+        function driveDataError(message) {
+            return Object.assign(new Error(message), {gymMessage: message});
+        }
+
+        function normalizeDriveData(value) {
+            if (!value || typeof value !== 'object' || Array.isArray(value) ||
+                !Array.isArray(value.gymnastes) || !Array.isArray(value.scores)) {
+                throw driveDataError('Sauvegarde Drive invalide : aucune donnée remplacée.');
+            }
+            const result = {...JSON.parse(JSON.stringify(INITIAL_GYM_DATA)), ...value};
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'deletedDefaultSigles'].forEach(key => {
+                if (!Array.isArray(result[key])) throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
+            });
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles'].forEach(key => {
+                if (result[key].some(item => !item || typeof item !== 'object' || Array.isArray(item)))
+                    throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
+            });
+            if (!result.mouvements || typeof result.mouvements !== 'object' || Array.isArray(result.mouvements))
+                throw driveDataError('Sauvegarde invalide (mouvements) : aucune donnée remplacée.');
+            return result;
+        }
+
+        function hasDriveContent(snapshot) {
+            return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'deletedDefaultSigles']
+                .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
+                !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
+                JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
+        }
+
+        async function driveDataSignature(snapshot) {
+            const stable = value => Array.isArray(value) ? value.map(stable)
+                : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]))
+                : value;
+            const bytes = new TextEncoder().encode(JSON.stringify(stable(snapshot)));
+            const digest = await crypto.subtle.digest('SHA-256', bytes);
+            return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        function getDriveBaseline() {
+            try { return JSON.parse(localStorage.getItem(DRIVE_BASELINE_KEY) || 'null'); }
+            catch (_) { return null; }
+        }
+
+        function markDriveSynced(fileId, signature, snapshot) {
+            driveFileId = fileId;
+            // Garder les anciennes copies sans redemander le même choix à chaque saisie.
+            // Si une copie change ensuite, sa nouvelle signature déclenchera un conflit.
+            const ignoredCopies = Object.fromEntries(driveSeenCandidates
+                .filter(candidate => candidate.id !== fileId)
+                .map(candidate => [candidate.id, candidate.signature]));
+            localStorage.setItem(DRIVE_BASELINE_KEY, JSON.stringify({fileId, signature, ignoredCopies}));
+            driveConflictCandidates = [];
+            document.getElementById('drive-conflict').classList.add('hidden');
+            updateDriveStatusUI(true, `✅ Synchronisé — ${snapshot.gymnastes.length} gymnaste(s) · ${new Date().toLocaleTimeString('fr-FR')}`, true);
+        }
+
+        async function listDriveDataFiles() {
+            const files = [];
+            let pageToken;
+            do {
+                const response = await gapi.client.drive.files.list({
+                    spaces: 'appDataFolder',
+                    q: `name = '${DRIVE_DATA_NAME}' and trashed = false`,
+                    fields: 'nextPageToken,incompleteSearch,files(id,name,modifiedTime)',
+                    orderBy: 'modifiedTime desc', pageSize: 100,
+                    ...(pageToken ? {pageToken} : {})
+                });
+                if (!response.result || !Array.isArray(response.result.files) || response.result.incompleteSearch)
+                    throw driveDataError('Recherche Drive incomplète : aucune sauvegarde écrasée.');
+                files.push(...response.result.files.filter(file => file.name === DRIVE_DATA_NAME));
+                pageToken = response.result.nextPageToken;
+            } while (pageToken);
+            return files;
+        }
+
+        async function readDriveSnapshot(file) {
+            const response = await gapi.client.drive.files.get({fileId: file.id, alt: 'media'});
+            let raw;
+            try { raw = typeof response.body === 'string' && response.body ? JSON.parse(response.body) : response.result; }
+            catch (_) { throw driveDataError('Un fichier Drive est illisible : il a été conservé.'); }
+            const snapshot = normalizeDriveData(raw);
+            return {...file, snapshot, signature: await driveDataSignature(snapshot)};
+        }
+
+        function showDriveConflict(candidates) {
+            driveConflictCandidates = candidates;
+            const select = document.getElementById('drive-candidate');
+            select.innerHTML = '';
+            candidates.forEach((candidate, index) => {
+                const option = document.createElement('option');
+                option.value = candidate.id;
+                const date = candidate.modifiedTime ? new Date(candidate.modifiedTime).toLocaleString('fr-FR') : 'date inconnue';
+                option.textContent = `${index + 1}. ${candidate.snapshot.gymnastes.length} gymnaste(s), ${candidate.snapshot.scores.length} évaluation(s) — ${date}`;
+                select.appendChild(option);
+            });
+            document.getElementById('drive-conflict').classList.remove('hidden');
+            updateDriveStatusUI(true, '⚠️ Des versions différentes existent. Choisis laquelle utiliser ci-dessous ; aucune donnée remplacée.');
+        }
+
+        function exportDriveLocalBackup() {
+            const raw = localStorage.getItem(DRIVE_BACKUP_KEY);
+            if (!raw) return;
+            const link = document.createElement('a');
+            link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(raw);
+            link.download = 'gymsuivi_avant_synchronisation.json';
+            link.click();
+        }
+
+        function applyDriveSnapshot(remote) {
+            const next = JSON.stringify(remote.snapshot);
+            if (hasDriveContent(data)) localStorage.setItem(DRIVE_BACKUP_KEY, JSON.stringify(data));
+            // Écrire avant de remplacer l'état affiché : un stockage plein ne doit pas perdre l'état local.
+            localStorage.setItem('gym_master_data_v3', next);
+            data = remote.snapshot;
+            renderLevels();
+            if (currentLevelId && !document.getElementById('screen-gymnastes').classList.contains('hidden')) renderGymnastes();
+            if (!document.getElementById('screen-competition').classList.contains('hidden')) {
+                renderTeamsList();
+                switchCompetitionTab(currentCompetitionTab);
+            }
+            applyCustomAppIdentity();
+            updateBirthdayNotificationUI();
+            ensureBirthdayCheckInterval();
+            syncBirthdayStateWithServiceWorker(false).catch(() => {});
+            markDriveSynced(remote.id, remote.signature, remote.snapshot);
+        }
+
+        async function writeDriveSnapshot(snapshot, fileId = null, name = DRIVE_DATA_NAME) {
+            const boundary = 'gymsuivi_boundary_v3';
+            const metadata = {name, ...(fileId ? {} : {parents: ['appDataFolder']})};
+            const body = `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}` +
+                `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(snapshot)}\r\n--${boundary}--`;
+            const response = await gapi.client.request({
+                path: fileId ? `/upload/drive/v3/files/${fileId}` : '/upload/drive/v3/files',
+                method: fileId ? 'PATCH' : 'POST',
+                params: {uploadType: 'multipart', fields: 'id'},
+                headers: {'Content-Type': `multipart/related; boundary=${boundary}`}, body
+            });
+            const id = (response.result && response.result.id) || fileId;
+            if (!id) throw driveDataError('Google Drive n’a pas confirmé la sauvegarde. Réessaie la synchronisation.');
+            return id;
+        }
+
+        async function resolveDriveConflict(mode) {
+            if (syncInProgress) return;
+            const candidate = driveConflictCandidates.find(item => item.id === document.getElementById('drive-candidate').value);
+            if (!candidate) return;
+            if (mode === 'local' && !hasDriveContent(data)) {
+                alert('Envoi bloqué : cet appareil est vide. Charge la sauvegarde Drive.');
+                return;
+            }
+            const message = mode === 'remote'
+                ? `Charger ${candidate.snapshot.gymnastes.length} gymnaste(s) depuis Drive à la place des données de cet appareil ? Une copie locale sera conservée.`
+                : `Envoyer les ${data.gymnastes.length} gymnaste(s) de cet appareil sur Drive ? La sauvegarde Drive sélectionnée sera copiée avant remplacement.`;
+            if (!confirm(message)) return;
+            driveResolution = {mode, id: candidate.id, signature: candidate.signature};
+            return syncWithDrive();
+        }
+
+        async function performDriveSync() {
+            const snapshot = normalizeDriveData(JSON.parse(JSON.stringify(data)));
+            const startText = JSON.stringify(data);
+            const localSignature = await driveDataSignature(snapshot);
+            const files = await listDriveDataFiles();
+            const candidates = [];
+            // Ne jamais supprimer un doublon. Un fichier illisible bloque toute écriture.
+            for (const file of files) candidates.push(await readDriveSnapshot(file));
+            driveSeenCandidates = candidates;
+            if (startText !== JSON.stringify(data)) { driveSyncQueued = true; return true; }
+            const resolution = driveResolution;
+            driveResolution = null;
+            let remote;
+            if (resolution) {
+                remote = candidates.find(item => item.id === resolution.id && item.signature === resolution.signature);
+                if (!remote) { showDriveConflict(candidates); return false; }
+            } else {
+                const previous = getDriveBaseline();
+                const current = candidates.filter(item => !previous || !previous.ignoredCopies ||
+                    previous.ignoredCopies[item.id] !== item.signature);
+                // Si le fichier actif a disparu, remettre les copies conservées au choix.
+                const available = current.length ? current : candidates;
+                const populated = available.filter(item => hasDriveContent(item.snapshot));
+                const useful = populated.length ? populated : available;
+                if (new Set(useful.map(item => item.signature)).size > 1) {
+                    showDriveConflict(useful);
+                    return false;
+                }
+                remote = useful[0];
+            }
+            if (!remote) {
+                if (!hasDriveContent(snapshot)) {
+                    updateDriveStatusUI(true, 'Aucune sauvegarde sur ce compte. Synchronise d’abord l’appareil qui contient les fiches.');
+                    return false; // Ne jamais créer une base vide sur un nouvel appareil.
+                }
+            } else if (remote.signature === localSignature) {
+                markDriveSynced(remote.id, remote.signature, snapshot);
+                return true;
+            } else {
+                const baseline = getDriveBaseline();
+                const known = baseline && baseline.fileId === remote.id;
+                if (resolution && resolution.mode === 'remote') {
+                    applyDriveSnapshot(remote);
+                    return true;
+                }
+                if (!resolution && ((!hasDriveContent(snapshot) && !baseline) ||
+                    (known && baseline.signature === localSignature && hasDriveContent(remote.snapshot)))) {
+                    applyDriveSnapshot(remote);
+                    return true;
+                }
+                if (!hasDriveContent(snapshot) || (!resolution && hasDriveContent(remote.snapshot) &&
+                    !(known && baseline.signature === remote.signature))) {
+                    showDriveConflict([remote]);
+                    return false;
+                }
+                // Relecture juste avant l'envoi : repère les changements d'un autre appareil.
+                const fresh = await readDriveSnapshot(remote);
+                if (fresh.signature !== remote.signature) { showDriveConflict([fresh]); return false; }
+                if (resolution && resolution.mode === 'local') {
+                    await writeDriveSnapshot(remote.snapshot, null, `gym_cloud_backup_v3_${Date.now()}.json`);
+                }
+            }
+            const id = await writeDriveSnapshot(snapshot, remote ? remote.id : null);
+            markDriveSynced(id, localSignature, snapshot);
+            if (startText !== JSON.stringify(data)) driveSyncQueued = true;
+            return true;
+        }
+
         async function syncWithDrive() {
-            if (syncInProgress) 
-                return; // FIX 2 : un seul sync à la fois
+            if (!googleAccessToken || !gapiInited) {
+                updateDriveStatusUI(false, 'Connecte-toi à Google pour récupérer ou envoyer les données.');
+                return false;
+            }
+            if (driveSyncTask) { driveSyncQueued = true; return driveSyncTask; }
             syncInProgress = true;
             setSyncIndicator(true);
-            try {
-                const response = await gapi
-                    .client
-                    .drive
-                    .files
-                    .list({spaces: 'appData', fields: 'files(id, name)', orderBy: 'createdTime'});
-                const files = response.result.files;
-                if (files && files.length > 0) {
-                    driveFileId = files[0].id;
-                    // Supprimer les doublons éventuels (laissés par un bug antérieur)
-                    if (files.length > 1) {
-                        for (let i = 1; i < files.length; i++) {
-                            await gapi
-                                .client
-                                .drive
-                                .files
-                                .delete({fileId: files[i].id})
-                                .catch(() => {});
-                        }
-                    }
-                    const fileData = await gapi
-                        .client
-                        .drive
-                        .files
-                        .get({fileId: driveFileId, alt: 'media'});
-                    if (fileData.body) {
-                        const remote = JSON.parse(fileData.body);
-                        data = {
-                            ...data,
-                            ...remote
-                        };
-                        if (!data.mouvements) 
-                            data.mouvements = {};
-                        if (!data.teams) 
-                            data.teams = [];
-                        if (!Array.isArray(data.competitionSessions))
-                            data.competitionSessions = [];
-                        if (!data.customSigles) 
-                            data.customSigles = [];
-                        if (!Array.isArray(data.deletedDefaultSigles))
-                            data.deletedDefaultSigles = [];
-                        localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
-                        renderLevels();
-                        applyCustomAppIdentity();
-                        updateBirthdayNotificationUI();
-                        ensureBirthdayCheckInterval();
-                        syncBirthdayStateWithServiceWorker(false).catch(() => {});
-                    }
-                } else {
-                    // Aucun fichier sur Drive : on en crée un
-                    await uploadDataToDrive(true);
-                }
-            } catch (err) {
-                console.error('[GymSuivi] Erreur sync Drive :', err);
-            } finally {
-                syncInProgress = false;
-                setSyncIndicator(false);
-            }
-        }
-
-        // FIX 2 + FIX 6 : recherche l'ID si absent, correction du Content-Type et
-        // suppression de parents en mode PATCH
-        async function uploadDataToDrive(isCreation = false) {
-            if (!googleAccessToken) 
-                return;
-            
-            // FIX 2 : si driveFileId est inconnu, on interroge Drive avant de créer un
-            // doublon
-            if (!isCreation && !driveFileId) {
+            driveSyncTask = (async () => {
+                let success = false;
                 try {
-                    const res = await gapi
-                        .client
-                        .drive
-                        .files
-                        .list({spaces: 'appData', fields: 'files(id)', orderBy: 'createdTime'});
-                    const files = res.result.files;
-                    if (files && files.length > 0) {
-                        driveFileId = files[0].id;
-                    } else {
-                        isCreation = true;
-                    }
+                    do {
+                        driveSyncQueued = false;
+                        updateDriveStatusUI(true, '🔄 Connecté — synchronisation en cours…');
+                        success = await performDriveSync();
+                    } while (success && driveSyncQueued && googleAccessToken);
+                    return success;
                 } catch (err) {
-                    console.error('[GymSuivi] Impossible de récupérer l\'ID Drive :', err);
-                    return;
+                    driveResolution = null;
+                    reportDriveError(err);
+                    return false;
+                } finally {
+                    syncInProgress = false;
+                    driveSyncTask = null;
+                    setSyncIndicator(false);
                 }
-            }
-
-            setSyncIndicator(true);
-
-            const boundary = 'gymsuivi_boundary_v3';
-            const delim = `\r\n--${boundary}\r\n`;
-            const closing = `\r\n--${boundary}--`;
-
-            // FIX 6 : parents uniquement à la création — jamais dans un PATCH
-            const metadata = isCreation
-                ? {
-                    name: 'gym_cloud_data_v3.json',
-                    parents: ['appDataFolder']
-                }
-                : {
-                    name: 'gym_cloud_data_v3.json'
-                };
-
-            const body = delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(
-                metadata
-            ) + delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(data) +
-                    closing;
-
-            try {
-                if (isCreation || !driveFileId) {
-                    const res = await gapi
-                        .client
-                        .request({
-                            path: '/upload/drive/v3/files',
-                            method: 'POST',
-                            params: {
-                                uploadType: 'multipart'
-                            },
-                            headers: {
-                                'Content-Type': `multipart/related; boundary=${boundary}`
-                            },
-                            body
-                        });
-                    driveFileId = res.result.id;
-                } else {
-                    await gapi
-                        .client
-                        .request({
-                            path: `/upload/drive/v3/files/${driveFileId}`,
-                            method: 'PATCH',
-                            params: {
-                                uploadType: 'multipart'
-                            },
-                            headers: {
-                                'Content-Type': `multipart/related; boundary=${boundary}`
-                            },
-                            body
-                        });
-                }
-            } catch (err) {
-                console.error('[GymSuivi] Erreur upload Drive :', err);
-            } finally {
-                setSyncIndicator(false);
-            }
+            })();
+            return driveSyncTask;
         }
+
+        async function uploadDataToDrive(isCreation = false) {
+            // Tous les chemins, y compris la saisie compétition, partagent la même file d'attente.
+            return syncWithDrive();
+        }
+
+        function refreshDriveWhenIdle() {
+            if (!googleAccessToken || document.visibilityState === 'hidden') return;
+            const safeScreen = ['screen-levels', 'screen-settings', 'screen-gymnastes'].some(id =>
+                !document.getElementById(id).classList.contains('hidden'));
+            const modalOpen = Array.from(document.querySelectorAll('[id^="modal-"]')).some(el => !el.classList.contains('hidden'));
+            if (safeScreen && !modalOpen) syncWithDrive();
+        }
+
+        window.addEventListener('online', refreshDriveWhenIdle);
+        document.addEventListener('visibilitychange', refreshDriveWhenIdle);
 
         // ────────────────────────────────────────────────────────────── COULEURS
         // ──────────────────────────────────────────────────────────────
@@ -3747,7 +3892,7 @@
                     await uploadDataToDrive();
                 const currentStatus = document.getElementById('live-save-status');
                 if (currentStatus) {
-                    currentStatus.innerText = 'Enregistré automatiquement';
+                    currentStatus.innerText = 'Enregistré sur cet appareil';
                     currentStatus.className = 'text-[10px] text-green-600 font-semibold';
                 }
             }, 650);
@@ -4676,7 +4821,7 @@
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
                 "s."
             )) {
-                ['gym_master_data_v3', 'gym_colors_v3', 'drive_access_token_v3']
+                ['gym_master_data_v3', 'gym_colors_v3', 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_BASELINE_KEY]
                     .forEach(key => localStorage.removeItem(key));
                 window
                     .location
