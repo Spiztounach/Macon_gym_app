@@ -643,7 +643,19 @@
                                 id="txt-mouvement-content"
                                 class="w-full p-2 border border-gray-300 rounded-lg text-xs"
                                 rows="4"
+                                oninput="updateMovementStartScoreDisplay()"
                                 placeholder="Écrivez le mouvement ou insérez les sigles..."></textarea>
+                            <div class="mt-2 rounded-xl border border-purple-200 bg-purple-50 p-3">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-xs font-bold text-purple-800">Note de départ calculée</span>
+                                    <output id="movement-start-score" class="text-xl font-black text-purple-700">0</output>
+                                </div>
+                                <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-purple-700">
+                                    <span>Valeur des mouvements : <strong id="movement-value-total">0</strong></span>
+                                    <span>Bonifications : <strong id="movement-bonus-total">0</strong></span>
+                                </div>
+                                <p id="movement-score-warning" class="hidden mt-1 text-[10px] font-semibold text-amber-700"></p>
+                            </div>
                             <button
                                 onclick="saveMouvementData()"
                                 class="w-full mt-1 bg-green-600 text-white py-1.5 rounded text-xs font-medium shadow hover:bg-green-700 transition">Enregistrer l'enchaînement</button>
@@ -1038,6 +1050,16 @@
                     <label class="block font-semibold text-gray-700 mb-1">Dossier de classement :</label>
                     <select id="sigle-folder-input" class="w-full p-2 border border-gray-300 rounded-md bg-white"></select>
                 </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Valeur du mouvement :</label>
+                        <input type="text" inputmode="decimal" id="sigle-movement-value-input" placeholder="Ex : 0,50" class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Bonus de bonification :</label>
+                        <input type="text" inputmode="decimal" id="sigle-bonus-input" placeholder="Ex : 0,10" class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
                 <div>
                     <label id="sigle-image-label" class="block font-semibold text-gray-700 mb-1">Image du mouvement :</label>
                     <input
@@ -1085,7 +1107,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.7.0';
+        const APP_VERSION = '1.8.0';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1137,6 +1159,7 @@
             competitionSessions: [],
             customSigles: [],
             movementFolders: [],
+            defaultSigleScoring: {},
             deletedDefaultSigles: [],
             appName: "GymSuivi",
             appLogo: "",
@@ -1208,6 +1231,8 @@
                     data.customSigles = [];
                 if (!Array.isArray(data.movementFolders))
                     data.movementFolders = [];
+                if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object' || Array.isArray(data.defaultSigleScoring))
+                    data.defaultSigleScoring = {};
                 if (!Array.isArray(data.deletedDefaultSigles))
                     data.deletedDefaultSigles = [];
                 }
@@ -1325,6 +1350,8 @@
                             data.customSigles = [];
                         if (!Array.isArray(data.movementFolders))
                             data.movementFolders = [];
+                        if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object' || Array.isArray(data.defaultSigleScoring))
+                            data.defaultSigleScoring = {};
                         if (!Array.isArray(data.deletedDefaultSigles))
                             data.deletedDefaultSigles = [];
                         saveAllData();
@@ -1487,12 +1514,15 @@
             });
             if (!result.mouvements || typeof result.mouvements !== 'object' || Array.isArray(result.mouvements))
                 throw driveDataError('Sauvegarde invalide (mouvements) : aucune donnée remplacée.');
+            if (!result.defaultSigleScoring || typeof result.defaultSigleScoring !== 'object' || Array.isArray(result.defaultSigleScoring))
+                throw driveDataError('Sauvegarde invalide (valeurs des mouvements) : aucune donnée remplacée.');
             return result;
         }
 
         function hasDriveContent(snapshot) {
             return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
+                Object.keys(snapshot.defaultSigleScoring || {}).length > 0 ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
         }
@@ -2821,6 +2851,160 @@
             }
         ];
 
+        function normalizeMovementScoringValue(value) {
+            if (value === null || value === undefined || String(value).trim() === '') return null;
+            const normalized = String(value).trim().replace(',', '.');
+            if (!/^(?:\d+(?:\.\d{0,3})?|\.\d{1,3})$/.test(normalized)) return null;
+            const number = Number(normalized);
+            if (!Number.isFinite(number) || number < 0 || number > 100) return null;
+            return Math.round(number * 1000) / 1000;
+        }
+
+        function formatMovementScoringValue(value) {
+            const number = normalizeMovementScoringValue(value);
+            if (number === null) return '0';
+            return number.toFixed(3).replace(/0+$/, '').replace(/\.$/, '').replace('.', ',');
+        }
+
+        function movementScoringInputValue(value) {
+            const number = normalizeMovementScoringValue(value);
+            return number === null ? '' : formatMovementScoringValue(number);
+        }
+
+        function readMovementScoringInput(elementId, label) {
+            const element = document.getElementById(elementId);
+            const raw = element ? element.value.trim() : '';
+            if (!raw) return {valid: true, value: null};
+            const value = normalizeMovementScoringValue(raw);
+            if (value === null) {
+                alert(`${label} doit être un nombre positif compris entre 0 et 100, avec trois décimales maximum.`);
+                if (element) element.focus();
+                return {valid: false, value: null};
+            }
+            return {valid: true, value};
+        }
+
+        function getDefaultSigleScoring(item) {
+            const saved = data.defaultSigleScoring && item
+                ? data.defaultSigleScoring[item.abrev]
+                : null;
+            return {
+                movementValue: normalizeMovementScoringValue(saved && saved.movementValue),
+                bonusValue: normalizeMovementScoringValue(saved && saved.bonusValue)
+            };
+        }
+
+        function getCustomSigleScoring(item) {
+            return {
+                movementValue: normalizeMovementScoringValue(item && item.movementValue),
+                bonusValue: normalizeMovementScoringValue(item && item.bonusValue)
+            };
+        }
+
+        function countMovementTokenOccurrences(content, token) {
+            const text = String(content || '');
+            if (!token) return 0;
+            let count = 0;
+            let offset = 0;
+            while ((offset = text.indexOf(token, offset)) !== -1) {
+                count++;
+                offset += token.length;
+            }
+            return count;
+        }
+
+        function calculateMovementStartScore(content) {
+            const text = String(content || '');
+            let movementValueTotal = 0;
+            let bonusTotal = 0;
+            let recognizedCount = 0;
+            let unvaluedCount = 0;
+            const details = [];
+            const addOccurrences = (label, token, scoring) => {
+                const count = countMovementTokenOccurrences(text, token);
+                if (!count) return;
+                const movementValue = scoring.movementValue || 0;
+                const bonusValue = scoring.bonusValue || 0;
+                recognizedCount += count;
+                if (scoring.movementValue === null) unvaluedCount += count;
+                movementValueTotal += movementValue * count;
+                bonusTotal += bonusValue * count;
+                details.push({label, token, count, movementValue, bonusValue});
+            };
+            defaultSiglesGym.forEach(item => {
+                addOccurrences(item.nom, `${item.symbole} (${item.abrev})`, getDefaultSigleScoring(item));
+            });
+            data.customSigles.forEach(item => {
+                addOccurrences(item.nom || item.abrev, `[${item.abrev}]`, getCustomSigleScoring(item));
+            });
+            const knownCustomCodes = new Set(data.customSigles.map(item => String(item.abrev || '')));
+            const unknownCount = [...text.matchAll(/\[([A-Z0-9_-]{1,12})\]/g)]
+                .filter(match => !knownCustomCodes.has(match[1])).length;
+            movementValueTotal = Math.round(movementValueTotal * 1000) / 1000;
+            bonusTotal = Math.round(bonusTotal * 1000) / 1000;
+            return {
+                movementValueTotal,
+                bonusTotal,
+                startScore: Math.round((movementValueTotal + bonusTotal) * 1000) / 1000,
+                recognizedCount,
+                unvaluedCount,
+                unknownCount,
+                details
+            };
+        }
+
+        function updateMovementStartScoreDisplay(content = undefined) {
+            const area = document.getElementById('txt-mouvement-content');
+            const score = calculateMovementStartScore(content === undefined && area ? area.value : content);
+            const totalOutput = document.getElementById('movement-start-score');
+            const movementOutput = document.getElementById('movement-value-total');
+            const bonusOutput = document.getElementById('movement-bonus-total');
+            const warning = document.getElementById('movement-score-warning');
+            if (totalOutput) totalOutput.textContent = formatMovementScoringValue(score.startScore);
+            if (movementOutput) movementOutput.textContent = formatMovementScoringValue(score.movementValueTotal);
+            if (bonusOutput) bonusOutput.textContent = formatMovementScoringValue(score.bonusTotal);
+            if (warning) {
+                const messages = [];
+                if (score.unvaluedCount)
+                    messages.push(`${score.unvaluedCount} mouvement${score.unvaluedCount === 1 ? '' : 's'} sans valeur renseignée`);
+                if (score.unknownCount)
+                    messages.push(`${score.unknownCount} code${score.unknownCount === 1 ? '' : 's'} non reconnu${score.unknownCount === 1 ? '' : 's'}`);
+                warning.textContent = messages.join(' · ');
+                warning.classList.toggle('hidden', messages.length === 0);
+            }
+            return score;
+        }
+
+        function saveDefaultSigleScoring(index) {
+            const item = defaultSiglesGym[index];
+            if (!item) return false;
+            const movementValue = readMovementScoringInput(`default-score-value-${index}`, 'La valeur du mouvement');
+            const bonusValue = readMovementScoringInput(`default-score-bonus-${index}`, 'Le bonus');
+            if (!movementValue.valid || !bonusValue.valid) return false;
+            if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object' || Array.isArray(data.defaultSigleScoring))
+                data.defaultSigleScoring = {};
+            const previousScoring = JSON.parse(JSON.stringify(data.defaultSigleScoring || {}));
+            if (movementValue.value === null && bonusValue.value === null)
+                delete data.defaultSigleScoring[item.abrev];
+            else
+                data.defaultSigleScoring[item.abrev] = {
+                    movementValue: movementValue.value,
+                    bonusValue: bonusValue.value
+                };
+            try {
+                saveAllData();
+            } catch (error) {
+                data.defaultSigleScoring = previousScoring;
+                alert("Les valeurs du mouvement n'ont pas pu être enregistrées.");
+                return false;
+            }
+            renderSiglesPalette();
+            renderCustomSiglesManager();
+            updateMovementStartScoreDisplay();
+            alert('🟢 Valeurs enregistrées !');
+            return true;
+        }
+
         function getMovementFolders() {
             if (!Array.isArray(data.movementFolders)) data.movementFolders = [];
             const used = new Set();
@@ -3072,11 +3256,14 @@
                 ? defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item))
                 : [];
             activeDefault.forEach(item => {
+                const scoring = getDefaultSigleScoring(item);
                 kbd.innerHTML += `
                 <button type="button" onclick="insertSigleToken('${item.symbole} (${item.abrev})')"
+                    title="${escapeHtml(item.nom)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
                     class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
                     <span class="font-bold text-gray-800 text-sm block">${item.symbole}</span>
                     <span class="text-[8px] text-gray-400 font-semibold truncate w-full block">${item.abrev}</span>
+                    <span class="text-[7px] text-purple-600 font-bold truncate w-full block">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
                 </button>`;
             });
             const visibleCustom = data.customSigles
@@ -3087,12 +3274,14 @@
                 const image = item.img
                     ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="w-5 h-5 object-contain">`
                     : '<span class="text-base">🖼️</span>';
+                const scoring = getCustomSigleScoring(item);
                 kbd.innerHTML += `
                 <button type="button" onclick="insertCustomSigleToken(${index})"
-                    title="${escapeHtml(item.nom)}"
+                    title="${escapeHtml(item.nom)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
                     class="bg-white border border-pink-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-pink-50 transition">
                     ${image}
                     <span class="text-[8px] text-pink-600 font-bold truncate w-full block mt-0.5">${escapeHtml(item.abrev)}</span>
+                    <span class="text-[7px] text-purple-600 font-bold truncate w-full block">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
                 </button>`;
             });
             empty.classList.toggle('hidden', activeDefault.length + visibleCustom.length + children.length > 0);
@@ -3142,6 +3331,8 @@
             document.getElementById('modal-custom-sigle-title').innerText = 'Gérer les images des mouvements';
             document.getElementById('sigle-abrev-input').value = '';
             document.getElementById('sigle-nom-input').value = '';
+            document.getElementById('sigle-movement-value-input').value = '';
+            document.getElementById('sigle-bonus-input').value = '';
             document.getElementById('sigle-image-file').value = '';
             document.getElementById('sigle-image-label').innerText = 'Image du mouvement :';
             document.getElementById('sigle-image-preview').removeAttribute('src');
@@ -3186,16 +3377,27 @@
                 .map((item, index) => ({item, index}))
                 .filter(entry => isDefaultSigleDeleted(entry.item)) : [];
             const defaultList = activeDefaultSigles.length ? `<div class="space-y-2">
-                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${activeDefaultSigles.map(({item, index}) => `
-                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${activeDefaultSigles.map(({item, index}) => {
+                const scoring = getDefaultSigleScoring(item);
+                return `
+                <div class="flex flex-wrap items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
                     <span class="w-12 h-12 flex items-center justify-center text-2xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
                         <p class="text-[10px] text-gray-500 font-semibold">${escapeHtml(item.abrev)} · image intégrée</p>
                     </div>
-                    <button type="button" onclick="deleteDefaultSigle(${index})" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
-                </div>
-            `).join('')}</div>` : '';
+                    <div class="w-full sm:w-52 grid grid-cols-2 gap-1">
+                        <label class="text-[9px] text-gray-500">Valeur
+                            <input id="default-score-value-${index}" type="text" inputmode="decimal" value="${movementScoringInputValue(scoring.movementValue)}" placeholder="0,00" class="mt-0.5 w-full p-1 rounded border border-gray-300 bg-white text-xs">
+                        </label>
+                        <label class="text-[9px] text-gray-500">Bonus
+                            <input id="default-score-bonus-${index}" type="text" inputmode="decimal" value="${movementScoringInputValue(scoring.bonusValue)}" placeholder="0,00" class="mt-0.5 w-full p-1 rounded border border-gray-300 bg-white text-xs">
+                        </label>
+                        <button type="button" onclick="saveDefaultSigleScoring(${index})" class="col-span-2 px-2 py-1 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">💾 Enregistrer les valeurs</button>
+                    </div>
+                    <button type="button" onclick="deleteDefaultSigle(${index})" class="w-full sm:w-auto px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
+                </div>`;
+            }).join('')}</div>` : '';
             const customList = visibleCustomSigles.length ? `<div class="space-y-2 ${isRoot && activeDefaultSigles.length ? 'border-t border-gray-200 pt-2 mt-2' : ''}">
                 <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images importées</p>${visibleCustomSigles.map(({item, index}) => `
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
@@ -3203,6 +3405,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
                         <p class="text-[10px] text-pink-600 font-semibold">[${escapeHtml(item.abrev)}]</p>
+                        <p class="text-[9px] text-purple-600 font-semibold">Valeur ${getCustomSigleScoring(item).movementValue === null ? '—' : formatMovementScoringValue(getCustomSigleScoring(item).movementValue)} · Bonus ${formatMovementScoringValue(getCustomSigleScoring(item).bonusValue)}</p>
                     </div>
                     <div class="w-28 flex flex-col gap-1">
                         <select aria-label="Déplacer ${escapeHtml(item.nom)}" onchange="moveCustomSigleToFolder(${index}, this.value)" class="w-full p-1 rounded border border-gray-300 bg-white text-[9px]">${getMovementFolderOptionsHtml(item.folderId)}</select>
@@ -3280,10 +3483,13 @@
         function editCustomSigle(index) {
             const item = data.customSigles[index];
             if (!item) return;
+            const scoring = getCustomSigleScoring(item);
             editingCustomSigleIndex = index;
             document.getElementById('modal-custom-sigle-title').innerText = `Modifier ${item.nom}`;
             document.getElementById('sigle-abrev-input').value = item.abrev || '';
             document.getElementById('sigle-nom-input').value = item.nom || '';
+            document.getElementById('sigle-movement-value-input').value = movementScoringInputValue(scoring.movementValue);
+            document.getElementById('sigle-bonus-input').value = movementScoringInputValue(scoring.bonusValue);
             document.getElementById('sigle-image-file').value = '';
             document.getElementById('sigle-image-label').innerText = 'Remplacer l’image (optionnel) :';
             document.getElementById('sigle-image-preview').src = item.img || '';
@@ -3311,7 +3517,7 @@
                 area.value = area.value.replace(pattern, `[${newAbrev}]`);
         }
 
-        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined) {
+        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined, movementValue = undefined, bonusValue = undefined) {
             const previousSigles = data.customSigles.map(item => ({...item}));
             const previousMouvements = JSON.parse(JSON.stringify(data.mouvements || {}));
             const movementArea = document.getElementById('txt-mouvement-content');
@@ -3322,17 +3528,32 @@
             const targetFolderId = folderId === undefined
                 ? normalizeMovementFolderId(previousItem && previousItem.folderId)
                 : normalizeMovementFolderId(folderId);
+            const targetMovementValue = movementValue === undefined
+                ? getCustomSigleScoring(previousItem).movementValue
+                : normalizeMovementScoringValue(movementValue);
+            const targetBonusValue = bonusValue === undefined
+                ? getCustomSigleScoring(previousItem).bonusValue
+                : normalizeMovementScoringValue(bonusValue);
             if (previousItem) {
                 data.customSigles[editingCustomSigleIndex] = {
                     ...previousItem,
                     abrev,
                     nom,
                     img: imageData,
-                    folderId: targetFolderId
+                    folderId: targetFolderId,
+                    movementValue: targetMovementValue,
+                    bonusValue: targetBonusValue
                 };
                 replaceCustomSigleTokens(previousItem.abrev, abrev);
             } else {
-                data.customSigles.push({abrev, nom, img: imageData, folderId: targetFolderId});
+                data.customSigles.push({
+                    abrev,
+                    nom,
+                    img: imageData,
+                    folderId: targetFolderId,
+                    movementValue: targetMovementValue,
+                    bonusValue: targetBonusValue
+                });
             }
 
             try {
@@ -3350,6 +3571,7 @@
             cancelCustomSigleEdit();
             renderSiglesPalette();
             renderCustomSiglesManager();
+            updateMovementStartScoreDisplay();
             alert('🟢 Image enregistrée !');
         }
 
@@ -3365,8 +3587,11 @@
                 .trim();
             const fileInput = document.getElementById('sigle-image-file');
             const folderId = document.getElementById('sigle-folder-input').value || null;
+            const movementValue = readMovementScoringInput('sigle-movement-value-input', 'La valeur du mouvement');
+            const bonusValue = readMovementScoringInput('sigle-bonus-input', 'Le bonus');
             if (!abrev || !nom)
                 return alert("Veuillez remplir l'abréviation et le nom.");
+            if (!movementValue.valid || !bonusValue.valid) return;
             if (!/^[A-Z0-9_-]{1,12}$/.test(abrev))
                 return alert("Le code doit contenir 1 à 12 lettres, chiffres, tirets ou tirets bas.");
             const duplicateIndex = data.customSigles.findIndex((item, index) =>
@@ -3381,12 +3606,12 @@
             if (!fileInput.files[0] && (!currentItem || !currentItem.img))
                 return alert("Veuillez sélectionner une image à enregistrer.");
             if (!fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, currentItem.img, folderId);
+                commitCustomSigleSave(abrev, nom, currentItem.img, folderId, movementValue.value, bonusValue.value);
                 return;
             }
 
             compressImage(fileInput.files[0], 160, 160, 0.82, compressedBase64 => {
-                commitCustomSigleSave(abrev, nom, compressedBase64, folderId);
+                commitCustomSigleSave(abrev, nom, compressedBase64, folderId, movementValue.value, bonusValue.value);
             });
         }
 
@@ -3410,6 +3635,7 @@
                 editingCustomSigleIndex--;
             renderSiglesPalette();
             renderCustomSiglesManager();
+            updateMovementStartScoreDisplay();
         }
 
         function switchMvtAgres(agres) {
@@ -3430,6 +3656,7 @@
                 .value = (
                     data.mouvements[currentGymId] && data.mouvements[currentGymId][agres]
                 ) || "";
+            updateMovementStartScoreDisplay();
         }
 
         function insertSigleToken(token) {
@@ -3443,6 +3670,7 @@
                 .substring(end);
             area.focus();
             area.selectionStart = area.selectionEnd = start + token.length + 2;
+            updateMovementStartScoreDisplay();
         }
 
         function saveMouvementData() {
