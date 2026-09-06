@@ -656,7 +656,10 @@
                                     onclick="openCustomSigleModal()"
                                     class="text-[10px] text-pink-600 font-bold bg-pink-50 px-2 py-0.5 rounded border border-pink-200 hover:bg-pink-100">➕ Gérer / Ajouter</button>
                             </div>
+                            <div id="sigle-palette-breadcrumb" class="flex flex-wrap items-center gap-1 text-[10px] text-gray-500"></div>
+                            <div id="sigle-palette-folders" class="grid grid-cols-2 gap-2"></div>
                             <div class="grid grid-cols-4 gap-2" id="keyboard-container"></div>
+                            <p id="sigle-palette-empty" class="hidden text-center text-[10px] text-gray-400 py-2">Aucune image dans ce dossier.</p>
                         </div>
                     </div>
 
@@ -1009,7 +1012,7 @@
         id="modal-custom-sigle"
         class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div
-            class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden text-xs max-h-[90vh] flex flex-col">
+            class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden text-xs max-h-[90vh] flex flex-col">
             <div class="bg-pink-600 text-white p-4 font-bold flex justify-between">
                 <span id="modal-custom-sigle-title">Gérer les images des mouvements</span>
                 <button onclick="closeCustomSigleModal()" class="text-white">✕</button>
@@ -1030,6 +1033,10 @@
                         id="sigle-nom-input"
                         placeholder="Ex: Tsukahara"
                         class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Dossier de classement :</label>
+                    <select id="sigle-folder-input" class="w-full p-2 border border-gray-300 rounded-md bg-white"></select>
                 </div>
                 <div>
                     <label id="sigle-image-label" class="block font-semibold text-gray-700 mb-1">Image du mouvement :</label>
@@ -1056,9 +1063,17 @@
 
                 <div class="border-t border-gray-200 pt-3 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="font-bold text-gray-700">Toutes les images</span>
+                        <span class="font-bold text-gray-700">Dossiers et images importées</span>
                         <span id="custom-sigles-count" class="text-[10px] text-gray-400">0 image</span>
                     </div>
+                    <div id="sigle-manager-breadcrumb" class="flex flex-wrap items-center gap-1 text-[10px] text-gray-500"></div>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button type="button" onclick="promptNewMovementFolder()" class="py-1.5 rounded bg-pink-50 text-pink-700 border border-pink-200 font-semibold">📁 Nouveau</button>
+                        <button id="btn-rename-sigle-folder" type="button" onclick="promptRenameMovementFolder()" class="py-1.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">✏️ Renommer</button>
+                        <button id="btn-delete-sigle-folder" type="button" onclick="deleteCurrentMovementFolder()" class="py-1.5 rounded bg-red-50 text-red-700 border border-red-200 font-semibold">🗑️ Supprimer</button>
+                    </div>
+                    <p class="text-[10px] text-gray-400">« Nouveau » crée un dossier ici. Ouvre un dossier avant de créer un sous-dossier.</p>
+                    <div id="sigle-manager-folders" class="grid grid-cols-1 gap-2"></div>
                     <div id="custom-sigles-manager-list" class="space-y-2"></div>
                 </div>
             </div>
@@ -1070,7 +1085,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.6.3';
+        const APP_VERSION = '1.7.0';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1121,6 +1136,7 @@
             teams: [],
             competitionSessions: [],
             customSigles: [],
+            movementFolders: [],
             deletedDefaultSigles: [],
             appName: "GymSuivi",
             appLogo: "",
@@ -1129,6 +1145,8 @@
         const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
         let editingCustomSigleIndex = null;
+        let currentSigleManagerFolderId = null;
+        let currentSiglePaletteFolderId = null;
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
@@ -1188,6 +1206,8 @@
                     data.competitionSessions = [];
                 if (!data.customSigles) 
                     data.customSigles = [];
+                if (!Array.isArray(data.movementFolders))
+                    data.movementFolders = [];
                 if (!Array.isArray(data.deletedDefaultSigles))
                     data.deletedDefaultSigles = [];
                 }
@@ -1303,6 +1323,8 @@
                             data.competitionSessions = [];
                         if (!data.customSigles) 
                             data.customSigles = [];
+                        if (!Array.isArray(data.movementFolders))
+                            data.movementFolders = [];
                         if (!Array.isArray(data.deletedDefaultSigles))
                             data.deletedDefaultSigles = [];
                         saveAllData();
@@ -1456,10 +1478,10 @@
                 throw driveDataError('Sauvegarde Drive invalide : aucune donnée remplacée.');
             }
             const result = {...JSON.parse(JSON.stringify(INITIAL_GYM_DATA)), ...value};
-            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'deletedDefaultSigles'].forEach(key => {
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles'].forEach(key => {
                 if (!Array.isArray(result[key])) throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
             });
-            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles'].forEach(key => {
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders'].forEach(key => {
                 if (result[key].some(item => !item || typeof item !== 'object' || Array.isArray(item)))
                     throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
             });
@@ -1469,7 +1491,7 @@
         }
 
         function hasDriveContent(snapshot) {
-            return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'deletedDefaultSigles']
+            return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
@@ -2799,6 +2821,222 @@
             }
         ];
 
+        function getMovementFolders() {
+            if (!Array.isArray(data.movementFolders)) data.movementFolders = [];
+            const used = new Set();
+            return data.movementFolders.filter(folder => {
+                if (!folder || typeof folder !== 'object' ||
+                    !/^MOV-FOLDER-[A-Za-z0-9_-]{1,80}$/.test(String(folder.id || '')) || used.has(folder.id))
+                    return false;
+                used.add(folder.id);
+                return true;
+            });
+        }
+
+        function getMovementFolder(folderId) {
+            return getMovementFolders().find(folder => folder.id === folderId) || null;
+        }
+
+        function normalizeMovementFolderId(folderId) {
+            return getMovementFolder(folderId) ? folderId : null;
+        }
+
+        function getEffectiveMovementFolderParentId(folder) {
+            if (!folder || !folder.parentId || !getMovementFolder(folder.parentId) || folder.parentId === folder.id)
+                return null;
+            const originalParentId = folder.parentId;
+            const seen = new Set([folder.id]);
+            let parentId = originalParentId;
+            while (parentId) {
+                if (seen.has(parentId)) return null;
+                seen.add(parentId);
+                const parent = getMovementFolder(parentId);
+                if (!parent) return null;
+                parentId = parent.parentId;
+            }
+            return originalParentId;
+        }
+
+        function getMovementFolderChildren(parentId = null) {
+            const normalizedParentId = normalizeMovementFolderId(parentId);
+            return getMovementFolders()
+                .filter(folder => getEffectiveMovementFolderParentId(folder) === normalizedParentId)
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fr', {sensitivity: 'base'}));
+        }
+
+        function getMovementFolderPath(folderId) {
+            const path = [];
+            const seen = new Set();
+            let folder = getMovementFolder(folderId);
+            while (folder && !seen.has(folder.id)) {
+                seen.add(folder.id);
+                path.unshift(folder);
+                folder = getMovementFolder(getEffectiveMovementFolderParentId(folder));
+            }
+            return path;
+        }
+
+        function getMovementFolderOptionsHtml(selectedFolderId = null) {
+            const selected = normalizeMovementFolderId(selectedFolderId);
+            const options = [`<option value=""${selected === null ? ' selected' : ''}>📂 Non classées</option>`];
+            const visit = (parentId, depth) => {
+                getMovementFolderChildren(parentId).forEach(folder => {
+                    const prefix = `${'— '.repeat(depth)}📁 `;
+                    options.push(`<option value="${escapeHtml(folder.id)}"${selected === folder.id ? ' selected' : ''}>${escapeHtml(prefix + (folder.name || 'Sans nom'))}</option>`);
+                    visit(folder.id, depth + 1);
+                });
+            };
+            visit(null, 0);
+            return options.join('');
+        }
+
+        function refreshCustomSigleFolderSelect(selectedFolderId = null) {
+            const select = document.getElementById('sigle-folder-input');
+            if (select) select.innerHTML = getMovementFolderOptionsHtml(selectedFolderId);
+        }
+
+        function createMovementFolder(name, parentId = null) {
+            const cleanName = String(name || '').trim().replace(/\s+/g, ' ');
+            const normalizedParentId = normalizeMovementFolderId(parentId);
+            if (!cleanName || cleanName.length > 60) {
+                alert('Le nom du dossier doit contenir entre 1 et 60 caractères.');
+                return null;
+            }
+            const duplicate = getMovementFolderChildren(normalizedParentId)
+                .some(folder => String(folder.name || '').localeCompare(cleanName, 'fr', {sensitivity: 'base'}) === 0);
+            if (duplicate) {
+                alert('Un dossier du même nom existe déjà à cet emplacement.');
+                return null;
+            }
+            let folderId;
+            do {
+                folderId = `MOV-FOLDER-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+            } while (getMovementFolder(folderId));
+            const folder = {
+                id: folderId,
+                name: cleanName,
+                parentId: normalizedParentId
+            };
+            data.movementFolders.push(folder);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.movementFolders.pop();
+                alert("Le dossier n'a pas pu être enregistré.");
+                return null;
+            }
+            return folder.id;
+        }
+
+        function renameMovementFolder(folderId, name) {
+            const folder = getMovementFolder(folderId);
+            const cleanName = String(name || '').trim().replace(/\s+/g, ' ');
+            if (!folder) return false;
+            if (!cleanName || cleanName.length > 60) {
+                alert('Le nom du dossier doit contenir entre 1 et 60 caractères.');
+                return false;
+            }
+            const parentId = getEffectiveMovementFolderParentId(folder);
+            const duplicate = getMovementFolderChildren(parentId).some(other =>
+                other.id !== folder.id && String(other.name || '').localeCompare(cleanName, 'fr', {sensitivity: 'base'}) === 0
+            );
+            if (duplicate) {
+                alert('Un dossier du même nom existe déjà à cet emplacement.');
+                return false;
+            }
+            const oldName = folder.name;
+            folder.name = cleanName;
+            try {
+                saveAllData();
+            } catch (error) {
+                folder.name = oldName;
+                alert("Le renommage n'a pas pu être enregistré.");
+                return false;
+            }
+            return true;
+        }
+
+        function deleteMovementFolder(folderId) {
+            const folder = getMovementFolder(folderId);
+            if (!folder) return false;
+            const containsFolders = getMovementFolderChildren(folder.id).length > 0;
+            const containsImages = data.customSigles.some(item => normalizeMovementFolderId(item.folderId) === folder.id);
+            if (containsFolders || containsImages) {
+                alert('Ce dossier contient encore des images ou des sous-dossiers. Déplace-les ou supprime-les avant de supprimer le dossier.');
+                return false;
+            }
+            if (!confirm(`Supprimer le dossier vide « ${folder.name} » ?`)) return false;
+            const index = data.movementFolders.indexOf(folder);
+            data.movementFolders.splice(index, 1);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.movementFolders.splice(index, 0, folder);
+                alert("Le dossier n'a pas pu être supprimé.");
+                return false;
+            }
+            return true;
+        }
+
+        function promptNewMovementFolder() {
+            const parent = getMovementFolder(currentSigleManagerFolderId);
+            const name = prompt(parent ? `Nom du sous-dossier dans « ${parent.name} » :` : 'Nom du nouveau dossier :');
+            if (name === null) return;
+            const createdId = createMovementFolder(name, currentSigleManagerFolderId);
+            if (!createdId) return;
+            renderCustomSiglesManager();
+            renderSiglesPalette();
+        }
+
+        function promptRenameMovementFolder() {
+            const folder = getMovementFolder(currentSigleManagerFolderId);
+            if (!folder) return;
+            const name = prompt('Nouveau nom du dossier :', folder.name);
+            if (name === null || !renameMovementFolder(folder.id, name)) return;
+            renderCustomSiglesManager();
+            renderSiglesPalette();
+        }
+
+        function deleteCurrentMovementFolder() {
+            const folder = getMovementFolder(currentSigleManagerFolderId);
+            if (!folder) return;
+            const parentId = getEffectiveMovementFolderParentId(folder);
+            if (!deleteMovementFolder(folder.id)) return;
+            currentSigleManagerFolderId = parentId;
+            if (currentSiglePaletteFolderId === folder.id) currentSiglePaletteFolderId = parentId;
+            cancelCustomSigleEdit();
+            renderCustomSiglesManager();
+            renderSiglesPalette();
+        }
+
+        function openSigleManagerFolder(folderId) {
+            currentSigleManagerFolderId = normalizeMovementFolderId(folderId);
+            cancelCustomSigleEdit();
+            renderCustomSiglesManager();
+        }
+
+        function openSiglePaletteFolder(folderId) {
+            currentSiglePaletteFolderId = normalizeMovementFolderId(folderId);
+            renderSiglesPalette();
+        }
+
+        function moveCustomSigleToFolder(index, folderId) {
+            const item = data.customSigles[index];
+            if (!item) return false;
+            const oldFolderId = item.folderId;
+            item.folderId = normalizeMovementFolderId(folderId);
+            try {
+                saveAllData();
+            } catch (error) {
+                item.folderId = oldFolderId;
+                alert("Le déplacement de l'image n'a pas pu être enregistré.");
+                return false;
+            }
+            renderCustomSiglesManager();
+            renderSiglesPalette();
+            return true;
+        }
+
         function initMouvementsTab() {
             if (!data.mouvements[currentGymId]) 
                 data.mouvements[currentGymId] = {
@@ -2813,8 +3051,27 @@
 
         function renderSiglesPalette() {
             const kbd = document.getElementById('keyboard-container');
+            const foldersBox = document.getElementById('sigle-palette-folders');
+            const breadcrumb = document.getElementById('sigle-palette-breadcrumb');
+            const empty = document.getElementById('sigle-palette-empty');
+            currentSiglePaletteFolderId = normalizeMovementFolderId(currentSiglePaletteFolderId);
             kbd.innerHTML = '';
-            defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item)).forEach(item => {
+            const path = getMovementFolderPath(currentSiglePaletteFolderId);
+            breadcrumb.innerHTML = `<button type="button" onclick="openSiglePaletteFolder(null)" class="font-semibold ${currentSiglePaletteFolderId === null ? 'text-pink-700' : 'text-gray-500'}">📚 Non classées</button>` +
+                path.map(folder => `<span>›</span><button type="button" onclick="openSiglePaletteFolder('${folder.id}')" class="font-semibold text-pink-700">${escapeHtml(folder.name)}</button>`).join('');
+            const children = getMovementFolderChildren(currentSiglePaletteFolderId);
+            foldersBox.innerHTML = children.map(folder => {
+                const imageCount = data.customSigles.filter(item => normalizeMovementFolderId(item.folderId) === folder.id).length;
+                const subCount = getMovementFolderChildren(folder.id).length;
+                return `<button type="button" onclick="openSiglePaletteFolder('${folder.id}')" class="bg-white border border-amber-200 rounded-lg p-2 text-left hover:bg-amber-50">
+                    <span class="block font-bold text-amber-700 truncate">📁 ${escapeHtml(folder.name)}</span>
+                    <span class="block text-[8px] text-gray-400">${imageCount} image${imageCount === 1 ? '' : 's'}${subCount ? ` · ${subCount} sous-dossier${subCount === 1 ? '' : 's'}` : ''}</span>
+                </button>`;
+            }).join('');
+            const activeDefault = currentSiglePaletteFolderId === null
+                ? defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item))
+                : [];
+            activeDefault.forEach(item => {
                 kbd.innerHTML += `
                 <button type="button" onclick="insertSigleToken('${item.symbole} (${item.abrev})')"
                     class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
@@ -2822,7 +3079,11 @@
                     <span class="text-[8px] text-gray-400 font-semibold truncate w-full block">${item.abrev}</span>
                 </button>`;
             });
-            data.customSigles.forEach((item, index) => {
+            const visibleCustom = data.customSigles
+                .map((item, index) => ({item, index}))
+                .filter(entry => normalizeMovementFolderId(entry.item.folderId) === currentSiglePaletteFolderId)
+                .sort((a, b) => String(a.item.nom || '').localeCompare(String(b.item.nom || ''), 'fr', {sensitivity: 'base'}));
+            visibleCustom.forEach(({item, index}) => {
                 const image = item.img
                     ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="w-5 h-5 object-contain">`
                     : '<span class="text-base">🖼️</span>';
@@ -2834,9 +3095,11 @@
                     <span class="text-[8px] text-pink-600 font-bold truncate w-full block mt-0.5">${escapeHtml(item.abrev)}</span>
                 </button>`;
             });
+            empty.classList.toggle('hidden', activeDefault.length + visibleCustom.length + children.length > 0);
         }
 
         function openCustomSigleModal() {
+            currentSigleManagerFolderId = normalizeMovementFolderId(currentSiglePaletteFolderId);
             cancelCustomSigleEdit();
             renderCustomSiglesManager();
             document
@@ -2885,21 +3148,45 @@
             document.getElementById('sigle-image-preview-container').classList.add('hidden');
             document.getElementById('btn-save-custom-sigle').innerText = "Enregistrer l'image";
             document.getElementById('btn-cancel-custom-sigle-edit').classList.add('hidden');
+            refreshCustomSigleFolderSelect(currentSigleManagerFolderId);
         }
 
         function renderCustomSiglesManager() {
             const list = document.getElementById('custom-sigles-manager-list');
             const count = document.getElementById('custom-sigles-count');
             if (!list || !count) return;
-            const activeDefaultSigles = defaultSiglesGym
+            currentSigleManagerFolderId = normalizeMovementFolderId(currentSigleManagerFolderId);
+            const isRoot = currentSigleManagerFolderId === null;
+            const path = getMovementFolderPath(currentSigleManagerFolderId);
+            const breadcrumb = document.getElementById('sigle-manager-breadcrumb');
+            breadcrumb.innerHTML = `<button type="button" onclick="openSigleManagerFolder(null)" class="font-semibold ${isRoot ? 'text-pink-700' : 'text-gray-500'}">📚 Non classées</button>` +
+                path.map(folder => `<span>›</span><button type="button" onclick="openSigleManagerFolder('${folder.id}')" class="font-semibold text-pink-700">${escapeHtml(folder.name)}</button>`).join('');
+            document.getElementById('btn-rename-sigle-folder').classList.toggle('hidden', isRoot);
+            document.getElementById('btn-delete-sigle-folder').classList.toggle('hidden', isRoot);
+
+            const children = getMovementFolderChildren(currentSigleManagerFolderId);
+            document.getElementById('sigle-manager-folders').innerHTML = children.map(folder => {
+                const imageCount = data.customSigles.filter(item => normalizeMovementFolderId(item.folderId) === folder.id).length;
+                const subCount = getMovementFolderChildren(folder.id).length;
+                return `<button type="button" onclick="openSigleManagerFolder('${folder.id}')" class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2 text-left">
+                    <span class="text-xl">📁</span><span class="min-w-0 flex-1"><span class="block font-bold text-amber-800 truncate">${escapeHtml(folder.name)}</span>
+                    <span class="block text-[9px] text-gray-500">${imageCount} image${imageCount === 1 ? '' : 's'}${subCount ? ` · ${subCount} sous-dossier${subCount === 1 ? '' : 's'}` : ''}</span></span><span>›</span>
+                </button>`;
+            }).join('');
+
+            const visibleCustomSigles = data.customSigles
                 .map((item, index) => ({item, index}))
-                .filter(entry => !isDefaultSigleDeleted(entry.item));
-            const deletedDefaultSigles = defaultSiglesGym
+                .filter(entry => normalizeMovementFolderId(entry.item.folderId) === currentSigleManagerFolderId)
+                .sort((a, b) => String(a.item.nom || '').localeCompare(String(b.item.nom || ''), 'fr', {sensitivity: 'base'}));
+            count.innerText = `${visibleCustomSigles.length} ici · ${data.customSigles.length} importée${data.customSigles.length === 1 ? '' : 's'}`;
+            const activeDefaultSigles = isRoot ? defaultSiglesGym
                 .map((item, index) => ({item, index}))
-                .filter(entry => isDefaultSigleDeleted(entry.item));
-            const total = activeDefaultSigles.length + data.customSigles.length;
-            count.innerText = `${total} image${total === 1 ? '' : 's'}`;
-            const defaultList = activeDefaultSigles.map(({item, index}) => `
+                .filter(entry => !isDefaultSigleDeleted(entry.item)) : [];
+            const deletedDefaultSigles = isRoot ? defaultSiglesGym
+                .map((item, index) => ({item, index}))
+                .filter(entry => isDefaultSigleDeleted(entry.item)) : [];
+            const defaultList = activeDefaultSigles.length ? `<div class="space-y-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${activeDefaultSigles.map(({item, index}) => `
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
                     <span class="w-12 h-12 flex items-center justify-center text-2xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
                     <div class="min-w-0 flex-1">
@@ -2908,20 +3195,22 @@
                     </div>
                     <button type="button" onclick="deleteDefaultSigle(${index})" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
                 </div>
-            `).join('');
-            const customList = data.customSigles.map((item, index) => `
+            `).join('')}</div>` : '';
+            const customList = visibleCustomSigles.length ? `<div class="space-y-2 ${isRoot && activeDefaultSigles.length ? 'border-t border-gray-200 pt-2 mt-2' : ''}">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images importées</p>${visibleCustomSigles.map(({item, index}) => `
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
                     <img src="${escapeHtml(item.img || '')}" alt="${escapeHtml(item.nom)}" class="w-12 h-12 object-contain rounded bg-white border border-gray-100">
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
                         <p class="text-[10px] text-pink-600 font-semibold">[${escapeHtml(item.abrev)}]</p>
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="w-28 flex flex-col gap-1">
+                        <select aria-label="Déplacer ${escapeHtml(item.nom)}" onchange="moveCustomSigleToFolder(${index}, this.value)" class="w-full p-1 rounded border border-gray-300 bg-white text-[9px]">${getMovementFolderOptionsHtml(item.folderId)}</select>
                         <button type="button" onclick="editCustomSigle(${index})" class="px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">✏️ Modifier</button>
                         <button type="button" onclick="deleteCustomSigle(${index})" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
                     </div>
                 </div>
-            `).join('');
+            `).join('')}</div>` : '';
             const deletedList = deletedDefaultSigles.length
                 ? `
                     <div class="border-t border-gray-200 pt-2 mt-3">
@@ -2941,7 +3230,9 @@
                     </div>`
                 : '';
             list.innerHTML = `${defaultList}${customList}${deletedList}` ||
-                '<p class="text-center text-gray-400 py-4">Aucune image enregistrée.</p>';
+                '<p class="text-center text-gray-400 py-4">Ce dossier est vide.</p>';
+            const editingItem = editingCustomSigleIndex === null ? null : data.customSigles[editingCustomSigleIndex];
+            refreshCustomSigleFolderSelect(editingItem ? editingItem.folderId : currentSigleManagerFolderId);
         }
 
         function isDefaultSigleDeleted(item) {
@@ -2997,6 +3288,7 @@
             document.getElementById('sigle-image-label').innerText = 'Remplacer l’image (optionnel) :';
             document.getElementById('sigle-image-preview').src = item.img || '';
             document.getElementById('sigle-image-preview-container').classList.toggle('hidden', !item.img);
+            refreshCustomSigleFolderSelect(item.folderId);
             document.getElementById('btn-save-custom-sigle').innerText = 'Enregistrer les modifications';
             document.getElementById('btn-cancel-custom-sigle-edit').classList.remove('hidden');
             document.getElementById('sigle-abrev-input').focus();
@@ -3019,7 +3311,7 @@
                 area.value = area.value.replace(pattern, `[${newAbrev}]`);
         }
 
-        function commitCustomSigleSave(abrev, nom, imageData) {
+        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined) {
             const previousSigles = data.customSigles.map(item => ({...item}));
             const previousMouvements = JSON.parse(JSON.stringify(data.mouvements || {}));
             const movementArea = document.getElementById('txt-mouvement-content');
@@ -3027,16 +3319,20 @@
             const previousItem = editingCustomSigleIndex === null
                 ? null
                 : data.customSigles[editingCustomSigleIndex];
+            const targetFolderId = folderId === undefined
+                ? normalizeMovementFolderId(previousItem && previousItem.folderId)
+                : normalizeMovementFolderId(folderId);
             if (previousItem) {
                 data.customSigles[editingCustomSigleIndex] = {
                     ...previousItem,
                     abrev,
                     nom,
-                    img: imageData
+                    img: imageData,
+                    folderId: targetFolderId
                 };
                 replaceCustomSigleTokens(previousItem.abrev, abrev);
             } else {
-                data.customSigles.push({abrev, nom, img: imageData});
+                data.customSigles.push({abrev, nom, img: imageData, folderId: targetFolderId});
             }
 
             try {
@@ -3068,6 +3364,7 @@
                 .value
                 .trim();
             const fileInput = document.getElementById('sigle-image-file');
+            const folderId = document.getElementById('sigle-folder-input').value || null;
             if (!abrev || !nom)
                 return alert("Veuillez remplir l'abréviation et le nom.");
             if (!/^[A-Z0-9_-]{1,12}$/.test(abrev))
@@ -3084,12 +3381,12 @@
             if (!fileInput.files[0] && (!currentItem || !currentItem.img))
                 return alert("Veuillez sélectionner une image à enregistrer.");
             if (!fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, currentItem.img);
+                commitCustomSigleSave(abrev, nom, currentItem.img, folderId);
                 return;
             }
 
             compressImage(fileInput.files[0], 160, 160, 0.82, compressedBase64 => {
-                commitCustomSigleSave(abrev, nom, compressedBase64);
+                commitCustomSigleSave(abrev, nom, compressedBase64, folderId);
             });
         }
 
