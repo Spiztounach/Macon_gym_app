@@ -1001,6 +1001,24 @@
                         placeholder="Ex: Fédérale A Équipe 1"
                         class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
+                <div class="space-y-2">
+                    <label class="block font-semibold text-gray-700 mb-1">Catégorie d'âge en compétition :</label>
+                    <select
+                        id="team-age-category-input"
+                        onchange="handleTeamAgeCategoryChange()"
+                        class="w-full p-2 border border-gray-300 rounded-md bg-white">
+                        <option value="">Sélectionner une tranche d'âge</option>
+                    </select>
+                    <div id="team-custom-age-range" class="hidden grid grid-cols-2 gap-2 rounded-lg border border-purple-100 bg-purple-50 p-2">
+                        <label class="text-[10px] font-semibold text-purple-700">Âge minimum
+                            <input id="team-custom-age-min" type="number" min="5" max="99" step="1" inputmode="numeric" oninput="handleCustomTeamAgeChange()" class="mt-1 w-full rounded border border-purple-200 bg-white p-2 text-xs">
+                        </label>
+                        <label class="text-[10px] font-semibold text-purple-700">Âge maximum
+                            <input id="team-custom-age-max" type="number" min="5" max="99" step="1" inputmode="numeric" oninput="handleCustomTeamAgeChange()" placeholder="Vide = et +" class="mt-1 w-full rounded border border-purple-200 bg-white p-2 text-xs">
+                        </label>
+                    </div>
+                    <p id="team-age-filter-info" class="text-[10px] text-gray-500">Sélectionnez une tranche d'âge pour afficher les gymnastes disponibles.</p>
+                </div>
                 <div>
                     <label class="block font-semibold text-gray-700 mb-1">Composition (Cochez les membres) :</label>
                     <div
@@ -1107,13 +1125,31 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.8.0';
+        const APP_VERSION = '1.9.0';
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
         const GYM_MUSIC_DB_NAME = 'gymsuivi-media-v1';
         const GYM_MUSIC_STORE_NAME = 'gymnast-music';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
+        const TEAM_AGE_CATEGORY_OPTIONS = [
+            {code: '7-9', label: '7–9 ans', min: 7, max: 9},
+            {code: '10-11', label: '10–11 ans', min: 10, max: 11},
+            {code: '10-13', label: '10–13 ans', min: 10, max: 13},
+            {code: '10-15', label: '10–15 ans', min: 10, max: 15},
+            {code: '10-17', label: '10–17 ans', min: 10, max: 17},
+            {code: '10+', label: '10 ans et plus', min: 10, max: null},
+            {code: '12-13', label: '12–13 ans', min: 12, max: 13},
+            {code: '12-15', label: '12–15 ans', min: 12, max: 15},
+            {code: '12-17', label: '12–17 ans', min: 12, max: 17},
+            {code: '12+', label: '12 ans et plus', min: 12, max: null},
+            {code: '14-15', label: '14–15 ans', min: 14, max: 15},
+            {code: '14-17', label: '14–17 ans', min: 14, max: 17},
+            {code: '14+', label: '14 ans et plus', min: 14, max: null},
+            {code: '16-17', label: '16–17 ans', min: 16, max: 17},
+            {code: '16+', label: '16 ans et plus', min: 16, max: null},
+            {code: '18+', label: '18 ans et plus', min: 18, max: null}
+        ];
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -1170,6 +1206,7 @@
         let editingCustomSigleIndex = null;
         let currentSigleManagerFolderId = null;
         let currentSiglePaletteFolderId = null;
+        let teamModalMemberSelection = new Set();
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
@@ -4116,6 +4153,114 @@
                 .join('');
         }
 
+        function normalizeTeamAgeBound(value) {
+            if (value === null || value === undefined || String(value).trim() === '') return null;
+            const number = Number(value);
+            return Number.isInteger(number) && number >= 5 && number <= 99 ? number : null;
+        }
+
+        function getTeamAgeCategoryLabel(minAge, maxAge = null) {
+            const min = normalizeTeamAgeBound(minAge);
+            const max = normalizeTeamAgeBound(maxAge);
+            if (min === null) return 'Catégorie non définie';
+            return max === null ? `${min} ans et plus` : `${min}–${max} ans`;
+        }
+
+        function getTeamAgeRangeForTeam(team) {
+            if (!team || normalizeTeamAgeBound(team.ageMin) === null) return null;
+            const min = normalizeTeamAgeBound(team.ageMin);
+            const max = team.ageMax === null || team.ageMax === undefined || team.ageMax === ''
+                ? null
+                : normalizeTeamAgeBound(team.ageMax);
+            if (team.ageMax !== null && team.ageMax !== undefined && team.ageMax !== '' && max === null)
+                return null;
+            if (max !== null && max < min) return null;
+            return {min, max, label: getTeamAgeCategoryLabel(min, max)};
+        }
+
+        function populateTeamAgeCategorySelect(team = null) {
+            const select = document.getElementById('team-age-category-input');
+            const customBox = document.getElementById('team-custom-age-range');
+            const minInput = document.getElementById('team-custom-age-min');
+            const maxInput = document.getElementById('team-custom-age-max');
+            select.innerHTML = '<option value="">Sélectionner une tranche d\'âge</option>' +
+                TEAM_AGE_CATEGORY_OPTIONS.map(option => `<option value="${option.code}">${option.label}</option>`).join('') +
+                '<option value="CUSTOM">Tranche personnalisée</option>';
+            const range = getTeamAgeRangeForTeam(team);
+            if (!range) {
+                select.value = '';
+                minInput.value = '';
+                maxInput.value = '';
+                customBox.classList.add('hidden');
+                return;
+            }
+            const preset = TEAM_AGE_CATEGORY_OPTIONS.find(option => option.min === range.min && option.max === range.max);
+            select.value = preset ? preset.code : 'CUSTOM';
+            minInput.value = range.min;
+            maxInput.value = range.max === null ? '' : range.max;
+            customBox.classList.toggle('hidden', !!preset);
+        }
+
+        function getTeamAgeRangeFromForm(showAlert = false) {
+            const code = document.getElementById('team-age-category-input').value;
+            if (!code) {
+                if (showAlert) alert("Veuillez sélectionner une catégorie d'âge.");
+                return null;
+            }
+            if (code !== 'CUSTOM') {
+                const preset = TEAM_AGE_CATEGORY_OPTIONS.find(option => option.code === code);
+                return preset ? {min: preset.min, max: preset.max, label: preset.label} : null;
+            }
+            const minInput = document.getElementById('team-custom-age-min');
+            const maxInput = document.getElementById('team-custom-age-max');
+            const min = normalizeTeamAgeBound(minInput.value);
+            const max = maxInput.value.trim() === '' ? null : normalizeTeamAgeBound(maxInput.value);
+            if (min === null || (maxInput.value.trim() !== '' && max === null) || (max !== null && max < min)) {
+                if (showAlert) alert("La tranche personnalisée doit contenir un âge minimum valide et un âge maximum supérieur ou égal.");
+                return null;
+            }
+            return {min, max, label: getTeamAgeCategoryLabel(min, max)};
+        }
+
+        function getGymnastIdsAssignedToOtherTeams(currentTeamId = '') {
+            return new Set(data.teams
+                .filter(team => team.id !== currentTeamId)
+                .flatMap(team => Array.isArray(team.members) ? team.members : []));
+        }
+
+        function getTeamAgeEligibility(range, currentTeamId = '', referenceDate = new Date()) {
+            const result = {eligible: [], outsideRange: [], assignedElsewhere: [], missingBirthDate: []};
+            if (!range) return result;
+            const assignedIds = getGymnastIdsAssignedToOtherTeams(currentTeamId);
+            [...data.gymnastes]
+                .sort((a, b) => `${a.nom || ''} ${a.prenom || ''}`.localeCompare(`${b.nom || ''} ${b.prenom || ''}`, 'fr', {sensitivity: 'base'}))
+                .forEach(gymnast => {
+                    const age = calculateAge(gymnast.ddn, referenceDate);
+                    const row = {...gymnast, competitionAge: age};
+                    if (age === null) result.missingBirthDate.push(row);
+                    else if (age < range.min || (range.max !== null && age > range.max)) result.outsideRange.push(row);
+                    else if (assignedIds.has(gymnast.id)) result.assignedElsewhere.push(row);
+                    else result.eligible.push(row);
+                });
+            return result;
+        }
+
+        function toggleTeamModalGymnast(gymnastId, checked) {
+            if (checked) teamModalMemberSelection.add(gymnastId);
+            else teamModalMemberSelection.delete(gymnastId);
+        }
+
+        function handleTeamAgeCategoryChange() {
+            const custom = document.getElementById('team-age-category-input').value === 'CUSTOM';
+            document.getElementById('team-custom-age-range').classList.toggle('hidden', !custom);
+            buildGymnastsChecklist();
+        }
+
+        function handleCustomTeamAgeChange() {
+            if (document.getElementById('team-age-category-input').value === 'CUSTOM')
+                buildGymnastsChecklist();
+        }
+
         function renderTeamsList() {
             const grid = document.getElementById('teams-grid');
             grid.innerHTML = '';
@@ -4126,6 +4271,7 @@
             data
                 .teams
                 .forEach(team => {
+                    const ageRange = getTeamAgeRangeForTeam(team);
                     const names = team
                         .members
                         .map(id => data.gymnastes.find(x => x.id === id))
@@ -4137,6 +4283,7 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:border-purple-300 transition">
                     <div>
                         <span class="block font-bold text-gray-800 text-sm">🏆 ${team.name}</span>
+                        <span class="text-[10px] text-purple-600 mt-0.5 block"><b>Catégorie :</b> ${ageRange ? ageRange.label : 'Non définie'}</span>
                         <span class="text-[10px] text-gray-400 mt-0.5 block"><b>Composition :</b> ${names}</span>
                     </div>
                     <div class="flex gap-2 pt-1">
@@ -4158,7 +4305,9 @@
             document
                 .getElementById('team-name-input')
                 .value = '';
-            buildGymnastsChecklist([]);
+            teamModalMemberSelection = new Set();
+            populateTeamAgeCategorySelect();
+            buildGymnastsChecklist();
             document
                 .getElementById('modal-team')
                 .classList
@@ -4180,35 +4329,53 @@
             document
                 .getElementById('team-name-input')
                 .value = team.name;
-            buildGymnastsChecklist(team.members);
+            teamModalMemberSelection = new Set(Array.isArray(team.members) ? team.members : []);
+            populateTeamAgeCategorySelect(team);
+            buildGymnastsChecklist();
             document
                 .getElementById('modal-team')
                 .classList
                 .remove('hidden');
         }
 
-        function buildGymnastsChecklist(selectedIds) {
+        function buildGymnastsChecklist(selectedIds = undefined) {
             const container = document.getElementById('team-gymnasts-checklist');
+            const info = document.getElementById('team-age-filter-info');
+            if (Array.isArray(selectedIds)) teamModalMemberSelection = new Set(selectedIds);
             container.innerHTML = '';
             if (data.gymnastes.length === 0) {
                 container.innerHTML = `<p class="text-gray-400 italic text-[11px]">Créez d'abord des gymnastes.</p>`;
+                info.textContent = 'Aucune gymnaste enregistrée.';
                 return;
             }
-            data
-                .gymnastes
-                .forEach(g => {
-                    const checked = selectedIds.includes(g.id)
-                        ? 'checked'
-                        : '';
-                    container.innerHTML += `
-                <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                    <input type="checkbox" value="${g.id}" ${checked} class="rounded text-purple-600">
-                    ${g.prenom} ${g.nom}
+            const range = getTeamAgeRangeFromForm(false);
+            if (!range) {
+                container.innerHTML = `<p class="text-gray-400 italic text-[11px]">Sélectionnez d'abord une tranche d'âge valide.</p>`;
+                info.textContent = "Sélectionnez une tranche d'âge pour afficher les gymnastes disponibles.";
+                return;
+            }
+            const currentTeamId = document.getElementById('edit-team-id').value;
+            const eligibility = getTeamAgeEligibility(range, currentTeamId);
+            const eligibleIds = new Set(eligibility.eligible.map(gymnast => gymnast.id));
+            teamModalMemberSelection = new Set([...teamModalMemberSelection].filter(id => eligibleIds.has(id)));
+            info.textContent = `${eligibility.eligible.length} disponible${eligibility.eligible.length === 1 ? '' : 's'} · ${eligibility.assignedElsewhere.length} déjà dans une autre équipe · ${eligibility.outsideRange.length} hors catégorie${eligibility.missingBirthDate.length ? ` · ${eligibility.missingBirthDate.length} sans date de naissance` : ''}`;
+            if (!eligibility.eligible.length) {
+                container.innerHTML = `<p class="text-gray-400 italic text-[11px]">Aucune gymnaste disponible pour la catégorie ${range.label}.</p>`;
+                return;
+            }
+            container.innerHTML = eligibility.eligible.map(gymnast => {
+                const checked = teamModalMemberSelection.has(gymnast.id) ? 'checked' : '';
+                return `
+                <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer rounded-lg px-1 py-0.5 hover:bg-purple-50">
+                    <input type="checkbox" value="${gymnast.id}" ${checked} onchange="toggleTeamModalGymnast('${gymnast.id}', this.checked)" class="rounded text-purple-600">
+                    <span class="min-w-0 flex-1 truncate">${escapeHtml(`${gymnast.nom || ''} ${gymnast.prenom || ''}`.trim())}</span>
+                    <span class="text-[10px] font-semibold text-purple-600">${gymnast.competitionAge} ans</span>
                 </label>`;
-                });
+            }).join('');
         }
 
         function closeTeamModal() {
+            teamModalMemberSelection = new Set();
             document
                 .getElementById('modal-team')
                 .classList
@@ -4225,11 +4392,16 @@
                 .value;
             if (!name) 
                 return alert("Veuillez attribuer un nom à l'équipe.");
-            const members = Array
-                .from(
-                    document.querySelectorAll('#team-gymnasts-checklist input[type="checkbox"]:checked')
-                )
-                .map(cb => cb.value);
+            const ageRange = getTeamAgeRangeFromForm(true);
+            if (!ageRange) return;
+            const assignedElsewhere = getGymnastIdsAssignedToOtherTeams(targetId);
+            const conflictingIds = [...teamModalMemberSelection].filter(id => assignedElsewhere.has(id));
+            if (conflictingIds.length) {
+                buildGymnastsChecklist();
+                return alert("Une ou plusieurs gymnastes viennent d'être ajoutées à une autre équipe. La liste a été actualisée.");
+            }
+            buildGymnastsChecklist();
+            const members = [...teamModalMemberSelection];
 
             if (targetId) {
                 const idx = data
@@ -4241,7 +4413,10 @@
                         ...previousTeam,
                         id: targetId,
                         name,
-                        members
+                        members,
+                        ageMin: ageRange.min,
+                        ageMax: ageRange.max,
+                        ageCategoryLabel: ageRange.label
                     };
                     const rows = buildTeamMatchRows(data.teams[idx]);
                     ensureTeamPassageOrders(data.teams[idx], rows);
@@ -4253,6 +4428,9 @@
                         id: "TEAM-" + Date.now(),
                         name,
                         members,
+                        ageMin: ageRange.min,
+                        ageMax: ageRange.max,
+                        ageCategoryLabel: ageRange.label,
                         passageOrders: {}
                     });
             }
