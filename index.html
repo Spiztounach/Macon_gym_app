@@ -663,12 +663,15 @@
                     <!-- TAB : Progression des éléments -->
                     <div id="content-progression" class="tab-content space-y-4">
                         <div class="rounded-xl border border-purple-100 bg-purple-50 p-3 space-y-3">
-                            <div class="flex items-center justify-between gap-3">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
                                     <p class="text-[10px] text-purple-600">Ajoutez un élément puis cochez son état d'acquisition.</p>
                                 </div>
-                                <button type="button" onclick="exportProgressionPDF()" class="shrink-0 rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                                <div class="flex gap-2">
+                                    <button type="button" onclick="openProgressionCopyPanel()" class="flex-1 whitespace-nowrap rounded-lg border border-purple-300 bg-white px-3 py-2 text-[10px] font-bold text-purple-700 hover:bg-purple-100">📋 Copier vers…</button>
+                                    <button type="button" onclick="exportProgressionPDF()" class="flex-1 whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                                </div>
                             </div>
                             <form id="form-progression" onsubmit="saveProgressionItem(event)" class="flex flex-col gap-2 sm:flex-row">
                                 <input type="hidden" id="edit-progression-id">
@@ -678,10 +681,31 @@
                                     <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
                                 </div>
                             </form>
+                            <div id="progression-copy-panel" class="hidden rounded-lg border border-purple-200 bg-white p-3 space-y-3">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div>
+                                        <p class="text-xs font-bold text-purple-800">Copier ce tableau vers une autre gymnaste</p>
+                                        <p class="text-[9px] text-gray-500">Les statuts et l'ordre des éléments sont conservés.</p>
+                                    </div>
+                                    <button type="button" onclick="closeProgressionCopyPanel()" class="text-gray-400" aria-label="Fermer">✕</button>
+                                </div>
+                                <select id="progression-copy-target" class="w-full rounded-lg border border-purple-200 bg-white p-2 text-xs"></select>
+                                <div class="space-y-1.5 text-[10px] text-gray-700">
+                                    <label class="flex items-start gap-2 rounded border border-gray-200 p-2 cursor-pointer">
+                                        <input type="radio" name="progression-copy-mode" value="merge" checked class="mt-0.5 accent-purple-600">
+                                        <span><strong>Ajouter les éléments manquants</strong><br><span class="text-gray-500">Conserve le tableau déjà présent chez la destinataire.</span></span>
+                                    </label>
+                                    <label class="flex items-start gap-2 rounded border border-red-100 p-2 cursor-pointer">
+                                        <input type="radio" name="progression-copy-mode" value="replace" class="mt-0.5 accent-red-600">
+                                        <span><strong>Remplacer entièrement</strong><br><span class="text-gray-500">Efface le tableau actuel de la destinataire avant la copie.</span></span>
+                                    </label>
+                                </div>
+                                <button type="button" onclick="confirmProgressionCopy()" class="w-full rounded-lg bg-purple-700 py-2 text-xs font-bold text-white">Copier le tableau</button>
+                            </div>
                         </div>
 
-                        <div class="overflow-x-auto rounded-xl border border-gray-200">
-                            <table class="w-full min-w-[540px] border-collapse text-xs">
+                        <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
+                            <table class="w-full border-collapse text-xs">
                                 <thead class="bg-gray-100 text-gray-700">
                                     <tr>
                                         <th class="w-[55%] border-b border-r border-gray-200 p-2.5 text-left">Nom de l'élément</th>
@@ -693,6 +717,7 @@
                                 <tbody id="progression-table-body"></tbody>
                             </table>
                         </div>
+                        <div id="progression-mobile-list" class="space-y-2 sm:hidden"></div>
                         <p id="progression-empty-state" class="hidden py-3 text-center text-[11px] italic text-gray-400">Aucun élément de progression enregistré.</p>
                     </div>
 
@@ -1248,7 +1273,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.11.1';
+        const APP_VERSION = '1.12.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
@@ -2785,6 +2810,7 @@
             applyCustomColors();
             cancelScoreEdit();
             cancelProgressionEdit();
+            closeProgressionCopyPanel();
             switchTab('infos');
             showScreen('screen-fiche');
             buildChart();
@@ -3027,13 +3053,17 @@
             );
         }
 
-        function createProgressionId() {
-            const items = getGymnastProgression();
+        function createProgressionIdForGym(gymId) {
+            const items = getGymnastProgression(gymId);
             let id;
             do {
                 id = `PROG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
             } while (items.some(item => item.id === id));
             return id;
+        }
+
+        function createProgressionId() {
+            return createProgressionIdForGym(currentGymId);
         }
 
         function addProgressionItem(name, status = 'not_acquired') {
@@ -3082,6 +3112,131 @@
             const removed = items.splice(index, 1)[0];
             saveAllData();
             return removed;
+        }
+
+        function moveProgressionItem(itemId, direction) {
+            const items = getGymnastProgression();
+            const index = items.findIndex(item => item.id === itemId);
+            if (index < 0) throw new Error('Élément introuvable.');
+            const targetIndex = index + Number(direction);
+            if (targetIndex < 0 || targetIndex >= items.length) return false;
+            [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
+            items[targetIndex].updatedAt = new Date().toISOString();
+            saveAllData();
+            renderProgressionTable();
+            renderProgressionStatistics();
+            return true;
+        }
+
+        function copyProgressionTable(sourceGymId, targetGymId, mode = 'merge') {
+            if (!sourceGymId || !targetGymId) throw new Error('Sélectionnez une gymnaste destinataire.');
+            if (sourceGymId === targetGymId) throw new Error('Choisissez une autre gymnaste.');
+            const sourceItems = getGymnastProgression(sourceGymId).map(item => ({...item}));
+            if (sourceItems.length === 0) throw new Error('Le tableau à copier est vide.');
+            const copyMode = mode === 'replace' ? 'replace' : 'merge';
+            const now = new Date().toISOString();
+            let added = 0;
+
+            if (copyMode === 'replace') {
+                data.progressions[targetGymId] = [];
+                sourceItems.forEach(item => {
+                    data.progressions[targetGymId].push({
+                        id: createProgressionIdForGym(targetGymId),
+                        name: normalizeProgressionName(item.name),
+                        status: normalizeProgressionStatus(item.status),
+                        updatedAt: now
+                    });
+                    added += 1;
+                });
+            } else {
+                const targetItems = getGymnastProgression(targetGymId);
+                const existingNames = new Set(targetItems.map(item =>
+                    normalizeProgressionName(item.name).toLocaleLowerCase('fr')
+                ));
+                sourceItems.forEach(item => {
+                    const name = normalizeProgressionName(item.name);
+                    const key = name.toLocaleLowerCase('fr');
+                    if (!name || existingNames.has(key)) return;
+                    targetItems.push({
+                        id: createProgressionIdForGym(targetGymId),
+                        name,
+                        status: normalizeProgressionStatus(item.status),
+                        updatedAt: now
+                    });
+                    existingNames.add(key);
+                    added += 1;
+                });
+            }
+
+            if (added > 0 || copyMode === 'replace') saveAllData();
+            return {
+                added,
+                total: getGymnastProgression(targetGymId).length,
+                mode: copyMode
+            };
+        }
+
+        function openProgressionCopyPanel() {
+            if (getGymnastProgression().length === 0) {
+                alert('⚠️ Ajoutez au moins un élément avant de copier le tableau.');
+                return;
+            }
+            const panel = document.getElementById('progression-copy-panel');
+            const select = document.getElementById('progression-copy-target');
+            const gymnasts = [...data.gymnastes]
+                .filter(gym => gym.id !== currentGymId)
+                .sort((a, b) => `${a.nom || ''} ${a.prenom || ''}`.localeCompare(
+                    `${b.nom || ''} ${b.prenom || ''}`,
+                    'fr',
+                    {sensitivity: 'base'}
+                ));
+            if (gymnasts.length === 0) {
+                alert('⚠️ Aucune autre gymnaste disponible.');
+                return;
+            }
+            select.innerHTML = '';
+            gymnasts.forEach(gym => {
+                const option = document.createElement('option');
+                option.value = gym.id;
+                option.textContent = `${gym.nom || ''} ${gym.prenom || ''}`.trim();
+                select.appendChild(option);
+            });
+            const merge = document.querySelector('input[name="progression-copy-mode"][value="merge"]');
+            if (merge) merge.checked = true;
+            panel.classList.remove('hidden');
+            select.focus();
+        }
+
+        function closeProgressionCopyPanel() {
+            const panel = document.getElementById('progression-copy-panel');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function confirmProgressionCopy() {
+            const targetGymId = document.getElementById('progression-copy-target').value;
+            const selectedMode = document.querySelector('input[name="progression-copy-mode"]:checked');
+            const mode = selectedMode ? selectedMode.value : 'merge';
+            const targetGymnast = data.gymnastes.find(gym => gym.id === targetGymId);
+            if (!targetGymnast) {
+                alert('⚠️ Sélectionnez une gymnaste destinataire.');
+                return;
+            }
+            const targetName = `${targetGymnast.prenom || ''} ${targetGymnast.nom || ''}`.trim();
+            const targetCount = getGymnastProgression(targetGymId).length;
+            if (mode === 'replace' && targetCount > 0 && !confirm(
+                `Remplacer les ${targetCount} élément${targetCount === 1 ? '' : 's'} du tableau de ${targetName} ?`
+            )) return;
+            try {
+                const result = copyProgressionTable(currentGymId, targetGymId, mode);
+                closeProgressionCopyPanel();
+                if (mode === 'merge' && result.added === 0) {
+                    alert(`ℹ️ ${targetName} possède déjà tous ces éléments.`);
+                    return;
+                }
+                alert(`✅ Tableau copié vers ${targetName} : ${result.added} élément${result.added === 1 ? '' : 's'}, ${result.total} au total.`);
+            } catch (error) {
+                alert(`❌ ${error.message}`);
+            }
         }
 
         function saveProgressionItem(event) {
@@ -3145,14 +3300,42 @@
             return cell;
         }
 
+        function createProgressionMoveButton(item, index, direction, total) {
+            const button = document.createElement('button');
+            const movingUp = direction < 0;
+            button.type = 'button';
+            button.className = 'flex h-7 w-7 items-center justify-center rounded border border-gray-200 bg-white text-sm font-black text-gray-600 disabled:cursor-not-allowed disabled:opacity-30';
+            button.textContent = movingUp ? '↑' : '↓';
+            button.title = movingUp ? 'Monter cet élément' : 'Descendre cet élément';
+            button.setAttribute('aria-label', `${movingUp ? 'Monter' : 'Descendre'} ${item.name}`);
+            button.disabled = movingUp ? index === 0 : index === total - 1;
+            button.onclick = () => moveProgressionItem(item.id, direction);
+            return button;
+        }
+
+        function createProgressionMobileStatusButton(item, status, label, activeClasses) {
+            const button = document.createElement('button');
+            const active = item.status === status;
+            button.type = 'button';
+            button.className = `min-h-11 flex-1 rounded-lg border px-2 py-2 text-[10px] font-bold ${
+                active ? activeClasses : 'border-gray-200 bg-white text-gray-500'
+            }`;
+            button.textContent = label;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.onclick = () => setProgressionStatus(item.id, status);
+            return button;
+        }
+
         function renderProgressionTable() {
             const body = document.getElementById('progression-table-body');
+            const mobileList = document.getElementById('progression-mobile-list');
             const empty = document.getElementById('progression-empty-state');
-            if (!body || !empty) return;
+            if (!body || !mobileList || !empty) return;
             body.innerHTML = '';
+            mobileList.innerHTML = '';
             const items = getGymnastProgression();
             empty.classList.toggle('hidden', items.length > 0);
-            items.forEach(item => {
+            items.forEach((item, index) => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 const nameCell = document.createElement('td');
@@ -3161,7 +3344,9 @@
                 name.className = 'font-bold text-gray-800 break-words';
                 name.textContent = item.name;
                 const actions = document.createElement('div');
-                actions.className = 'mt-1 flex gap-3 text-[10px]';
+                actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
+                const up = createProgressionMoveButton(item, index, -1, items.length);
+                const down = createProgressionMoveButton(item, index, 1, items.length);
                 const edit = document.createElement('button');
                 edit.type = 'button';
                 edit.className = 'font-bold text-blue-600';
@@ -3172,7 +3357,7 @@
                 remove.className = 'font-bold text-red-600';
                 remove.textContent = 'Supprimer';
                 remove.onclick = () => deleteProgressionItem(item.id);
-                actions.append(edit, remove);
+                actions.append(up, down, edit, remove);
                 nameCell.append(name, actions);
                 row.append(
                     nameCell,
@@ -3181,6 +3366,45 @@
                     createProgressionStatusCell(item, 'acquired', 'accent-green-600')
                 );
                 body.appendChild(row);
+
+                const card = document.createElement('article');
+                card.className = 'rounded-xl border border-gray-200 bg-white p-3 shadow-sm';
+                const cardHeader = document.createElement('div');
+                cardHeader.className = 'flex items-start justify-between gap-2';
+                const cardName = document.createElement('p');
+                cardName.className = 'min-w-0 flex-1 break-words text-xs font-black text-gray-800';
+                cardName.textContent = item.name;
+                const orderButtons = document.createElement('div');
+                orderButtons.className = 'flex shrink-0 gap-1';
+                orderButtons.append(
+                    createProgressionMoveButton(item, index, -1, items.length),
+                    createProgressionMoveButton(item, index, 1, items.length)
+                );
+                cardHeader.append(cardName, orderButtons);
+
+                const statusButtons = document.createElement('div');
+                statusButtons.className = 'mt-3 flex gap-1.5';
+                statusButtons.append(
+                    createProgressionMobileStatusButton(item, 'not_acquired', 'Pas acquis', 'border-red-300 bg-red-50 text-red-700'),
+                    createProgressionMobileStatusButton(item, 'in_progress', 'En cours', 'border-amber-300 bg-amber-50 text-amber-700'),
+                    createProgressionMobileStatusButton(item, 'acquired', 'Acquis', 'border-green-300 bg-green-50 text-green-700')
+                );
+
+                const cardActions = document.createElement('div');
+                cardActions.className = 'mt-2 flex justify-end gap-4 text-[10px]';
+                const mobileEdit = document.createElement('button');
+                mobileEdit.type = 'button';
+                mobileEdit.className = 'font-bold text-blue-600';
+                mobileEdit.textContent = 'Modifier';
+                mobileEdit.onclick = () => startProgressionEdit(item.id);
+                const mobileRemove = document.createElement('button');
+                mobileRemove.type = 'button';
+                mobileRemove.className = 'font-bold text-red-600';
+                mobileRemove.textContent = 'Supprimer';
+                mobileRemove.onclick = () => deleteProgressionItem(item.id);
+                cardActions.append(mobileEdit, mobileRemove);
+                card.append(cardHeader, statusButtons, cardActions);
+                mobileList.appendChild(card);
             });
         }
 
