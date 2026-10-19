@@ -627,6 +627,23 @@
                                 <div class="rounded-lg border border-amber-100 bg-white p-2"><span id="progression-count-in-progress" class="block text-lg font-black text-amber-600">0</span><span class="text-[9px] font-semibold text-gray-500">En cours</span></div>
                                 <div class="rounded-lg border border-green-100 bg-white p-2"><span id="progression-count-acquired" class="block text-lg font-black text-green-600">0</span><span class="text-[9px] font-semibold text-gray-500">Acquis</span></div>
                             </div>
+                            <div id="progression-radar-card" class="hidden rounded-lg border border-purple-100 bg-white p-2.5 space-y-2">
+                                <div class="grid gap-3 lg:grid-cols-2">
+                                    <div>
+                                        <h4 class="text-center text-[10px] font-black uppercase tracking-wide text-purple-700">Profil technique</h4>
+                                        <div class="h-72 w-full sm:h-80">
+                                            <canvas id="progression-family-radar-chart" aria-label="Diagramme radar des familles techniques"></canvas>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-center text-[10px] font-black uppercase tracking-wide text-blue-700">Progression par agrès</h4>
+                                        <div class="h-72 w-full sm:h-80">
+                                            <canvas id="progression-apparatus-radar-chart" aria-label="Diagramme radar de progression par agrès"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p id="progression-radar-note" class="text-center text-[9px] text-gray-500"></p>
+                            </div>
                             <div class="grid gap-2 md:grid-cols-3 text-left">
                                 <div class="rounded-lg border border-green-200 bg-white p-2.5">
                                     <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-green-700">✓ Acquis / validés</h4>
@@ -666,42 +683,40 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
-                                    <p class="text-[10px] text-purple-600">Ajoutez un élément puis cochez son état d'acquisition.</p>
+                                    <p class="text-[10px] text-purple-600">La liste des éléments est commune à toutes les gymnastes. Seul l'état d'acquisition est personnel.</p>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button type="button" onclick="openProgressionCopyPanel()" class="flex-1 whitespace-nowrap rounded-lg border border-purple-300 bg-white px-3 py-2 text-[10px] font-bold text-purple-700 hover:bg-purple-100">📋 Copier vers…</button>
-                                    <button type="button" onclick="exportProgressionPDF()" class="flex-1 whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
-                                </div>
+                                <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
                             </div>
-                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="flex flex-col gap-2 sm:flex-row">
+                            <div class="rounded-lg border border-purple-200 bg-white px-3 py-2 text-[10px] text-purple-800">
+                                <strong>🌐 Référentiel commun :</strong> ajouter, renommer, déplacer ou supprimer un élément modifie la liste pour toutes les fiches, sans modifier leurs validations personnelles.
+                            </div>
+                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto]">
                                 <input type="hidden" id="edit-progression-id">
                                 <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
+                                <select id="progression-apparatus" class="min-w-0 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
+                                    <option value="">Choisir l'agrès…</option>
+                                    <option value="saut">Saut</option>
+                                    <option value="barres">Barres</option>
+                                    <option value="poutre">Poutre</option>
+                                    <option value="sol">Sol</option>
+                                    <option value="transversal">Transversal</option>
+                                </select>
+                                <select id="progression-family" class="min-w-0 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
+                                    <option value="">Choisir la famille technique…</option>
+                                    <option value="acro_forward">Acrobatie avant</option>
+                                    <option value="acro_backward">Acrobatie arrière</option>
+                                    <option value="flexibility">Souplesse</option>
+                                    <option value="strength_core">Force et gainage</option>
+                                    <option value="alignment">Alignement et tenue</option>
+                                    <option value="balance">Équilibre et proprioception</option>
+                                    <option value="power">Impulsion et détente</option>
+                                    <option value="coordination">Coordination et rythme</option>
+                                </select>
                                 <div class="flex gap-2">
                                     <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="hidden flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
                                     <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
                                 </div>
                             </form>
-                            <div id="progression-copy-panel" class="hidden rounded-lg border border-purple-200 bg-white p-3 space-y-3">
-                                <div class="flex items-center justify-between gap-2">
-                                    <div>
-                                        <p class="text-xs font-bold text-purple-800">Copier ce tableau vers une autre gymnaste</p>
-                                        <p class="text-[9px] text-gray-500">Les statuts et l'ordre des éléments sont conservés.</p>
-                                    </div>
-                                    <button type="button" onclick="closeProgressionCopyPanel()" class="text-gray-400" aria-label="Fermer">✕</button>
-                                </div>
-                                <select id="progression-copy-target" class="w-full rounded-lg border border-purple-200 bg-white p-2 text-xs"></select>
-                                <div class="space-y-1.5 text-[10px] text-gray-700">
-                                    <label class="flex items-start gap-2 rounded border border-gray-200 p-2 cursor-pointer">
-                                        <input type="radio" name="progression-copy-mode" value="merge" checked class="mt-0.5 accent-purple-600">
-                                        <span><strong>Ajouter les éléments manquants</strong><br><span class="text-gray-500">Conserve le tableau déjà présent chez la destinataire.</span></span>
-                                    </label>
-                                    <label class="flex items-start gap-2 rounded border border-red-100 p-2 cursor-pointer">
-                                        <input type="radio" name="progression-copy-mode" value="replace" class="mt-0.5 accent-red-600">
-                                        <span><strong>Remplacer entièrement</strong><br><span class="text-gray-500">Efface le tableau actuel de la destinataire avant la copie.</span></span>
-                                    </label>
-                                </div>
-                                <button type="button" onclick="confirmProgressionCopy()" class="w-full rounded-lg bg-purple-700 py-2 text-xs font-bold text-white">Copier le tableau</button>
-                            </div>
                         </div>
 
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
@@ -1273,10 +1288,27 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.12.0';
+        const APP_VERSION = '1.15.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
+        const PROGRESSION_APPARATUS = [
+            {key: 'saut', label: 'Saut'},
+            {key: 'barres', label: 'Barres'},
+            {key: 'poutre', label: 'Poutre'},
+            {key: 'sol', label: 'Sol'},
+            {key: 'transversal', label: 'Transversal'}
+        ];
+        const PROGRESSION_FAMILIES = [
+            {key: 'acro_forward', label: 'Acrobatie avant'},
+            {key: 'acro_backward', label: 'Acrobatie arrière'},
+            {key: 'flexibility', label: 'Souplesse'},
+            {key: 'strength_core', label: 'Force et gainage'},
+            {key: 'alignment', label: 'Alignement et tenue'},
+            {key: 'balance', label: 'Équilibre et proprioception'},
+            {key: 'power', label: 'Impulsion et détente'},
+            {key: 'coordination', label: 'Coordination et rythme'}
+        ];
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1341,6 +1373,7 @@
             ],
             gymnastes: [],
             scores: [],
+            progressionElements: [],
             progressions: {},
             mouvements: {},
             teams: [],
@@ -1396,30 +1429,109 @@
             return PROGRESSION_STATUSES.includes(value) ? value : 'not_acquired';
         }
 
+        function normalizeProgressionApparatus(value) {
+            const key = String(value || '').trim();
+            return PROGRESSION_APPARATUS.some(item => item.key === key) ? key : 'unclassified';
+        }
+
+        function normalizeProgressionFamily(value) {
+            const key = String(value || '').trim();
+            return PROGRESSION_FAMILIES.some(item => item.key === key) ? key : 'unclassified';
+        }
+
+        function getProgressionApparatusLabel(value) {
+            const item = PROGRESSION_APPARATUS.find(entry => entry.key === normalizeProgressionApparatus(value));
+            return item ? item.label : 'À classer';
+        }
+
+        function getProgressionFamilyLabel(value) {
+            const item = PROGRESSION_FAMILIES.find(entry => entry.key === normalizeProgressionFamily(value));
+            return item ? item.label : 'À classer';
+        }
+
         function normalizeProgressionData(target) {
             const source = target.progressions && typeof target.progressions === 'object' && !Array.isArray(target.progressions)
                 ? target.progressions
                 : {};
-            const normalized = {};
-            Object.entries(source).forEach(([gymId, items]) => {
-                if (!Array.isArray(items)) return;
-                const seenIds = new Set();
-                normalized[String(gymId)] = items.reduce((result, item, index) => {
-                    if (!item || typeof item !== 'object' || Array.isArray(item)) return result;
-                    const name = normalizeProgressionName(item.name);
-                    if (!name) return result;
-                    let id = String(item.id || `PROG-${gymId}-${index + 1}`).trim();
-                    while (seenIds.has(id)) id = `${id}-${index + 1}`;
-                    seenIds.add(id);
-                    result.push({
-                        id,
-                        name,
-                        status: normalizeProgressionStatus(item.status),
-                        updatedAt: String(item.updatedAt || '')
-                    });
-                    return result;
-                }, []);
+            const catalogSource = Array.isArray(target.progressionElements)
+                ? target.progressionElements
+                : [];
+            const elements = [];
+            const elementsByName = new Map();
+            const usedIds = new Set();
+
+            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatus = '', family = '') => {
+                const name = normalizeProgressionName(rawName);
+                if (!name) return null;
+                const key = name.toLocaleLowerCase('fr');
+                if (elementsByName.has(key)) return elementsByName.get(key);
+                const baseId = String(preferredId || `PROG-COMMON-${elements.length + 1}`).trim() || `PROG-COMMON-${elements.length + 1}`;
+                let id = baseId;
+                let suffix = 2;
+                while (usedIds.has(id)) {
+                    id = `${baseId}-${suffix}`;
+                    suffix += 1;
+                }
+                const element = {
+                    id,
+                    name,
+                    apparatus: normalizeProgressionApparatus(apparatus),
+                    family: normalizeProgressionFamily(family),
+                    updatedAt: String(updatedAt || '')
+                };
+                elements.push(element);
+                elementsByName.set(key, element);
+                usedIds.add(id);
+                return element;
+            };
+
+            catalogSource.forEach(element => {
+                if (!element || typeof element !== 'object' || Array.isArray(element)) return;
+                ensureElement(element.name, element.id, element.updatedAt, element.apparatus, element.family);
             });
+
+            const orderedGymIds = [];
+            (Array.isArray(target.gymnastes) ? target.gymnastes : []).forEach(gym => {
+                const gymId = String(gym && gym.id || '').trim();
+                if (gymId && !orderedGymIds.includes(gymId)) orderedGymIds.push(gymId);
+            });
+            Object.keys(source).forEach(gymId => {
+                const normalizedGymId = String(gymId);
+                const saved = source[gymId];
+                if (!Array.isArray(saved) && (!saved || typeof saved !== 'object')) return;
+                if (!orderedGymIds.includes(normalizedGymId)) orderedGymIds.push(normalizedGymId);
+            });
+
+            const normalized = {};
+            orderedGymIds.forEach(gymId => {
+                const saved = source[gymId];
+                const statuses = {};
+                if (Array.isArray(saved)) {
+                    saved.forEach(item => {
+                        if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+                        const element = ensureElement(item.name, item.id, item.updatedAt, item.apparatus, item.family);
+                        if (!element || statuses[element.id]) return;
+                        statuses[element.id] = {
+                            status: normalizeProgressionStatus(item.status),
+                            updatedAt: String(item.updatedAt || '')
+                        };
+                    });
+                } else if (saved && typeof saved === 'object') {
+                    Object.entries(saved).forEach(([elementId, value]) => {
+                        if (!usedIds.has(elementId)) return;
+                        const record = value && typeof value === 'object' && !Array.isArray(value)
+                            ? value
+                            : {status: value};
+                        statuses[elementId] = {
+                            status: normalizeProgressionStatus(record.status),
+                            updatedAt: String(record.updatedAt || '')
+                        };
+                    });
+                }
+                normalized[gymId] = statuses;
+            });
+
+            target.progressionElements = elements;
             target.progressions = normalized;
             return target;
         }
@@ -1777,6 +1889,8 @@
                 throw driveDataError('Sauvegarde invalide (valeurs des mouvements) : aucune donnée remplacée.');
             if (!result.progressions || typeof result.progressions !== 'object' || Array.isArray(result.progressions))
                 throw driveDataError('Sauvegarde invalide (progression) : aucune donnée remplacée.');
+            if (!Array.isArray(result.progressionElements))
+                throw driveDataError('Sauvegarde invalide (référentiel de progression) : aucune donnée remplacée.');
             return normalizeProgressionData(normalizeLevelCollection(result));
         }
 
@@ -1784,7 +1898,10 @@
             return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
                 Object.keys(snapshot.defaultSigleScoring || {}).length > 0 ||
-                Object.values(snapshot.progressions || {}).some(items => Array.isArray(items) && items.length > 0) ||
+                (Array.isArray(snapshot.progressionElements) && snapshot.progressionElements.length > 0) ||
+                Object.values(snapshot.progressions || {}).some(statuses =>
+                    statuses && typeof statuses === 'object' && Object.keys(statuses).length > 0
+                ) ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
         }
@@ -2335,6 +2452,8 @@
         let currentLevelId = null;
         let currentGymId = null;
         let myChart = null;
+        let progressionFamilyRadarChart = null;
+        let progressionApparatusRadarChart = null;
         let currentMvtAgres = "Saut";
         let currentCompetitionTeamId = null;
         let currentCompetitionTab = 'match';
@@ -3025,12 +3144,37 @@
 
         // ────────────────────────────────────────────────────────────── PROGRESSION
         // DES ÉLÉMENTS ──────────────────────────────────────────────────────────────
+        function getProgressionElements() {
+            if (!Array.isArray(data.progressionElements) ||
+                !data.progressions || typeof data.progressions !== 'object' || Array.isArray(data.progressions))
+                normalizeProgressionData(data);
+            return data.progressionElements;
+        }
+
+        function getGymnastProgressionStatusMap(gymId = currentGymId) {
+            if (!gymId) return {};
+            getProgressionElements();
+            if (!data.progressions[gymId] || typeof data.progressions[gymId] !== 'object' || Array.isArray(data.progressions[gymId]))
+                data.progressions[gymId] = {};
+            return data.progressions[gymId];
+        }
+
         function getGymnastProgression(gymId = currentGymId) {
             if (!gymId) return [];
-            if (!data.progressions || typeof data.progressions !== 'object' || Array.isArray(data.progressions))
-                data.progressions = {};
-            if (!Array.isArray(data.progressions[gymId])) data.progressions[gymId] = [];
-            return data.progressions[gymId];
+            const statuses = getGymnastProgressionStatusMap(gymId);
+            return getProgressionElements().map(element => {
+                const record = statuses[element.id] && typeof statuses[element.id] === 'object'
+                    ? statuses[element.id]
+                    : {};
+                return {
+                    id: element.id,
+                    name: element.name,
+                    apparatus: normalizeProgressionApparatus(element.apparatus),
+                    family: normalizeProgressionFamily(element.family),
+                    status: normalizeProgressionStatus(record.status),
+                    updatedAt: String(record.updatedAt || element.updatedAt || '')
+                };
+            });
         }
 
         function calculateProgressionSummary(items) {
@@ -3046,15 +3190,160 @@
             return summary;
         }
 
+        function getProgressionRadarValue(status) {
+            const normalized = normalizeProgressionStatus(status);
+            return normalized === 'acquired' ? 100 : normalized === 'in_progress' ? 50 : 0;
+        }
+
+        function getProgressionRadarData(items, dimension = 'family') {
+            const source = Array.isArray(items) ? items : [];
+            const byApparatus = dimension === 'apparatus';
+            const definitions = byApparatus ? PROGRESSION_APPARATUS : PROGRESSION_FAMILIES;
+            const field = byApparatus ? 'apparatus' : 'family';
+            const entries = definitions.map(definition => {
+                const matching = source.filter(item =>
+                    (byApparatus
+                        ? normalizeProgressionApparatus(item && item[field])
+                        : normalizeProgressionFamily(item && item[field])) === definition.key
+                );
+                const totalValue = matching.reduce((sum, item) => sum + getProgressionRadarValue(item.status), 0);
+                return {
+                    id: definition.key,
+                    label: definition.label,
+                    value: matching.length ? Math.round(totalValue / matching.length) : 0,
+                    count: matching.length
+                };
+            });
+            const unclassifiedCount = source.filter(item =>
+                (byApparatus
+                    ? normalizeProgressionApparatus(item && item[field])
+                    : normalizeProgressionFamily(item && item[field])) === 'unclassified'
+            ).length;
+            return {
+                entries,
+                total: source.length,
+                classifiedCount: source.length - unclassifiedCount,
+                unclassifiedCount,
+                dimension: byApparatus ? 'apparatus' : 'family'
+            };
+        }
+
+        function buildProgressionRadarSvg(items, dimension = 'family') {
+            const radar = getProgressionRadarData(items, dimension);
+            if (radar.total === 0)
+                return '<p style="color:#9ca3af; font-style:italic; font-size:12px; text-align:center;">Aucun élément de progression.</p>';
+            const axisCount = radar.entries.length;
+            const displayEntries = [...radar.entries];
+            const centerX = 220;
+            const centerY = 185;
+            const radius = 118;
+            const point = (index, ratio) => {
+                const angle = -Math.PI / 2 + (Math.PI * 2 * index) / axisCount;
+                return {
+                    x: centerX + Math.cos(angle) * radius * ratio,
+                    y: centerY + Math.sin(angle) * radius * ratio,
+                    angle
+                };
+            };
+            const polygon = ratio => displayEntries
+                .map((entry, index) => {
+                    const p = point(index, ratio);
+                    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+                })
+                .join(' ');
+            const grid = [0.25, 0.5, 0.75, 1]
+                .map(ratio => `<polygon points="${polygon(ratio)}" fill="none" stroke="#ddd6fe" stroke-width="1"/>`)
+                .join('');
+            const axes = displayEntries.map((entry, index) => {
+                const p = point(index, 1);
+                return `<line x1="${centerX}" y1="${centerY}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#e5e7eb" stroke-width="1"/>`;
+            }).join('');
+            const dataPoints = displayEntries.map((entry, index) => {
+                const p = point(index, entry.value / 100);
+                return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+            }).join(' ');
+            const chartColor = dimension === 'apparatus' ? '#2563eb' : '#7e22ce';
+            const dots = displayEntries.map((entry, index) => {
+                const p = point(index, entry.value / 100);
+                return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="${chartColor}"/>`;
+            }).join('');
+            const labels = displayEntries.map((entry, index) => {
+                const p = point(index, 1.2);
+                const anchor = Math.cos(p.angle) > 0.25 ? 'start' : Math.cos(p.angle) < -0.25 ? 'end' : 'middle';
+                const label = entry.label.length > 20 ? `${entry.label.slice(0, 18)}…` : entry.label;
+                return `<text x="${p.x.toFixed(1)}" y="${(p.y + 3).toFixed(1)}" text-anchor="${anchor}" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#374151">${escapeHtml(label)}</text>`;
+            }).join('');
+            return `<div style="page-break-inside:avoid; text-align:center;">
+                <svg viewBox="0 0 440 390" role="img" aria-label="Diagramme radar de progression" style="display:block; width:100%; max-width:440px; height:auto; margin:0 auto;">
+                    ${grid}${axes}
+                    <polygon points="${dataPoints}" fill="${chartColor}" fill-opacity="0.2" stroke="${chartColor}" stroke-width="3"/>
+                    ${dots}${labels}
+                    <text x="220" y="376" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">0 % : pas acquis · 50 % : en cours · 100 % : acquis</text>
+                </svg>
+                ${radar.unclassifiedCount ? `<p style="margin:0; color:#b45309; font-size:10px;">${radar.unclassifiedCount} élément${radar.unclassifiedCount === 1 ? '' : 's'} à classer, non inclus dans ce radar.</p>` : ''}
+            </div>`;
+        }
+
+        function drawProgressionRadarPDF(doc, items, centerX, centerY, radius, dimension = 'family') {
+            const radar = getProgressionRadarData(items, dimension);
+            if (radar.total === 0) return radar;
+            const axisCount = radar.entries.length;
+            const displayEntries = [...radar.entries];
+            const point = (index, ratio) => {
+                const angle = -Math.PI / 2 + (Math.PI * 2 * index) / axisCount;
+                return {
+                    x: centerX + Math.cos(angle) * radius * ratio,
+                    y: centerY + Math.sin(angle) * radius * ratio,
+                    angle
+                };
+            };
+            doc.setLineWidth(0.2);
+            doc.setDrawColor(221, 214, 254);
+            [0.25, 0.5, 0.75, 1].forEach(ratio => {
+                displayEntries.forEach((entry, index) => {
+                    const start = point(index, ratio);
+                    const end = point((index + 1) % axisCount, ratio);
+                    doc.line(start.x, start.y, end.x, end.y);
+                });
+            });
+            doc.setDrawColor(229, 231, 235);
+            displayEntries.forEach((entry, index) => {
+                const end = point(index, 1);
+                doc.line(centerX, centerY, end.x, end.y);
+            });
+            const chartColor = dimension === 'apparatus' ? [37, 99, 235] : [126, 34, 206];
+            doc.setDrawColor(...chartColor);
+            doc.setLineWidth(0.8);
+            const dataPoints = displayEntries.map((entry, index) => point(index, entry.value / 100));
+            dataPoints.forEach((start, index) => {
+                const end = dataPoints[(index + 1) % dataPoints.length];
+                doc.line(start.x, start.y, end.x, end.y);
+            });
+            doc.setFillColor(...chartColor);
+            dataPoints.forEach(pointData =>
+                doc.circle(pointData.x, pointData.y, 0.8, 'F')
+            );
+            doc.setTextColor(55, 65, 81);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.3);
+            radar.entries.forEach((entry, index) => {
+                const p = point(index, 1.22);
+                const label = entry.label.length > 18 ? `${entry.label.slice(0, 16)}...` : entry.label;
+                const cosine = Math.cos(p.angle);
+                doc.text(label, p.x, p.y + 1.2, {align: cosine > 0.3 ? 'left' : cosine < -0.3 ? 'right' : 'center'});
+            });
+            return radar;
+        }
+
         function progressionNameExists(name, ignoredItemId = '') {
             const key = normalizeProgressionName(name).toLocaleLowerCase('fr');
-            return getGymnastProgression().some(item =>
+            return getProgressionElements().some(item =>
                 item.id !== ignoredItemId && item.name.toLocaleLowerCase('fr') === key
             );
         }
 
         function createProgressionIdForGym(gymId) {
-            const items = getGymnastProgression(gymId);
+            const items = getProgressionElements();
             let id;
             do {
                 id = `PROG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -3066,56 +3355,71 @@
             return createProgressionIdForGym(currentGymId);
         }
 
-        function addProgressionItem(name, status = 'not_acquired') {
+        function addProgressionItem(name, status = 'not_acquired', apparatus = 'unclassified', family = 'unclassified') {
             if (!currentGymId) throw new Error('Ouvrez d’abord une fiche gymnaste.');
             const normalizedName = normalizeProgressionName(name);
             if (!normalizedName) throw new Error("Indiquez le nom de l'élément.");
             if (progressionNameExists(normalizedName)) throw new Error('Cet élément existe déjà dans le tableau.');
+            const now = new Date().toISOString();
             const item = {
                 id: createProgressionId(),
                 name: normalizedName,
-                status: normalizeProgressionStatus(status),
-                updatedAt: new Date().toISOString()
+                apparatus: normalizeProgressionApparatus(apparatus),
+                family: normalizeProgressionFamily(family),
+                updatedAt: now
             };
-            getGymnastProgression().push(item);
+            getProgressionElements().push(item);
+            getGymnastProgressionStatusMap()[item.id] = {
+                status: normalizeProgressionStatus(status),
+                updatedAt: now
+            };
             saveAllData();
-            return item;
+            return {...item, status: normalizeProgressionStatus(status)};
         }
 
-        function renameProgressionItem(itemId, name) {
-            const item = getGymnastProgression().find(entry => entry.id === itemId);
+        function renameProgressionItem(itemId, name, apparatus, family) {
+            const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) throw new Error('Élément introuvable.');
             const normalizedName = normalizeProgressionName(name);
             if (!normalizedName) throw new Error("Le nom de l'élément ne peut pas être vide.");
             if (progressionNameExists(normalizedName, itemId)) throw new Error('Cet élément existe déjà dans le tableau.');
             item.name = normalizedName;
+            if (apparatus !== undefined) item.apparatus = normalizeProgressionApparatus(apparatus);
+            if (family !== undefined) item.family = normalizeProgressionFamily(family);
             item.updatedAt = new Date().toISOString();
             saveAllData();
             return item;
         }
 
         function setProgressionStatus(itemId, status) {
-            const item = getGymnastProgression().find(entry => entry.id === itemId);
-            if (!item) throw new Error('Élément introuvable.');
-            item.status = normalizeProgressionStatus(status);
-            item.updatedAt = new Date().toISOString();
+            const element = getProgressionElements().find(entry => entry.id === itemId);
+            if (!element) throw new Error('Élément introuvable.');
+            const record = {
+                status: normalizeProgressionStatus(status),
+                updatedAt: new Date().toISOString()
+            };
+            getGymnastProgressionStatusMap()[itemId] = record;
             saveAllData();
             renderProgressionTable();
             renderProgressionStatistics();
-            return item;
+            return {...element, ...record};
         }
 
         function removeProgressionItem(itemId) {
-            const items = getGymnastProgression();
+            const items = getProgressionElements();
             const index = items.findIndex(item => item.id === itemId);
             if (index < 0) throw new Error('Élément introuvable.');
             const removed = items.splice(index, 1)[0];
+            Object.values(data.progressions || {}).forEach(statuses => {
+                if (statuses && typeof statuses === 'object' && !Array.isArray(statuses))
+                    delete statuses[itemId];
+            });
             saveAllData();
             return removed;
         }
 
         function moveProgressionItem(itemId, direction) {
-            const items = getGymnastProgression();
+            const items = getProgressionElements();
             const index = items.findIndex(item => item.id === itemId);
             if (index < 0) throw new Error('Élément introuvable.');
             const targetIndex = index + Number(direction);
@@ -3131,121 +3435,53 @@
         function copyProgressionTable(sourceGymId, targetGymId, mode = 'merge') {
             if (!sourceGymId || !targetGymId) throw new Error('Sélectionnez une gymnaste destinataire.');
             if (sourceGymId === targetGymId) throw new Error('Choisissez une autre gymnaste.');
-            const sourceItems = getGymnastProgression(sourceGymId).map(item => ({...item}));
-            if (sourceItems.length === 0) throw new Error('Le tableau à copier est vide.');
+            const sourceStatuses = getGymnastProgressionStatusMap(sourceGymId);
+            const targetStatuses = getGymnastProgressionStatusMap(targetGymId);
             const copyMode = mode === 'replace' ? 'replace' : 'merge';
-            const now = new Date().toISOString();
             let added = 0;
-
             if (copyMode === 'replace') {
-                data.progressions[targetGymId] = [];
-                sourceItems.forEach(item => {
-                    data.progressions[targetGymId].push({
-                        id: createProgressionIdForGym(targetGymId),
-                        name: normalizeProgressionName(item.name),
-                        status: normalizeProgressionStatus(item.status),
-                        updatedAt: now
-                    });
-                    added += 1;
-                });
+                data.progressions[targetGymId] = {};
             } else {
-                const targetItems = getGymnastProgression(targetGymId);
-                const existingNames = new Set(targetItems.map(item =>
-                    normalizeProgressionName(item.name).toLocaleLowerCase('fr')
-                ));
-                sourceItems.forEach(item => {
-                    const name = normalizeProgressionName(item.name);
-                    const key = name.toLocaleLowerCase('fr');
-                    if (!name || existingNames.has(key)) return;
-                    targetItems.push({
-                        id: createProgressionIdForGym(targetGymId),
-                        name,
-                        status: normalizeProgressionStatus(item.status),
-                        updatedAt: now
-                    });
-                    existingNames.add(key);
-                    added += 1;
-                });
+                Object.assign(data.progressions[targetGymId], targetStatuses);
             }
-
+            getProgressionElements().forEach(element => {
+                if (!sourceStatuses[element.id]) return;
+                if (copyMode === 'merge' && data.progressions[targetGymId][element.id]) return;
+                data.progressions[targetGymId][element.id] = {...sourceStatuses[element.id]};
+                added += 1;
+            });
             if (added > 0 || copyMode === 'replace') saveAllData();
             return {
                 added,
-                total: getGymnastProgression(targetGymId).length,
+                total: getProgressionElements().length,
                 mode: copyMode
             };
         }
 
         function openProgressionCopyPanel() {
-            if (getGymnastProgression().length === 0) {
-                alert('⚠️ Ajoutez au moins un élément avant de copier le tableau.');
-                return;
-            }
-            const panel = document.getElementById('progression-copy-panel');
-            const select = document.getElementById('progression-copy-target');
-            const gymnasts = [...data.gymnastes]
-                .filter(gym => gym.id !== currentGymId)
-                .sort((a, b) => `${a.nom || ''} ${a.prenom || ''}`.localeCompare(
-                    `${b.nom || ''} ${b.prenom || ''}`,
-                    'fr',
-                    {sensitivity: 'base'}
-                ));
-            if (gymnasts.length === 0) {
-                alert('⚠️ Aucune autre gymnaste disponible.');
-                return;
-            }
-            select.innerHTML = '';
-            gymnasts.forEach(gym => {
-                const option = document.createElement('option');
-                option.value = gym.id;
-                option.textContent = `${gym.nom || ''} ${gym.prenom || ''}`.trim();
-                select.appendChild(option);
-            });
-            const merge = document.querySelector('input[name="progression-copy-mode"][value="merge"]');
-            if (merge) merge.checked = true;
-            panel.classList.remove('hidden');
-            select.focus();
+            alert('ℹ️ La liste des éléments est désormais commune à toutes les gymnastes. Aucune copie n’est nécessaire.');
         }
 
         function closeProgressionCopyPanel() {
-            const panel = document.getElementById('progression-copy-panel');
-            if (panel) panel.classList.add('hidden');
+            return true;
         }
 
         function confirmProgressionCopy() {
-            const targetGymId = document.getElementById('progression-copy-target').value;
-            const selectedMode = document.querySelector('input[name="progression-copy-mode"]:checked');
-            const mode = selectedMode ? selectedMode.value : 'merge';
-            const targetGymnast = data.gymnastes.find(gym => gym.id === targetGymId);
-            if (!targetGymnast) {
-                alert('⚠️ Sélectionnez une gymnaste destinataire.');
-                return;
-            }
-            const targetName = `${targetGymnast.prenom || ''} ${targetGymnast.nom || ''}`.trim();
-            const targetCount = getGymnastProgression(targetGymId).length;
-            if (mode === 'replace' && targetCount > 0 && !confirm(
-                `Remplacer les ${targetCount} élément${targetCount === 1 ? '' : 's'} du tableau de ${targetName} ?`
-            )) return;
-            try {
-                const result = copyProgressionTable(currentGymId, targetGymId, mode);
-                closeProgressionCopyPanel();
-                if (mode === 'merge' && result.added === 0) {
-                    alert(`ℹ️ ${targetName} possède déjà tous ces éléments.`);
-                    return;
-                }
-                alert(`✅ Tableau copié vers ${targetName} : ${result.added} élément${result.added === 1 ? '' : 's'}, ${result.total} au total.`);
-            } catch (error) {
-                alert(`❌ ${error.message}`);
-            }
+            openProgressionCopyPanel();
+            return false;
         }
 
         function saveProgressionItem(event) {
             event.preventDefault();
             const input = document.getElementById('progression-element-name');
+            const apparatus = document.getElementById('progression-apparatus');
+            const family = document.getElementById('progression-family');
             const editId = document.getElementById('edit-progression-id').value;
             try {
-                if (editId) renameProgressionItem(editId, input.value);
-                else addProgressionItem(input.value);
+                if (!apparatus.value || !family.value)
+                    throw new Error("Choisissez l'agrès et la famille technique.");
+                if (editId) renameProgressionItem(editId, input.value, apparatus.value, family.value);
+                else addProgressionItem(input.value, 'not_acquired', apparatus.value, family.value);
                 cancelProgressionEdit();
                 renderProgressionTable();
                 renderProgressionStatistics();
@@ -3260,6 +3496,8 @@
             if (!item) return;
             document.getElementById('edit-progression-id').value = item.id;
             document.getElementById('progression-element-name').value = item.name;
+            document.getElementById('progression-apparatus').value = item.apparatus === 'unclassified' ? '' : item.apparatus;
+            document.getElementById('progression-family').value = item.family === 'unclassified' ? '' : item.family;
             document.getElementById('btn-save-progression').textContent = 'Enregistrer';
             document.getElementById('btn-cancel-progression-edit').classList.remove('hidden');
             document.getElementById('progression-element-name').focus();
@@ -3268,13 +3506,17 @@
         function cancelProgressionEdit() {
             document.getElementById('edit-progression-id').value = '';
             document.getElementById('progression-element-name').value = '';
+            document.getElementById('progression-apparatus').value = '';
+            document.getElementById('progression-family').value = '';
             document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
             document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
         }
 
         function deleteProgressionItem(itemId) {
             const item = getGymnastProgression().find(entry => entry.id === itemId);
-            if (!item || !confirm(`Supprimer l'élément « ${item.name} » ?`)) return;
+            if (!item || !confirm(
+                `Supprimer l'élément « ${item.name} » pour toutes les gymnastes ?\n\nLes statuts personnels associés seront également supprimés.`
+            )) return;
             try {
                 removeProgressionItem(itemId);
                 if (document.getElementById('edit-progression-id').value === itemId) cancelProgressionEdit();
@@ -3326,6 +3568,25 @@
             return button;
         }
 
+        function createProgressionClassificationBadges(item) {
+            const container = document.createElement('div');
+            container.className = 'mt-1 flex flex-wrap gap-1';
+            const apparatus = document.createElement('span');
+            const apparatusMissing = normalizeProgressionApparatus(item.apparatus) === 'unclassified';
+            apparatus.className = apparatusMissing
+                ? 'rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700'
+                : 'rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700';
+            apparatus.textContent = apparatusMissing ? 'Agrès à classer' : getProgressionApparatusLabel(item.apparatus);
+            const family = document.createElement('span');
+            const familyMissing = normalizeProgressionFamily(item.family) === 'unclassified';
+            family.className = familyMissing
+                ? 'rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700'
+                : 'rounded bg-purple-50 px-1.5 py-0.5 text-[9px] font-bold text-purple-700';
+            family.textContent = familyMissing ? 'Famille à classer' : getProgressionFamilyLabel(item.family);
+            container.append(apparatus, family);
+            return container;
+        }
+
         function renderProgressionTable() {
             const body = document.getElementById('progression-table-body');
             const mobileList = document.getElementById('progression-mobile-list');
@@ -3343,6 +3604,7 @@
                 const name = document.createElement('p');
                 name.className = 'font-bold text-gray-800 break-words';
                 name.textContent = item.name;
+                const classifications = createProgressionClassificationBadges(item);
                 const actions = document.createElement('div');
                 actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
                 const up = createProgressionMoveButton(item, index, -1, items.length);
@@ -3358,7 +3620,7 @@
                 remove.textContent = 'Supprimer';
                 remove.onclick = () => deleteProgressionItem(item.id);
                 actions.append(up, down, edit, remove);
-                nameCell.append(name, actions);
+                nameCell.append(name, classifications, actions);
                 row.append(
                     nameCell,
                     createProgressionStatusCell(item, 'not_acquired', 'accent-red-600'),
@@ -3381,6 +3643,7 @@
                     createProgressionMoveButton(item, index, 1, items.length)
                 );
                 cardHeader.append(cardName, orderButtons);
+                const cardClassifications = createProgressionClassificationBadges(item);
 
                 const statusButtons = document.createElement('div');
                 statusButtons.className = 'mt-3 flex gap-1.5';
@@ -3403,7 +3666,7 @@
                 mobileRemove.textContent = 'Supprimer';
                 mobileRemove.onclick = () => deleteProgressionItem(item.id);
                 cardActions.append(mobileEdit, mobileRemove);
-                card.append(cardHeader, statusButtons, cardActions);
+                card.append(cardHeader, cardClassifications, statusButtons, cardActions);
                 mobileList.appendChild(card);
             });
         }
@@ -3434,6 +3697,108 @@
                 line.append(bullet, name);
                 container.appendChild(line);
             });
+        }
+
+        function createProgressionRadarChart(canvas, radar, color) {
+            return new Chart(canvas.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: radar.entries.map(entry => entry.label),
+                    datasets: [{
+                        label: 'Progression',
+                        data: radar.entries.map(entry => entry.value),
+                        borderColor: color.border,
+                        backgroundColor: color.background,
+                        pointBackgroundColor: color.border,
+                        pointBorderColor: '#ffffff',
+                        pointRadius: 4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {display: false},
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const value = Number(context.raw);
+                                    const entry = radar.entries[context.dataIndex];
+                                    return `${value} % · ${entry.count} élément${entry.count === 1 ? '' : 's'}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 25,
+                                backdropColor: 'transparent',
+                                color: '#6b7280',
+                                font: {size: 8},
+                                callback(value) {
+                                    return `${Number(value)} %`;
+                                }
+                            },
+                            pointLabels: {
+                                color: '#374151',
+                                font: {size: 9, weight: '600'},
+                                callback(label) {
+                                    return label.length > 18 ? `${label.slice(0, 16)}…` : label;
+                                }
+                            },
+                            grid: {color: '#ddd6fe'},
+                            angleLines: {color: '#e5e7eb'}
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProgressionRadarChart(items) {
+            const card = document.getElementById('progression-radar-card');
+            const familyCanvas = document.getElementById('progression-family-radar-chart');
+            const apparatusCanvas = document.getElementById('progression-apparatus-radar-chart');
+            const note = document.getElementById('progression-radar-note');
+            if (!card || !familyCanvas || !apparatusCanvas || !note) return;
+            if (progressionFamilyRadarChart) {
+                progressionFamilyRadarChart.destroy();
+                progressionFamilyRadarChart = null;
+            }
+            if (progressionApparatusRadarChart) {
+                progressionApparatusRadarChart.destroy();
+                progressionApparatusRadarChart = null;
+            }
+            if (!Array.isArray(items) || items.length === 0 || typeof Chart === 'undefined') {
+                card.classList.add('hidden');
+                return;
+            }
+            const familyRadar = getProgressionRadarData(items, 'family');
+            const apparatusRadar = getProgressionRadarData(items, 'apparatus');
+            card.classList.remove('hidden');
+            const missing = [];
+            if (familyRadar.unclassifiedCount)
+                missing.push(`${familyRadar.unclassifiedCount} sans famille technique`);
+            if (apparatusRadar.unclassifiedCount)
+                missing.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
+            note.textContent = missing.length
+                ? `À classer : ${missing.join(' · ')}. Ces éléments ne sont pas inclus dans le radar concerné.`
+                : 'Moyenne des éléments : pas acquis = 0 %, en cours = 50 %, acquis = 100 %.';
+            progressionFamilyRadarChart = createProgressionRadarChart(
+                familyCanvas,
+                familyRadar,
+                {border: '#7e22ce', background: 'rgba(126, 34, 206, 0.18)'}
+            );
+            progressionApparatusRadarChart = createProgressionRadarChart(
+                apparatusCanvas,
+                apparatusRadar,
+                {border: '#2563eb', background: 'rgba(37, 99, 235, 0.16)'}
+            );
         }
 
         function renderProgressionStatistics() {
@@ -3467,6 +3832,7 @@
                 items.filter(item => item.status === 'not_acquired'),
                 'Aucun élément non validé.'
             );
+            renderProgressionRadarChart(items);
             return summary;
         }
 
@@ -3506,23 +3872,50 @@
                 doc.text(`En cours : ${summary.in_progress}`, 103, 39);
                 doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 145, 39);
 
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text('Profils de progression', 14, 49);
+                doc.setFontSize(8);
+                doc.setTextColor(107, 33, 168);
+                doc.text('Familles techniques', 57, 57, {align: 'center'});
+                doc.setTextColor(29, 78, 216);
+                doc.text('Agrès', 153, 57, {align: 'center'});
+                const familyRadar = drawProgressionRadarPDF(doc, items, 57, 84, 19, 'family');
+                const apparatusRadar = drawProgressionRadarPDF(doc, items, 153, 84, 19, 'apparatus');
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(107, 114, 128);
+                doc.text('0 % : pas acquis · 50 % : en cours · 100 % : acquis', 105, 113, {align: 'center'});
+                const classificationWarnings = [];
+                if (familyRadar.unclassifiedCount)
+                    classificationWarnings.push(`${familyRadar.unclassifiedCount} sans famille`);
+                if (apparatusRadar.unclassifiedCount)
+                    classificationWarnings.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
+                if (classificationWarnings.length)
+                    doc.text(`À classer : ${classificationWarnings.join(' · ')} (non inclus dans le radar concerné)`, 105, 118, {align: 'center'});
+
                 doc.autoTable({
-                    startY: 47,
-                    head: [["Nom de l'élément", 'Pas acquis', 'En cours', 'Acquis']],
+                    startY: classificationWarnings.length ? 124 : 120,
+                    head: [["Nom de l'élément", 'Agrès', 'Famille', 'Pas acquis', 'En cours', 'Acquis']],
                     body: items.map(item => [
                         item.name,
+                        getProgressionApparatusLabel(item.apparatus),
+                        getProgressionFamilyLabel(item.family),
                         item.status === 'not_acquired' ? 'X' : '',
                         item.status === 'in_progress' ? 'X' : '',
                         item.status === 'acquired' ? 'X' : ''
                     ]),
                     theme: 'grid',
-                    styles: {fontSize: 10, cellPadding: 3, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
+                    styles: {fontSize: 7.5, cellPadding: 2, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                     headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
                     columnStyles: {
-                        0: {cellWidth: 100, halign: 'left', fontStyle: 'bold'},
-                        1: {cellWidth: 29, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                        2: {cellWidth: 29, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                        3: {cellWidth: 29, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                        0: {cellWidth: 48, halign: 'left', fontStyle: 'bold'},
+                        1: {cellWidth: 23, halign: 'left'},
+                        2: {cellWidth: 44, halign: 'left'},
+                        3: {cellWidth: 24, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                        4: {cellWidth: 24, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                        5: {cellWidth: 24, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                     },
                     margin: {left: 11, right: 11, bottom: 14},
                     rowPageBreak: 'avoid'
@@ -6234,6 +6627,46 @@
             }
         }
 
+        function buildGymnastProgressionExportHtml(gymId = currentGymId) {
+            const items = getGymnastProgression(gymId);
+            if (items.length === 0) {
+                return `<h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:35px;">🎯 Progression des éléments</h2>
+                    <p style="color:#9ca3af; font-style:italic; font-size:12px;">Aucun élément de progression enregistré.</p>`;
+            }
+            const summary = calculateProgressionSummary(items);
+            const rows = items.map(item => `<tr style="text-align:center; page-break-inside:avoid;">
+                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left; font-weight:600;">${escapeHtml(item.name)}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionApparatusLabel(item.apparatus))}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyLabel(item.family))}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_acquired' ? 'X' : ''}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; color:#d97706; font-weight:bold;">${item.status === 'in_progress' ? 'X' : ''}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
+            </tr>`).join('');
+            return `<section style="margin-top:35px;">
+                <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937;">🎯 Progression des éléments</h2>
+                <div style="display:flex; gap:8px; margin:12px 0; text-align:center; font-size:11px;">
+                    <div style="flex:1; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.not_acquired}</strong>Pas acquis</div>
+                    <div style="flex:1; border:1px solid #fde68a; background:#fffbeb; color:#b45309; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.in_progress}</strong>En cours</div>
+                    <div style="flex:1; border:1px solid #bbf7d0; background:#f0fdf4; color:#15803d; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.acquired}</strong>Acquis (${summary.acquiredPercent} %)</div>
+                </div>
+                <h3 style="font-size:12px; color:#6b21a8; margin:18px 0 5px; text-align:center;">Profil par familles techniques</h3>
+                ${buildProgressionRadarSvg(items, 'family')}
+                <h3 style="font-size:12px; color:#1d4ed8; margin:18px 0 5px; text-align:center; page-break-before:auto;">Progression par agrès</h3>
+                ${buildProgressionRadarSvg(items, 'apparatus')}
+                <table style="width:100%; border-collapse:collapse; margin-top:18px; font-size:10px;">
+                    <thead><tr style="background:#f3e8ff; color:#581c87;">
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:31%;">Nom de l'élément</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:13%;">Agrès</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:26%;">Famille</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px;">Pas acquis</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px;">En cours</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px;">Acquis</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </section>`;
+        }
+
         function exportGymnastePDF() {
             if (typeof html2pdf === 'undefined') {
                 alert("❌ La bibliothèque PDF n'est pas encore chargée. Vérifiez votre connexion internet et rechargez la page.");
@@ -6299,6 +6732,8 @@
                 scoresHtml += '</tbody></table>';
             }
 
+            const progressionHtml = buildGymnastProgressionExportHtml(currentGymId);
+
             const element = document.createElement('div');
             element.style.padding = '30px';
             element.style.fontFamily = '"Segoe UI", system-ui, sans-serif';
@@ -6327,6 +6762,8 @@
 
                 <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:25px;">📈 Évolution des Performances</h2>
                 ${chartImgHtml}
+
+                ${progressionHtml}
 
                 <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:35px;">🏆 Historique des Évaluations</h2>
                 ${scoresHtml}
