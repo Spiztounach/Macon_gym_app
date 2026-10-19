@@ -47,7 +47,7 @@
                 overflow-wrap: anywhere;
             }
             /* Garder les boutons des fenêtres accessibles avec une faible hauteur. */
-            #modal-add > div, #modal-team > div, #modal-custom-sigle > div {
+            #modal-add > div, #modal-team > div, #modal-custom-sigle > div, #modal-levels > div {
                 display: flex;
                 flex-direction: column;
                 max-height: calc(100vh - 2rem);
@@ -55,11 +55,13 @@
             }
             #modal-add > div > :first-child,
             #modal-team > div > :first-child,
-            #modal-custom-sigle > div > :first-child {
+            #modal-custom-sigle > div > :first-child,
+            #modal-levels > div > :first-child {
                 flex-shrink: 0;
             }
             #form-add-gym, #modal-team > div > :last-child,
-            #modal-custom-sigle > div > :last-child {
+            #modal-custom-sigle > div > :last-child,
+            #modal-levels > div > :last-child {
                 min-height: 0;
                 overflow-y: auto;
             }
@@ -270,18 +272,18 @@
                                 onchange="updateCustomColor('header', this.value)"
                                 class="w-8 h-7 rounded cursor-pointer">
                         </div>
-                        <div
+                        <div id="color-fed-a-row"
                             class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">Fédéral A :</label>
+                            <label id="color-fed-a-label" class="text-xs font-medium text-gray-700">Fédéral A :</label>
                             <input
                                 type="color"
                                 id="color-fed-a"
                                 onchange="updateCustomColor('fed-a', this.value)"
                                 class="w-8 h-7 rounded cursor-pointer">
                         </div>
-                        <div
+                        <div id="color-fed-b-row"
                             class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">Fédéral B :</label>
+                            <label id="color-fed-b-label" class="text-xs font-medium text-gray-700">Fédéral B :</label>
                             <input
                                 type="color"
                                 id="color-fed-b"
@@ -328,7 +330,13 @@
 
             <!-- ═══════════════════════════════════════ SCREEN LEVELS ═══ -->
             <section id="screen-levels" class="space-y-4">
-                <h2 class="text-lg font-semibold text-gray-700 mb-2">Sélectionnez une catégorie :</h2>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-gray-700">Sélectionnez une catégorie :</h2>
+                    <button
+                        type="button"
+                        onclick="openLevelsManager()"
+                        class="shrink-0 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-700 hover:bg-teal-100">⚙️ Gérer</button>
+                </div>
                 <div id="levels-list" class="grid grid-cols-1 gap-3"></div>
             </section>
 
@@ -382,21 +390,25 @@
 
                 </div>
 
-                <div class="flex border-b border-gray-200 bg-gray-50 text-xs">
+                <div class="flex overflow-x-auto border-b border-gray-200 bg-gray-50 text-xs">
                     <button
-                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        class="min-w-[84px] flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
                         id="tab-infos"
                         onclick="switchTab('infos')">Fiche Perso</button>
                     <button
-                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        class="min-w-[84px] flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
                         id="tab-saisie"
                         onclick="switchTab('saisie')">Saisie Notes</button>
                     <button
-                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        class="min-w-[84px] flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
                         id="tab-suivi"
                         onclick="switchTab('suivi')">Statistiques</button>
                     <button
-                        class="flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        class="min-w-[84px] flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
+                        id="tab-progression"
+                        onclick="switchTab('progression')">Progression</button>
+                    <button
+                        class="min-w-[84px] flex-1 py-3 text-center font-medium border-b-2 focus:outline-none"
                         id="tab-mouvements"
                         onclick="switchTab('mouvements')">Mouvements</button>
                 </div>
@@ -597,6 +609,25 @@
 
                     <!-- TAB : Statistiques -->
                     <div id="content-suivi" class="tab-content space-y-4">
+                        <div id="progression-statistics-card" class="rounded-xl border border-purple-200 bg-purple-50 p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Progression des éléments</h3>
+                                    <p id="progression-statistics-total" class="text-[10px] text-purple-600">Aucun élément enregistré</p>
+                                </div>
+                                <span id="progression-statistics-percent" class="rounded-full bg-white px-3 py-1.5 text-sm font-black text-purple-700 shadow-sm">0 %</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-white border border-purple-100 flex" aria-label="Répartition de la progression">
+                                <div id="progression-bar-not-acquired" class="h-full bg-red-400 transition-all" style="width:0%"></div>
+                                <div id="progression-bar-in-progress" class="h-full bg-amber-400 transition-all" style="width:0%"></div>
+                                <div id="progression-bar-acquired" class="h-full bg-green-500 transition-all" style="width:0%"></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="rounded-lg border border-red-100 bg-white p-2"><span id="progression-count-not-acquired" class="block text-lg font-black text-red-600">0</span><span class="text-[9px] font-semibold text-gray-500">Pas acquis</span></div>
+                                <div class="rounded-lg border border-amber-100 bg-white p-2"><span id="progression-count-in-progress" class="block text-lg font-black text-amber-600">0</span><span class="text-[9px] font-semibold text-gray-500">En cours</span></div>
+                                <div class="rounded-lg border border-green-100 bg-white p-2"><span id="progression-count-acquired" class="block text-lg font-black text-green-600">0</span><span class="text-[9px] font-semibold text-gray-500">Acquis</span></div>
+                            </div>
+                        </div>
                         <div
                             class="bg-white p-2 border border-gray-100 rounded-xl shadow-inner space-y-2">
                             <select
@@ -613,6 +644,42 @@
                             <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Historique des Saisies</h3>
                             <div id="scores-history-list" class="space-y-2"></div>
                         </div>
+                    </div>
+
+                    <!-- TAB : Progression des éléments -->
+                    <div id="content-progression" class="tab-content space-y-4">
+                        <div class="rounded-xl border border-purple-100 bg-purple-50 p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
+                                    <p class="text-[10px] text-purple-600">Ajoutez un élément puis cochez son état d'acquisition.</p>
+                                </div>
+                                <button type="button" onclick="exportProgressionPDF()" class="shrink-0 rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                            </div>
+                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="flex flex-col gap-2 sm:flex-row">
+                                <input type="hidden" id="edit-progression-id">
+                                <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
+                                <div class="flex gap-2">
+                                    <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="hidden flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
+                                    <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="w-full min-w-[540px] border-collapse text-xs">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="w-[55%] border-b border-r border-gray-200 p-2.5 text-left">Nom de l'élément</th>
+                                        <th class="border-b border-r border-gray-200 p-2 text-center text-red-700">Pas acquis</th>
+                                        <th class="border-b border-r border-gray-200 p-2 text-center text-amber-700">En cours</th>
+                                        <th class="border-b border-gray-200 p-2 text-center text-green-700">Acquis</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="progression-table-body"></tbody>
+                            </table>
+                        </div>
+                        <p id="progression-empty-state" class="hidden py-3 text-center text-[11px] italic text-gray-400">Aucun élément de progression enregistré.</p>
                     </div>
 
                     <!-- TAB : Mouvements -->
@@ -981,6 +1048,48 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════ MODAL CATÉGORIES ═══ -->
+    <div
+        id="modal-levels"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden text-xs">
+            <div class="bg-teal-700 text-white p-4 font-bold flex justify-between items-center">
+                <span>Gérer les catégories</span>
+                <button type="button" onclick="closeLevelsManager()" class="text-white">✕</button>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <form onsubmit="createLevelFromManager(event)" class="rounded-xl border border-teal-100 bg-teal-50 p-3 space-y-2">
+                    <label for="new-level-name" class="block font-bold text-teal-800">Nouvelle catégorie</label>
+                    <div class="flex gap-2">
+                        <input
+                            id="new-level-name"
+                            type="text"
+                            maxlength="60"
+                            autocomplete="off"
+                            placeholder="Ex. Performance, Loisir…"
+                            class="min-w-0 flex-1 rounded-md border border-teal-200 bg-white p-2">
+                        <button type="submit" class="rounded-md bg-teal-700 px-3 py-2 font-bold text-white">＋ Créer</button>
+                    </div>
+                </form>
+
+                <p id="levels-manager-status" role="status" aria-live="polite" class="hidden rounded-lg px-3 py-2 font-semibold"></p>
+                <div id="levels-manager-list" class="space-y-3"></div>
+
+                <div id="level-delete-panel" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 space-y-3">
+                    <p id="level-delete-message" class="font-semibold text-red-800"></p>
+                    <label for="level-delete-target" class="block font-semibold text-red-700">Déplacer les gymnastes vers :</label>
+                    <select id="level-delete-target" class="w-full rounded-md border border-red-200 bg-white p-2"></select>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="cancelLevelDeletion()" class="flex-1 rounded-md bg-white py-2 font-semibold text-gray-600 border border-gray-200">Annuler</button>
+                        <button type="button" onclick="confirmLevelDeletion()" class="flex-1 rounded-md bg-red-600 py-2 font-bold text-white">Déplacer et supprimer</button>
+                    </div>
+                </div>
+
+                <p class="text-[10px] leading-relaxed text-gray-500">Le bloc Compétition reste protégé. Renommer une catégorie conserve toutes ses fiches et statistiques.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- ════════════════════════════════════════════ MODAL ÉQUIPE ═══ -->
     <div
         id="modal-team"
@@ -1125,7 +1234,10 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.9.0';
+        const APP_VERSION = '1.11.0';
+        const COMPETITION_LEVEL_ID = 'COMP-ZONE';
+        const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
+        const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
@@ -1190,6 +1302,7 @@
             ],
             gymnastes: [],
             scores: [],
+            progressions: {},
             mouvements: {},
             teams: [],
             competitionSessions: [],
@@ -1210,6 +1323,70 @@
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
+        let pendingLevelDeletionId = null;
+
+        function normalizeLevelName(value) {
+            return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+        }
+
+        function normalizeLevelCollection(target) {
+            const source = Array.isArray(target.levels) ? target.levels : [];
+            const seenIds = new Set();
+            const normalized = [];
+            source.forEach(level => {
+                if (!level || typeof level !== 'object' || Array.isArray(level)) return;
+                const id = String(level.id || '').trim();
+                const name = normalizeLevelName(level.name);
+                if (!id || id === COMPETITION_LEVEL_ID || !name || seenIds.has(id)) return;
+                seenIds.add(id);
+                normalized.push({...level, id, name});
+            });
+            if (normalized.length === 0) {
+                normalized.push({id: 'NIV-A', name: 'Fédéral A'}, {id: 'NIV-B', name: 'Fédéral B'});
+            }
+            normalized.push({id: COMPETITION_LEVEL_ID, name: COMPETITION_LEVEL_NAME});
+            target.levels = normalized;
+            return target;
+        }
+
+        function normalizeProgressionName(value) {
+            return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 100);
+        }
+
+        function normalizeProgressionStatus(value) {
+            return PROGRESSION_STATUSES.includes(value) ? value : 'not_acquired';
+        }
+
+        function normalizeProgressionData(target) {
+            const source = target.progressions && typeof target.progressions === 'object' && !Array.isArray(target.progressions)
+                ? target.progressions
+                : {};
+            const normalized = {};
+            Object.entries(source).forEach(([gymId, items]) => {
+                if (!Array.isArray(items)) return;
+                const seenIds = new Set();
+                normalized[String(gymId)] = items.reduce((result, item, index) => {
+                    if (!item || typeof item !== 'object' || Array.isArray(item)) return result;
+                    const name = normalizeProgressionName(item.name);
+                    if (!name) return result;
+                    let id = String(item.id || `PROG-${gymId}-${index + 1}`).trim();
+                    while (seenIds.has(id)) id = `${id}-${index + 1}`;
+                    seenIds.add(id);
+                    result.push({
+                        id,
+                        name,
+                        status: normalizeProgressionStatus(item.status),
+                        updatedAt: String(item.updatedAt || '')
+                    });
+                    return result;
+                }, []);
+            });
+            target.progressions = normalized;
+            return target;
+        }
+
+        normalizeLevelCollection(data);
+        normalizeProgressionData(data);
         // Fonction globale pour compresser et redimensionner une image avant stockage
         function compressImage(file, maxWidth, maxHeight, quality, callback) {
             const reader = new FileReader();
@@ -1272,6 +1449,8 @@
                     data.defaultSigleScoring = {};
                 if (!Array.isArray(data.deletedDefaultSigles))
                     data.deletedDefaultSigles = [];
+                normalizeLevelCollection(data);
+                normalizeProgressionData(data);
                 }
             catch (e) {
                 console.error('[GymSuivi] Erreur lecture localStorage :', e);
@@ -1279,6 +1458,8 @@
         })();
 
         function saveAllData() {
+            normalizeLevelCollection(data);
+            normalizeProgressionData(data);
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller)
                 syncBirthdayStateWithServiceWorker(false).catch(() => {});
@@ -1391,6 +1572,8 @@
                             data.defaultSigleScoring = {};
                         if (!Array.isArray(data.deletedDefaultSigles))
                             data.deletedDefaultSigles = [];
+                        normalizeLevelCollection(data);
+                        normalizeProgressionData(data);
                         saveAllData();
                         renderLevels();
                         applyCustomAppIdentity();
@@ -1553,13 +1736,16 @@
                 throw driveDataError('Sauvegarde invalide (mouvements) : aucune donnée remplacée.');
             if (!result.defaultSigleScoring || typeof result.defaultSigleScoring !== 'object' || Array.isArray(result.defaultSigleScoring))
                 throw driveDataError('Sauvegarde invalide (valeurs des mouvements) : aucune donnée remplacée.');
-            return result;
+            if (!result.progressions || typeof result.progressions !== 'object' || Array.isArray(result.progressions))
+                throw driveDataError('Sauvegarde invalide (progression) : aucune donnée remplacée.');
+            return normalizeProgressionData(normalizeLevelCollection(result));
         }
 
         function hasDriveContent(snapshot) {
             return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
                 Object.keys(snapshot.defaultSigleScoring || {}).length > 0 ||
+                Object.values(snapshot.progressions || {}).some(items => Array.isArray(items) && items.length > 0) ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
         }
@@ -1836,6 +2022,16 @@
         };
 
         function initColorsInSettings() {
+            const levelA = getLevelById('NIV-A');
+            const levelB = getLevelById('NIV-B');
+            const rowA = document.getElementById('color-fed-a-row');
+            const rowB = document.getElementById('color-fed-b-row');
+            if (rowA) rowA.classList.toggle('hidden', !levelA);
+            if (rowB) rowB.classList.toggle('hidden', !levelB);
+            const labelA = document.getElementById('color-fed-a-label');
+            const labelB = document.getElementById('color-fed-b-label');
+            if (labelA && levelA) labelA.textContent = `${levelA.name} :`;
+            if (labelB && levelB) labelB.textContent = `${levelB.name} :`;
             document
                 .getElementById('color-header')
                 .value = userColors.header;
@@ -2176,6 +2372,220 @@
 
         // ────────────────────────────────────────────────────────────── RENDU DES
         // NIVEAUX ──────────────────────────────────────────────────────────────
+        function getGymLevels() {
+            return data.levels.filter(level => level.id !== COMPETITION_LEVEL_ID);
+        }
+
+        function getLevelById(levelId) {
+            return data.levels.find(level => level.id === levelId) || null;
+        }
+
+        function levelNameExists(name, ignoredLevelId = '') {
+            const key = normalizeLevelName(name).toLocaleLowerCase('fr');
+            return getGymLevels().some(level =>
+                level.id !== ignoredLevelId && level.name.toLocaleLowerCase('fr') === key
+            );
+        }
+
+        function createLevelId() {
+            let id;
+            do {
+                id = `NIV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+            } while (getLevelById(id));
+            return id;
+        }
+
+        function addGymLevel(name) {
+            const normalizedName = normalizeLevelName(name);
+            if (!normalizedName) throw new Error('Indiquez un nom de catégorie.');
+            if (levelNameExists(normalizedName)) throw new Error('Une catégorie porte déjà ce nom.');
+            const level = {id: createLevelId(), name: normalizedName};
+            const competitionIndex = data.levels.findIndex(item => item.id === COMPETITION_LEVEL_ID);
+            data.levels.splice(competitionIndex < 0 ? data.levels.length : competitionIndex, 0, level);
+            saveAllData();
+            return level;
+        }
+
+        function renameGymLevel(levelId, name) {
+            const level = getLevelById(levelId);
+            if (!level || level.id === COMPETITION_LEVEL_ID) throw new Error('Cette catégorie est protégée.');
+            const normalizedName = normalizeLevelName(name);
+            if (!normalizedName) throw new Error('Le nom de la catégorie ne peut pas être vide.');
+            if (levelNameExists(normalizedName, levelId)) throw new Error('Une catégorie porte déjà ce nom.');
+            level.name = normalizedName;
+            saveAllData();
+            return level;
+        }
+
+        function removeGymLevel(levelId, moveToLevelId = null) {
+            const levels = getGymLevels();
+            const level = levels.find(item => item.id === levelId);
+            if (!level) throw new Error('Catégorie introuvable.');
+            if (levels.length <= 1) throw new Error('Conservez au moins une catégorie de gymnastes.');
+            const assigned = data.gymnastes.filter(gymnast => gymnast.niveauId === levelId);
+            if (assigned.length > 0) {
+                const target = levels.find(item => item.id === moveToLevelId && item.id !== levelId);
+                if (!target) throw new Error('Choisissez une catégorie de destination.');
+                assigned.forEach(gymnast => { gymnast.niveauId = target.id; });
+            }
+            data.levels = data.levels.filter(item => item.id !== levelId);
+            if (currentLevelId === levelId) currentLevelId = moveToLevelId || null;
+            saveAllData();
+            return assigned.length;
+        }
+
+        function showLevelsManagerStatus(message, isError = false) {
+            const status = document.getElementById('levels-manager-status');
+            if (!status) return;
+            status.textContent = message;
+            status.className = `rounded-lg px-3 py-2 font-semibold ${isError ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`;
+        }
+
+        function openLevelsManager() {
+            pendingLevelDeletionId = null;
+            document.getElementById('level-delete-panel').classList.add('hidden');
+            document.getElementById('levels-manager-status').classList.add('hidden');
+            document.getElementById('new-level-name').value = '';
+            renderLevelsManager();
+            document.getElementById('modal-levels').classList.remove('hidden');
+        }
+
+        function closeLevelsManager() {
+            pendingLevelDeletionId = null;
+            document.getElementById('modal-levels').classList.add('hidden');
+        }
+
+        function createLevelFromManager(event) {
+            event.preventDefault();
+            const input = document.getElementById('new-level-name');
+            try {
+                const level = addGymLevel(input.value);
+                input.value = '';
+                renderLevels();
+                renderLevelsManager();
+                showLevelsManagerStatus(`Catégorie « ${level.name} » créée.`);
+            } catch (error) {
+                showLevelsManagerStatus(error.message, true);
+            }
+        }
+
+        function saveLevelFromManager(levelId, input) {
+            try {
+                const level = renameGymLevel(levelId, input.value);
+                input.value = level.name;
+                renderLevels();
+                renderLevelsManager();
+                showLevelsManagerStatus(`Catégorie renommée « ${level.name} ».`);
+            } catch (error) {
+                showLevelsManagerStatus(error.message, true);
+            }
+        }
+
+        function renderLevelsManager() {
+            const container = document.getElementById('levels-manager-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const levels = getGymLevels();
+            levels.forEach(level => {
+                const count = data.gymnastes.filter(gymnast => gymnast.niveauId === level.id).length;
+                const card = document.createElement('div');
+                card.className = 'rounded-xl border border-gray-200 bg-white p-3 space-y-2';
+
+                const heading = document.createElement('div');
+                heading.className = 'flex items-center justify-between gap-2';
+                const label = document.createElement('span');
+                label.className = 'font-bold text-gray-700';
+                label.textContent = `${count} gymnaste${count === 1 ? '' : 's'}`;
+                const idLabel = document.createElement('span');
+                idLabel.className = 'text-[9px] text-gray-400';
+                idLabel.textContent = level.id;
+                heading.append(label, idLabel);
+
+                const row = document.createElement('div');
+                row.className = 'flex gap-2';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 60;
+                input.value = level.name;
+                input.className = 'min-w-0 flex-1 rounded-md border border-gray-300 p-2';
+                input.setAttribute('aria-label', `Nom de la catégorie ${level.name}`);
+                const saveButton = document.createElement('button');
+                saveButton.type = 'button';
+                saveButton.className = 'rounded-md bg-blue-600 px-3 py-2 font-bold text-white';
+                saveButton.textContent = 'Enregistrer';
+                saveButton.onclick = () => saveLevelFromManager(level.id, input);
+                row.append(input, saveButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'w-full rounded-md border border-red-200 bg-red-50 py-2 font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-40';
+                deleteButton.textContent = count > 0 ? `Supprimer et déplacer ${count} gymnaste${count === 1 ? '' : 's'}` : 'Supprimer la catégorie';
+                deleteButton.disabled = levels.length <= 1;
+                deleteButton.onclick = () => requestLevelDeletion(level.id);
+                card.append(heading, row, deleteButton);
+                container.appendChild(card);
+            });
+        }
+
+        function requestLevelDeletion(levelId) {
+            const level = getLevelById(levelId);
+            const otherLevels = getGymLevels().filter(item => item.id !== levelId);
+            if (!level || otherLevels.length === 0) {
+                showLevelsManagerStatus('Conservez au moins une catégorie de gymnastes.', true);
+                return;
+            }
+            const count = data.gymnastes.filter(gymnast => gymnast.niveauId === levelId).length;
+            if (count === 0) {
+                if (!confirm(`Supprimer définitivement la catégorie « ${level.name} » ?`)) return;
+                try {
+                    removeGymLevel(levelId);
+                    renderLevels();
+                    renderLevelsManager();
+                    showLevelsManagerStatus(`Catégorie « ${level.name} » supprimée.`);
+                } catch (error) {
+                    showLevelsManagerStatus(error.message, true);
+                }
+                return;
+            }
+            pendingLevelDeletionId = levelId;
+            const target = document.getElementById('level-delete-target');
+            target.innerHTML = '';
+            otherLevels.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                target.appendChild(option);
+            });
+            document.getElementById('level-delete-message').textContent =
+                `La catégorie « ${level.name} » contient ${count} gymnaste${count === 1 ? '' : 's'}. Aucune fiche ne sera supprimée.`;
+            document.getElementById('level-delete-panel').classList.remove('hidden');
+            document.getElementById('level-delete-panel').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }
+
+        function cancelLevelDeletion() {
+            pendingLevelDeletionId = null;
+            document.getElementById('level-delete-panel').classList.add('hidden');
+        }
+
+        function confirmLevelDeletion() {
+            const level = getLevelById(pendingLevelDeletionId);
+            const target = getLevelById(document.getElementById('level-delete-target').value);
+            if (!level || !target) {
+                showLevelsManagerStatus('Choisissez une catégorie de destination.', true);
+                return;
+            }
+            if (!confirm(`Déplacer les gymnastes vers « ${target.name} » puis supprimer « ${level.name} » ?`)) return;
+            try {
+                const moved = removeGymLevel(level.id, target.id);
+                cancelLevelDeletion();
+                renderLevels();
+                renderLevelsManager();
+                showLevelsManagerStatus(`${moved} gymnaste${moved === 1 ? '' : 's'} déplacée${moved === 1 ? '' : 's'} vers « ${target.name} ». Catégorie supprimée.`);
+            } catch (error) {
+                showLevelsManagerStatus(error.message, true);
+            }
+        }
+
         function renderLevels() {
             const list = document.getElementById('levels-list');
             list.innerHTML = '';
@@ -2186,7 +2596,7 @@
                         .gymnastes
                         .filter(g => g.niveauId === lvl.id)
                         .length;
-                    const badge = lvl.id === 'COMP-ZONE'
+                    const badge = lvl.id === COMPETITION_LEVEL_ID
                         ? '🌟 Gestion Multi-Équipes'
                         : `${count} gymnaste(s)`;
 
@@ -2196,30 +2606,38 @@
                     if (lvl.id === 'NIV-B' && userColors['fed-b']) 
                         styleStr = `background-color:${userColors['fed-b']};`;
                     
-                    list.innerHTML += `
-                <button onclick="openLevel('${lvl.id}', '${lvl.name}')"
-                    class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition"
-                    style="${styleStr}">
-                    <div>
-                        <span class="block font-bold text-gray-800 text-base">${lvl.name}</span>
-                        <span class="text-xs text-gray-600">${badge}</span>
-                    </div>
-                    <span class="text-gray-600 text-lg">▶</span>
-                </button>`;
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition';
+                    button.style.cssText = styleStr;
+                    const text = document.createElement('div');
+                    const name = document.createElement('span');
+                    name.className = 'block font-bold text-gray-800 text-base';
+                    name.textContent = lvl.name;
+                    const badgeElement = document.createElement('span');
+                    badgeElement.className = 'text-xs text-gray-600';
+                    badgeElement.textContent = badge;
+                    const arrow = document.createElement('span');
+                    arrow.className = 'text-gray-600 text-lg';
+                    arrow.textContent = '▶';
+                    text.append(name, badgeElement);
+                    button.append(text, arrow);
+                    button.onclick = () => openLevel(lvl.id, lvl.name);
+                    list.appendChild(button);
                 });
 
             const niveauSel = document.getElementById('gym-niveau');
             if (niveauSel) {
                 niveauSel.innerHTML = data
                     .levels
-                    .filter(l => l.id !== 'COMP-ZONE')
+                    .filter(l => l.id !== COMPETITION_LEVEL_ID)
                     .map(l => `<option value="${l.id}">${l.name}</option>`)
                     .join('');
             }
         }
 
         function openLevel(id, name) {
-            if (id === 'COMP-ZONE') {
+            if (id === COMPETITION_LEVEL_ID) {
                 renderTeamsList();
                 switchCompetitionTab(currentCompetitionTab);
                 showScreen('screen-competition');
@@ -2231,7 +2649,7 @@
                 .innerText = `Gymnastes — ${name}`;
             const exportButton = document.getElementById('btn-export-level-stats-pdf');
             if (exportButton)
-                exportButton.innerText = `📄 Statistiques ${id === 'NIV-A' ? 'Fédéral A' : 'Fédéral B'}`;
+                exportButton.innerText = `📄 Statistiques ${name}`;
             const exportStatus = document.getElementById('level-stats-pdf-status');
             if (exportStatus)
                 exportStatus.classList.add('hidden');
@@ -2352,10 +2770,13 @@
 
             applyCustomColors();
             cancelScoreEdit();
+            cancelProgressionEdit();
             switchTab('infos');
             showScreen('screen-fiche');
             buildChart();
             renderScoresHistory();
+            renderProgressionTable();
+            renderProgressionStatistics();
             initMouvementsTab();
             renderGymnastMusic();
         }
@@ -2557,6 +2978,292 @@
                 activeBtn.style.borderColor = userColors.header;
                 activeBtn.style.color = userColors.header;
                 activeBtn.style.fontWeight = 'bold';
+            }
+            if (tabName === 'progression') renderProgressionTable();
+            if (tabName === 'suivi') renderProgressionStatistics();
+        }
+
+        // ────────────────────────────────────────────────────────────── PROGRESSION
+        // DES ÉLÉMENTS ──────────────────────────────────────────────────────────────
+        function getGymnastProgression(gymId = currentGymId) {
+            if (!gymId) return [];
+            if (!data.progressions || typeof data.progressions !== 'object' || Array.isArray(data.progressions))
+                data.progressions = {};
+            if (!Array.isArray(data.progressions[gymId])) data.progressions[gymId] = [];
+            return data.progressions[gymId];
+        }
+
+        function calculateProgressionSummary(items) {
+            const summary = {total: 0, not_acquired: 0, in_progress: 0, acquired: 0, acquiredPercent: 0};
+            (Array.isArray(items) ? items : []).forEach(item => {
+                const status = normalizeProgressionStatus(item && item.status);
+                summary.total += 1;
+                summary[status] += 1;
+            });
+            summary.acquiredPercent = summary.total
+                ? Math.round((summary.acquired / summary.total) * 100)
+                : 0;
+            return summary;
+        }
+
+        function progressionNameExists(name, ignoredItemId = '') {
+            const key = normalizeProgressionName(name).toLocaleLowerCase('fr');
+            return getGymnastProgression().some(item =>
+                item.id !== ignoredItemId && item.name.toLocaleLowerCase('fr') === key
+            );
+        }
+
+        function createProgressionId() {
+            const items = getGymnastProgression();
+            let id;
+            do {
+                id = `PROG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+            } while (items.some(item => item.id === id));
+            return id;
+        }
+
+        function addProgressionItem(name, status = 'not_acquired') {
+            if (!currentGymId) throw new Error('Ouvrez d’abord une fiche gymnaste.');
+            const normalizedName = normalizeProgressionName(name);
+            if (!normalizedName) throw new Error("Indiquez le nom de l'élément.");
+            if (progressionNameExists(normalizedName)) throw new Error('Cet élément existe déjà dans le tableau.');
+            const item = {
+                id: createProgressionId(),
+                name: normalizedName,
+                status: normalizeProgressionStatus(status),
+                updatedAt: new Date().toISOString()
+            };
+            getGymnastProgression().push(item);
+            saveAllData();
+            return item;
+        }
+
+        function renameProgressionItem(itemId, name) {
+            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            if (!item) throw new Error('Élément introuvable.');
+            const normalizedName = normalizeProgressionName(name);
+            if (!normalizedName) throw new Error("Le nom de l'élément ne peut pas être vide.");
+            if (progressionNameExists(normalizedName, itemId)) throw new Error('Cet élément existe déjà dans le tableau.');
+            item.name = normalizedName;
+            item.updatedAt = new Date().toISOString();
+            saveAllData();
+            return item;
+        }
+
+        function setProgressionStatus(itemId, status) {
+            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            if (!item) throw new Error('Élément introuvable.');
+            item.status = normalizeProgressionStatus(status);
+            item.updatedAt = new Date().toISOString();
+            saveAllData();
+            renderProgressionTable();
+            renderProgressionStatistics();
+            return item;
+        }
+
+        function removeProgressionItem(itemId) {
+            const items = getGymnastProgression();
+            const index = items.findIndex(item => item.id === itemId);
+            if (index < 0) throw new Error('Élément introuvable.');
+            const removed = items.splice(index, 1)[0];
+            saveAllData();
+            return removed;
+        }
+
+        function saveProgressionItem(event) {
+            event.preventDefault();
+            const input = document.getElementById('progression-element-name');
+            const editId = document.getElementById('edit-progression-id').value;
+            try {
+                if (editId) renameProgressionItem(editId, input.value);
+                else addProgressionItem(input.value);
+                cancelProgressionEdit();
+                renderProgressionTable();
+                renderProgressionStatistics();
+            } catch (error) {
+                alert(`⚠️ ${error.message}`);
+                input.focus();
+            }
+        }
+
+        function startProgressionEdit(itemId) {
+            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            if (!item) return;
+            document.getElementById('edit-progression-id').value = item.id;
+            document.getElementById('progression-element-name').value = item.name;
+            document.getElementById('btn-save-progression').textContent = 'Enregistrer';
+            document.getElementById('btn-cancel-progression-edit').classList.remove('hidden');
+            document.getElementById('progression-element-name').focus();
+        }
+
+        function cancelProgressionEdit() {
+            document.getElementById('edit-progression-id').value = '';
+            document.getElementById('progression-element-name').value = '';
+            document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
+            document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
+        }
+
+        function deleteProgressionItem(itemId) {
+            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            if (!item || !confirm(`Supprimer l'élément « ${item.name} » ?`)) return;
+            try {
+                removeProgressionItem(itemId);
+                if (document.getElementById('edit-progression-id').value === itemId) cancelProgressionEdit();
+                renderProgressionTable();
+                renderProgressionStatistics();
+            } catch (error) {
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        function createProgressionStatusCell(item, status, colorClass) {
+            const cell = document.createElement('td');
+            cell.className = 'border-r border-b border-gray-200 p-2 text-center last:border-r-0';
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = `progression-status-${currentGymId}-${item.id}`;
+            radio.value = status;
+            radio.checked = item.status === status;
+            radio.className = `h-5 w-5 cursor-pointer ${colorClass}`;
+            radio.setAttribute('aria-label', `${item.name} — ${status === 'not_acquired' ? 'Pas acquis' : status === 'in_progress' ? 'En cours' : 'Acquis'}`);
+            radio.onchange = () => setProgressionStatus(item.id, status);
+            cell.appendChild(radio);
+            return cell;
+        }
+
+        function renderProgressionTable() {
+            const body = document.getElementById('progression-table-body');
+            const empty = document.getElementById('progression-empty-state');
+            if (!body || !empty) return;
+            body.innerHTML = '';
+            const items = getGymnastProgression();
+            empty.classList.toggle('hidden', items.length > 0);
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white hover:bg-gray-50';
+                const nameCell = document.createElement('td');
+                nameCell.className = 'border-r border-b border-gray-200 p-2.5';
+                const name = document.createElement('p');
+                name.className = 'font-bold text-gray-800 break-words';
+                name.textContent = item.name;
+                const actions = document.createElement('div');
+                actions.className = 'mt-1 flex gap-3 text-[10px]';
+                const edit = document.createElement('button');
+                edit.type = 'button';
+                edit.className = 'font-bold text-blue-600';
+                edit.textContent = 'Modifier';
+                edit.onclick = () => startProgressionEdit(item.id);
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'font-bold text-red-600';
+                remove.textContent = 'Supprimer';
+                remove.onclick = () => deleteProgressionItem(item.id);
+                actions.append(edit, remove);
+                nameCell.append(name, actions);
+                row.append(
+                    nameCell,
+                    createProgressionStatusCell(item, 'not_acquired', 'accent-red-600'),
+                    createProgressionStatusCell(item, 'in_progress', 'accent-amber-500'),
+                    createProgressionStatusCell(item, 'acquired', 'accent-green-600')
+                );
+                body.appendChild(row);
+            });
+        }
+
+        function renderProgressionStatistics() {
+            const summary = calculateProgressionSummary(getGymnastProgression());
+            const total = document.getElementById('progression-statistics-total');
+            if (!total) return summary;
+            total.textContent = summary.total
+                ? `${summary.total} élément${summary.total === 1 ? '' : 's'} suivi${summary.total === 1 ? '' : 's'} · ${summary.acquired} acquis`
+                : 'Aucun élément enregistré';
+            document.getElementById('progression-statistics-percent').textContent = `${summary.acquiredPercent} %`;
+            document.getElementById('progression-count-not-acquired').textContent = String(summary.not_acquired);
+            document.getElementById('progression-count-in-progress').textContent = String(summary.in_progress);
+            document.getElementById('progression-count-acquired').textContent = String(summary.acquired);
+            const percent = count => summary.total ? (count / summary.total) * 100 : 0;
+            document.getElementById('progression-bar-not-acquired').style.width = `${percent(summary.not_acquired)}%`;
+            document.getElementById('progression-bar-in-progress').style.width = `${percent(summary.in_progress)}%`;
+            document.getElementById('progression-bar-acquired').style.width = `${percent(summary.acquired)}%`;
+            return summary;
+        }
+
+        function exportProgressionPDF() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
+                return;
+            }
+            const gymnast = data.gymnastes.find(item => item.id === currentGymId);
+            if (!gymnast) return;
+            const items = getGymnastProgression();
+            if (items.length === 0) {
+                alert("⚠️ Ajoutez au moins un élément avant d'exporter le tableau.");
+                return;
+            }
+            try {
+                const {jsPDF} = window.jspdf;
+                const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
+                if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
+                const summary = calculateProgressionSummary(items);
+                doc.setFillColor(126, 34, 206);
+                doc.rect(0, 0, 210, 29, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(17);
+                doc.text('Tableau de progression', 14, 12);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 20);
+                doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 20, {align: 'right'});
+
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text(`Éléments : ${summary.total}`, 14, 39);
+                doc.text(`Pas acquis : ${summary.not_acquired}`, 55, 39);
+                doc.text(`En cours : ${summary.in_progress}`, 103, 39);
+                doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 145, 39);
+
+                doc.autoTable({
+                    startY: 47,
+                    head: [["Nom de l'élément", 'Pas acquis', 'En cours', 'Acquis']],
+                    body: items.map(item => [
+                        item.name,
+                        item.status === 'not_acquired' ? 'X' : '',
+                        item.status === 'in_progress' ? 'X' : '',
+                        item.status === 'acquired' ? 'X' : ''
+                    ]),
+                    theme: 'grid',
+                    styles: {fontSize: 10, cellPadding: 3, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
+                    headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
+                    columnStyles: {
+                        0: {cellWidth: 100, halign: 'left', fontStyle: 'bold'},
+                        1: {cellWidth: 29, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                        2: {cellWidth: 29, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                        3: {cellWidth: 29, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                    },
+                    margin: {left: 11, right: 11, bottom: 14},
+                    rowPageBreak: 'avoid'
+                });
+
+                const pageCount = doc.getNumberOfPages();
+                for (let page = 1; page <= pageCount; page++) {
+                    doc.setPage(page);
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.text('Mâcon Gym Suivi — progression des éléments', 11, 288);
+                    doc.text(`Page ${page} / ${pageCount}`, 199, 288, {align: 'right'});
+                }
+                const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '') || 'Gymnaste';
+                doc.save(`Progression_${safeName}.pdf`);
+            } catch (error) {
+                console.error('[GymSuivi] Erreur export progression :', error);
+                alert(`❌ Impossible de créer le PDF : ${error.message}`);
             }
         }
 
@@ -3740,7 +4447,7 @@
                 preview
                     .classList
                     .add('hidden');
-            if (currentLevelId && currentLevelId !== 'COMP-ZONE') 
+            if (currentLevelId && currentLevelId !== COMPETITION_LEVEL_ID) 
                 document
                     .getElementById('gym-niveau')
                     .value = currentLevelId;
@@ -3901,6 +4608,11 @@
                 // 3. Suppression de ses enchaînements (mouvements)
                 if (data.mouvements[currentGymId]) {
                     delete data.mouvements[currentGymId];
+                }
+
+                // 3a. Suppression du tableau de progression associé
+                if (data.progressions && data.progressions[currentGymId]) {
+                    delete data.progressions[currentGymId];
                 }
 
                 // 3b. Suppression de sa musique locale sans bloquer le reste de la fiche
@@ -5107,8 +5819,9 @@
         }
 
         async function exportLevelStatsPDF() {
-            if (!['NIV-A', 'NIV-B'].includes(currentLevelId)) {
-                alert("⚠️ Ouvrez d'abord la catégorie Fédéral A ou Fédéral B.");
+            const currentLevel = getLevelById(currentLevelId);
+            if (!currentLevel || currentLevel.id === COMPETITION_LEVEL_ID) {
+                alert("⚠️ Ouvrez d'abord une catégorie de gymnastes.");
                 return;
             }
             if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -5131,7 +5844,7 @@
                 const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
                 if (typeof doc.autoTable !== 'function')
                     throw new Error('Le module de tableau PDF est indisponible.');
-                const levelName = currentLevelId === 'NIV-A' ? 'Fédéral A' : 'Fédéral B';
+                const levelName = currentLevel.name;
                 const color = currentLevelId === 'NIV-A' ? [236, 72, 153] : [14, 165, 233];
                 doc.setFillColor(...color);
                 doc.rect(0, 0, 297, 26, 'F');
@@ -5222,7 +5935,11 @@
                     doc.text('Mâcon Gym Suivi - statistiques de performance globale', 10, 203);
                     doc.text(`Page ${page} / ${pageCount}`, 287, 203, {align: 'right'});
                 }
-                const safeLevel = currentLevelId === 'NIV-A' ? 'Federal_A' : 'Federal_B';
+                const safeLevel = levelName
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '') || 'Categorie';
                 doc.save(`Statistiques_globales_${safeLevel}.pdf`);
                 status.innerText = 'PDF téléchargé ✓';
             } catch (error) {
