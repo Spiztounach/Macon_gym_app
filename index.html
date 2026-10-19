@@ -627,6 +627,20 @@
                                 <div class="rounded-lg border border-amber-100 bg-white p-2"><span id="progression-count-in-progress" class="block text-lg font-black text-amber-600">0</span><span class="text-[9px] font-semibold text-gray-500">En cours</span></div>
                                 <div class="rounded-lg border border-green-100 bg-white p-2"><span id="progression-count-acquired" class="block text-lg font-black text-green-600">0</span><span class="text-[9px] font-semibold text-gray-500">Acquis</span></div>
                             </div>
+                            <div class="grid gap-2 md:grid-cols-3 text-left">
+                                <div class="rounded-lg border border-green-200 bg-white p-2.5">
+                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-green-700">✓ Acquis / validés</h4>
+                                    <ul id="progression-list-acquired" class="space-y-1 text-[10px] text-gray-700"></ul>
+                                </div>
+                                <div class="rounded-lg border border-amber-200 bg-white p-2.5">
+                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-amber-700">● En cours</h4>
+                                    <ul id="progression-list-in-progress" class="space-y-1 text-[10px] text-gray-700"></ul>
+                                </div>
+                                <div class="rounded-lg border border-red-200 bg-white p-2.5">
+                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-red-700">✕ Pas acquis / non validés</h4>
+                                    <ul id="progression-list-not-acquired" class="space-y-1 text-[10px] text-gray-700"></ul>
+                                </div>
+                            </div>
                         </div>
                         <div
                             class="bg-white p-2 border border-gray-100 rounded-xl shadow-inner space-y-2">
@@ -1234,7 +1248,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.11.0';
+        const APP_VERSION = '1.11.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
@@ -3170,8 +3184,37 @@
             });
         }
 
+        function renderProgressionStatusList(containerId, items, emptyText) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            const sorted = [...items].sort((a, b) =>
+                a.name.localeCompare(b.name, 'fr', {sensitivity: 'base'})
+            );
+            if (sorted.length === 0) {
+                const empty = document.createElement('li');
+                empty.className = 'italic text-gray-400';
+                empty.textContent = emptyText;
+                container.appendChild(empty);
+                return;
+            }
+            sorted.forEach(item => {
+                const line = document.createElement('li');
+                line.className = 'flex items-start gap-1.5 border-t border-gray-100 pt-1 first:border-t-0 first:pt-0';
+                const bullet = document.createElement('span');
+                bullet.className = 'mt-0.5 shrink-0 text-gray-400';
+                bullet.textContent = '•';
+                const name = document.createElement('span');
+                name.className = 'break-words font-semibold';
+                name.textContent = item.name;
+                line.append(bullet, name);
+                container.appendChild(line);
+            });
+        }
+
         function renderProgressionStatistics() {
-            const summary = calculateProgressionSummary(getGymnastProgression());
+            const items = getGymnastProgression();
+            const summary = calculateProgressionSummary(items);
             const total = document.getElementById('progression-statistics-total');
             if (!total) return summary;
             total.textContent = summary.total
@@ -3185,6 +3228,21 @@
             document.getElementById('progression-bar-not-acquired').style.width = `${percent(summary.not_acquired)}%`;
             document.getElementById('progression-bar-in-progress').style.width = `${percent(summary.in_progress)}%`;
             document.getElementById('progression-bar-acquired').style.width = `${percent(summary.acquired)}%`;
+            renderProgressionStatusList(
+                'progression-list-acquired',
+                items.filter(item => item.status === 'acquired'),
+                'Aucun élément validé.'
+            );
+            renderProgressionStatusList(
+                'progression-list-in-progress',
+                items.filter(item => item.status === 'in_progress'),
+                'Aucun élément en cours.'
+            );
+            renderProgressionStatusList(
+                'progression-list-not-acquired',
+                items.filter(item => item.status === 'not_acquired'),
+                'Aucun élément non validé.'
+            );
             return summary;
         }
 
