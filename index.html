@@ -46,6 +46,58 @@
             #app-title {
                 overflow-wrap: anywhere;
             }
+            .progression-radar-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 1rem;
+            }
+            .progression-radar-panel {
+                min-width: 0;
+                overflow: hidden;
+            }
+            .progression-radar-shell {
+                position: relative;
+                width: 100%;
+                max-width: 480px;
+                min-height: 310px;
+                aspect-ratio: 1 / 1;
+                margin-inline: auto;
+            }
+            .progression-radar-shell canvas {
+                position: absolute;
+                inset: 0;
+                display: block;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100%;
+            }
+            #sigle-drawing-canvas {
+                display: block;
+                width: 100%;
+                max-width: 420px;
+                height: auto;
+                aspect-ratio: 1 / 1;
+                margin-inline: auto;
+                touch-action: none;
+                user-select: none;
+                overscroll-behavior: contain;
+                cursor: crosshair;
+            }
+            @media (max-width: 380px) {
+                .progression-radar-shell {
+                    min-height: 330px;
+                    aspect-ratio: 0.92 / 1;
+                }
+            }
+            @media (min-width: 700px) and (orientation: landscape) {
+                .progression-radar-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .progression-radar-shell {
+                    min-height: 320px;
+                    max-width: 430px;
+                }
+            }
             /* Garder les boutons des fenêtres accessibles avec une faible hauteur. */
             #modal-add > div, #modal-team > div, #modal-custom-sigle > div, #modal-levels > div {
                 display: flex;
@@ -628,16 +680,16 @@
                                 <div class="rounded-lg border border-green-100 bg-white p-2"><span id="progression-count-acquired" class="block text-lg font-black text-green-600">0</span><span class="text-[9px] font-semibold text-gray-500">Acquis</span></div>
                             </div>
                             <div id="progression-radar-card" class="hidden rounded-lg border border-purple-100 bg-white p-2.5 space-y-2">
-                                <div class="grid gap-3 lg:grid-cols-2">
-                                    <div>
+                                <div class="progression-radar-grid">
+                                    <div class="progression-radar-panel">
                                         <h4 class="text-center text-[10px] font-black uppercase tracking-wide text-purple-700">Profil technique</h4>
-                                        <div class="h-72 w-full sm:h-80">
+                                        <div class="progression-radar-shell">
                                             <canvas id="progression-family-radar-chart" aria-label="Diagramme radar des familles techniques"></canvas>
                                         </div>
                                     </div>
-                                    <div>
+                                    <div class="progression-radar-panel">
                                         <h4 class="text-center text-[10px] font-black uppercase tracking-wide text-blue-700">Progression par agrès</h4>
-                                        <div class="h-72 w-full sm:h-80">
+                                        <div class="progression-radar-shell">
                                             <canvas id="progression-apparatus-radar-chart" aria-label="Diagramme radar de progression par agrès"></canvas>
                                         </div>
                                     </div>
@@ -690,7 +742,7 @@
                             <div class="rounded-lg border border-purple-200 bg-white px-3 py-2 text-[10px] text-purple-800">
                                 <strong>🌐 Référentiel commun :</strong> ajouter, renommer, déplacer ou supprimer un élément modifie la liste pour toutes les fiches, sans modifier leurs validations personnelles.
                             </div>
-                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
                                 <input type="hidden" id="edit-progression-id">
                                 <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
                                 <select id="progression-apparatus" class="min-w-0 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
@@ -701,21 +753,23 @@
                                     <option value="sol">Sol</option>
                                     <option value="transversal">Transversal</option>
                                 </select>
-                                <select id="progression-family" class="min-w-0 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
-                                    <option value="">Choisir la famille technique…</option>
-                                    <option value="acro_forward">Acrobatie avant</option>
-                                    <option value="acro_backward">Acrobatie arrière</option>
-                                    <option value="flexibility">Souplesse</option>
-                                    <option value="strength_core">Force et gainage</option>
-                                    <option value="alignment">Alignement et tenue</option>
-                                    <option value="balance">Équilibre et proprioception</option>
-                                    <option value="power">Impulsion et détente</option>
-                                    <option value="coordination">Coordination et rythme</option>
-                                </select>
                                 <div class="flex gap-2">
                                     <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="hidden flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
                                     <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
                                 </div>
+                                <fieldset id="progression-family" class="rounded-lg border border-purple-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
+                                    <legend class="px-1 text-[10px] font-bold text-purple-700">Familles techniques — plusieurs choix possibles</legend>
+                                    <div class="grid grid-cols-1 gap-1.5 min-[390px]:grid-cols-2 lg:grid-cols-4">
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="acro_forward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie avant</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="acro_backward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie arrière</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="flexibility" class="h-4 w-4 shrink-0 accent-purple-600">Souplesse</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="strength_core" class="h-4 w-4 shrink-0 accent-purple-600">Force et gainage</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="alignment" class="h-4 w-4 shrink-0 accent-purple-600">Alignement et tenue</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="balance" class="h-4 w-4 shrink-0 accent-purple-600">Équilibre et proprioception</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="power" class="h-4 w-4 shrink-0 accent-purple-600">Impulsion et détente</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="coordination" class="h-4 w-4 shrink-0 accent-purple-600">Coordination et rythme</label>
+                                    </div>
+                                </fieldset>
                             </form>
                         </div>
 
@@ -1202,6 +1256,28 @@
 
     <!-- ══════════════════════════════════════ MODAL CUSTOM SIGLE ═══ -->
     <div
+        id="modal-progression-quality"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden text-xs max-h-[90vh] flex flex-col">
+            <div class="bg-purple-700 text-white p-4 font-bold flex justify-between gap-3">
+                <span id="progression-quality-title">Qualité technique</span>
+                <button type="button" onclick="closeProgressionQualityModal()" class="text-white">✕</button>
+            </div>
+            <div class="min-h-0 overflow-y-auto p-4 space-y-3">
+                <input type="hidden" id="progression-quality-item-id">
+                <p class="rounded-lg border border-purple-100 bg-purple-50 p-2 text-[10px] leading-relaxed text-purple-800">
+                    Le statut indique si l’élément est réalisé. La qualité évalue séparément chaque famille technique et alimente le radar technique.
+                </p>
+                <div id="progression-quality-fields" class="space-y-2"></div>
+                <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="closeProgressionQualityModal()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                    <button type="button" onclick="saveProgressionQuality()" class="flex-1 rounded-lg bg-purple-700 py-2 font-bold text-white">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
         id="modal-custom-sigle"
         class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div
@@ -1250,6 +1326,34 @@
                         onchange="previewCustomSigleImage(event)"
                         class="w-full text-xs">
                 </div>
+                <div class="rounded-lg border border-pink-200 bg-pink-50 p-3 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-pink-800">✍️ Dessin tactile</p>
+                            <p class="text-[10px] text-pink-700">Créez directement un symbole au doigt, au stylet ou à la souris.</p>
+                        </div>
+                        <button type="button" onclick="openSigleDrawingEditor()" class="rounded-lg border border-pink-300 bg-white px-3 py-2 font-bold text-pink-700">Ouvrir le dessin</button>
+                    </div>
+                    <div id="sigle-drawing-panel" class="hidden space-y-2">
+                        <div class="flex flex-wrap items-center gap-2 rounded-lg border border-pink-100 bg-white p-2">
+                            <label class="flex items-center gap-1 text-[10px] font-semibold text-gray-600">Couleur
+                                <input id="sigle-drawing-color" type="color" value="#111827" onchange="setSigleDrawingTool('draw')" class="h-8 w-10 rounded border border-gray-200 bg-white p-0.5">
+                            </label>
+                            <label class="flex min-w-32 flex-1 items-center gap-2 text-[10px] font-semibold text-gray-600">Épaisseur
+                                <input id="sigle-drawing-width" type="range" min="2" max="28" value="8" step="1" class="min-w-0 flex-1 accent-pink-600">
+                            </label>
+                            <button id="btn-sigle-draw" type="button" onclick="setSigleDrawingTool('draw')" class="rounded border border-pink-300 bg-pink-100 px-2 py-1.5 font-bold text-pink-700">Crayon</button>
+                            <button id="btn-sigle-erase" type="button" onclick="setSigleDrawingTool('erase')" class="rounded border border-gray-200 bg-white px-2 py-1.5 font-bold text-gray-600">Gomme</button>
+                        </div>
+                        <canvas id="sigle-drawing-canvas" width="512" height="512" class="rounded-xl border-2 border-pink-200 bg-white shadow-inner" aria-label="Zone de dessin du symbole"></canvas>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="undoSigleDrawing()" class="rounded-lg border border-gray-200 bg-white py-2 font-semibold text-gray-600">↶ Annuler</button>
+                            <button type="button" onclick="clearSigleDrawing()" class="rounded-lg border border-red-200 bg-red-50 py-2 font-semibold text-red-600">Effacer</button>
+                            <button type="button" onclick="useSigleDrawing()" class="rounded-lg bg-pink-600 py-2 font-bold text-white">Utiliser</button>
+                        </div>
+                        <p id="sigle-drawing-status" class="text-center text-[10px] text-pink-700">Dessinez le symbole puis appuyez sur « Utiliser ».</p>
+                    </div>
+                </div>
                 <div id="sigle-image-preview-container" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
                     <img id="sigle-image-preview" alt="Aperçu de l'image" class="w-20 h-20 object-contain mx-auto rounded bg-white border border-gray-100">
                 </div>
@@ -1288,7 +1392,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.15.0';
+        const APP_VERSION = '1.17.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
@@ -1308,6 +1412,12 @@
             {key: 'balance', label: 'Équilibre et proprioception'},
             {key: 'power', label: 'Impulsion et détente'},
             {key: 'coordination', label: 'Coordination et rythme'}
+        ];
+        const PROGRESSION_QUALITY_LEVELS = [
+            {value: 1, label: 'À corriger', percent: 25},
+            {value: 2, label: 'Fragile', percent: 50},
+            {value: 3, label: 'Correct', percent: 75},
+            {value: 4, label: 'Maîtrisé', percent: 100}
         ];
         const SPORT_SEASON_START_MONTH = 7; // Août (0 = janvier)
         const BIRTHDAY_CHECK_INTERVAL_MS = 60 * 60 * 1000;
@@ -1396,6 +1506,12 @@
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
         let pendingLevelDeletionId = null;
+        let customSigleDrawingData = null;
+        let sigleDrawingContext = null;
+        let sigleDrawingPointerActive = false;
+        let sigleDrawingTool = 'draw';
+        let sigleDrawingHistory = [];
+        let sigleDrawingHasContent = false;
 
         function normalizeLevelName(value) {
             return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
@@ -1439,14 +1555,73 @@
             return PROGRESSION_FAMILIES.some(item => item.key === key) ? key : 'unclassified';
         }
 
+        function normalizeProgressionFamilies(value) {
+            const source = Array.isArray(value)
+                ? value
+                : value === undefined || value === null
+                    ? []
+                    : String(value).split(',');
+            return [...new Set(source
+                .map(item => normalizeProgressionFamily(item))
+                .filter(item => item !== 'unclassified'))];
+        }
+
         function getProgressionApparatusLabel(value) {
             const item = PROGRESSION_APPARATUS.find(entry => entry.key === normalizeProgressionApparatus(value));
             return item ? item.label : 'À classer';
         }
 
+        function getProgressionFamilyLabels(value) {
+            const families = normalizeProgressionFamilies(value);
+            return families.map(family => {
+                const item = PROGRESSION_FAMILIES.find(entry => entry.key === family);
+                return item ? item.label : '';
+            }).filter(Boolean);
+        }
+
         function getProgressionFamilyLabel(value) {
-            const item = PROGRESSION_FAMILIES.find(entry => entry.key === normalizeProgressionFamily(value));
-            return item ? item.label : 'À classer';
+            const labels = getProgressionFamilyLabels(value);
+            return labels.length ? labels.join(', ') : 'À classer';
+        }
+
+        function normalizeProgressionQualityRating(value) {
+            const rating = Number(value);
+            return PROGRESSION_QUALITY_LEVELS.some(level => level.value === rating) ? rating : null;
+        }
+
+        function normalizeProgressionQuality(value, families = []) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const normalized = {};
+            normalizeProgressionFamilies(families).forEach(family => {
+                const rating = normalizeProgressionQualityRating(source[family]);
+                if (rating !== null) normalized[family] = rating;
+            });
+            return normalized;
+        }
+
+        function getProgressionQualityLevel(value) {
+            const rating = normalizeProgressionQualityRating(value);
+            return PROGRESSION_QUALITY_LEVELS.find(level => level.value === rating) || null;
+        }
+
+        function getProgressionQualityPercent(value) {
+            const level = getProgressionQualityLevel(value);
+            return level ? level.percent : null;
+        }
+
+        function getProgressionQualityLabel(value) {
+            const level = getProgressionQualityLevel(value);
+            return level ? level.label : 'Non évalué';
+        }
+
+        function getProgressionFamilyQualityText(item) {
+            const families = normalizeProgressionFamilies(item && item.families);
+            if (families.length === 0) return 'À classer';
+            const quality = normalizeProgressionQuality(item && item.quality, families);
+            return families.map(family => {
+                const definition = PROGRESSION_FAMILIES.find(entry => entry.key === family);
+                return `${definition ? definition.label : family} : ${getProgressionQualityLabel(quality[family])}`;
+            }).join(' · ');
         }
 
         function normalizeProgressionData(target) {
@@ -1460,11 +1635,19 @@
             const elementsByName = new Map();
             const usedIds = new Set();
 
-            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatus = '', family = '') => {
+            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatus = '', families = []) => {
                 const name = normalizeProgressionName(rawName);
                 if (!name) return null;
                 const key = name.toLocaleLowerCase('fr');
-                if (elementsByName.has(key)) return elementsByName.get(key);
+                const normalizedApparatus = normalizeProgressionApparatus(apparatus);
+                const normalizedFamilies = normalizeProgressionFamilies(families);
+                if (elementsByName.has(key)) {
+                    const existing = elementsByName.get(key);
+                    if (existing.apparatus === 'unclassified' && normalizedApparatus !== 'unclassified')
+                        existing.apparatus = normalizedApparatus;
+                    existing.families = normalizeProgressionFamilies([...existing.families, ...normalizedFamilies]);
+                    return existing;
+                }
                 const baseId = String(preferredId || `PROG-COMMON-${elements.length + 1}`).trim() || `PROG-COMMON-${elements.length + 1}`;
                 let id = baseId;
                 let suffix = 2;
@@ -1475,8 +1658,8 @@
                 const element = {
                     id,
                     name,
-                    apparatus: normalizeProgressionApparatus(apparatus),
-                    family: normalizeProgressionFamily(family),
+                    apparatus: normalizedApparatus,
+                    families: normalizedFamilies,
                     updatedAt: String(updatedAt || '')
                 };
                 elements.push(element);
@@ -1487,7 +1670,13 @@
 
             catalogSource.forEach(element => {
                 if (!element || typeof element !== 'object' || Array.isArray(element)) return;
-                ensureElement(element.name, element.id, element.updatedAt, element.apparatus, element.family);
+                ensureElement(
+                    element.name,
+                    element.id,
+                    element.updatedAt,
+                    element.apparatus,
+                    element.families !== undefined ? element.families : element.family
+                );
             });
 
             const orderedGymIds = [];
@@ -1509,10 +1698,17 @@
                 if (Array.isArray(saved)) {
                     saved.forEach(item => {
                         if (!item || typeof item !== 'object' || Array.isArray(item)) return;
-                        const element = ensureElement(item.name, item.id, item.updatedAt, item.apparatus, item.family);
+                        const element = ensureElement(
+                            item.name,
+                            item.id,
+                            item.updatedAt,
+                            item.apparatus,
+                            item.families !== undefined ? item.families : item.family
+                        );
                         if (!element || statuses[element.id]) return;
                         statuses[element.id] = {
                             status: normalizeProgressionStatus(item.status),
+                            quality: normalizeProgressionQuality(item.quality, element.families),
                             updatedAt: String(item.updatedAt || '')
                         };
                     });
@@ -1522,8 +1718,10 @@
                         const record = value && typeof value === 'object' && !Array.isArray(value)
                             ? value
                             : {status: value};
+                        const element = elements.find(entry => entry.id === elementId);
                         statuses[elementId] = {
                             status: normalizeProgressionStatus(record.status),
+                            quality: normalizeProgressionQuality(record.quality, element ? element.families : []),
                             updatedAt: String(record.updatedAt || '')
                         };
                     });
@@ -2454,6 +2652,8 @@
         let myChart = null;
         let progressionFamilyRadarChart = null;
         let progressionApparatusRadarChart = null;
+        let progressionRadarResizeFrame = null;
+        let progressionRadarResizeObserver = null;
         let currentMvtAgres = "Saut";
         let currentCompetitionTeamId = null;
         let currentCompetitionTab = 'match';
@@ -3166,12 +3366,16 @@
                 const record = statuses[element.id] && typeof statuses[element.id] === 'object'
                     ? statuses[element.id]
                     : {};
+                const families = normalizeProgressionFamilies(
+                    element.families !== undefined ? element.families : element.family
+                );
                 return {
                     id: element.id,
                     name: element.name,
                     apparatus: normalizeProgressionApparatus(element.apparatus),
-                    family: normalizeProgressionFamily(element.family),
+                    families,
                     status: normalizeProgressionStatus(record.status),
+                    quality: normalizeProgressionQuality(record.quality, families),
                     updatedAt: String(record.updatedAt || element.updatedAt || '')
                 };
             });
@@ -3199,31 +3403,51 @@
             const source = Array.isArray(items) ? items : [];
             const byApparatus = dimension === 'apparatus';
             const definitions = byApparatus ? PROGRESSION_APPARATUS : PROGRESSION_FAMILIES;
-            const field = byApparatus ? 'apparatus' : 'family';
             const entries = definitions.map(definition => {
                 const matching = source.filter(item =>
                     (byApparatus
-                        ? normalizeProgressionApparatus(item && item[field])
-                        : normalizeProgressionFamily(item && item[field])) === definition.key
+                        ? normalizeProgressionApparatus(item && item.apparatus) === definition.key
+                        : normalizeProgressionFamilies(
+                            item && (item.families !== undefined ? item.families : item.family)
+                        ).includes(definition.key))
                 );
-                const totalValue = matching.reduce((sum, item) => sum + getProgressionRadarValue(item.status), 0);
+                const evaluated = byApparatus
+                    ? matching
+                    : matching.filter(item =>
+                        getProgressionQualityPercent(item && item.quality && item.quality[definition.key]) !== null
+                    );
+                const totalValue = evaluated.reduce((sum, item) => sum + (byApparatus
+                    ? getProgressionRadarValue(item.status)
+                    : getProgressionQualityPercent(item && item.quality && item.quality[definition.key])), 0);
                 return {
                     id: definition.key,
                     label: definition.label,
-                    value: matching.length ? Math.round(totalValue / matching.length) : 0,
-                    count: matching.length
+                    value: evaluated.length ? Math.round(totalValue / evaluated.length) : 0,
+                    count: evaluated.length,
+                    associatedCount: matching.length
                 };
             });
             const unclassifiedCount = source.filter(item =>
                 (byApparatus
-                    ? normalizeProgressionApparatus(item && item[field])
-                    : normalizeProgressionFamily(item && item[field])) === 'unclassified'
+                    ? normalizeProgressionApparatus(item && item.apparatus) === 'unclassified'
+                    : normalizeProgressionFamilies(
+                        item && (item.families !== undefined ? item.families : item.family)
+                    ).length === 0)
             ).length;
+            const unevaluatedCount = byApparatus ? 0 : source.filter(item => {
+                const families = normalizeProgressionFamilies(
+                    item && (item.families !== undefined ? item.families : item.family)
+                );
+                return families.some(family =>
+                    getProgressionQualityPercent(item && item.quality && item.quality[family]) === null
+                );
+            }).length;
             return {
                 entries,
                 total: source.length,
                 classifiedCount: source.length - unclassifiedCount,
                 unclassifiedCount,
+                unevaluatedCount,
                 dimension: byApparatus ? 'apparatus' : 'family'
             };
         }
@@ -3263,6 +3487,9 @@
                 return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
             }).join(' ');
             const chartColor = dimension === 'apparatus' ? '#2563eb' : '#7e22ce';
+            const scaleNote = dimension === 'apparatus'
+                ? 'Acquisition : 0 % pas acquis · 50 % en cours · 100 % acquis'
+                : 'Qualité : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé';
             const dots = displayEntries.map((entry, index) => {
                 const p = point(index, entry.value / 100);
                 return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="${chartColor}"/>`;
@@ -3278,9 +3505,10 @@
                     ${grid}${axes}
                     <polygon points="${dataPoints}" fill="${chartColor}" fill-opacity="0.2" stroke="${chartColor}" stroke-width="3"/>
                     ${dots}${labels}
-                    <text x="220" y="376" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">0 % : pas acquis · 50 % : en cours · 100 % : acquis</text>
+                    <text x="220" y="376" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">${escapeHtml(scaleNote)}</text>
                 </svg>
                 ${radar.unclassifiedCount ? `<p style="margin:0; color:#b45309; font-size:10px;">${radar.unclassifiedCount} élément${radar.unclassifiedCount === 1 ? '' : 's'} à classer, non inclus dans ce radar.</p>` : ''}
+                ${radar.unevaluatedCount ? `<p style="margin:3px 0 0; color:#6b7280; font-size:10px;">${radar.unevaluatedCount} élément${radar.unevaluatedCount === 1 ? '' : 's'} avec une qualité non évaluée, exclue de la moyenne concernée.</p>` : ''}
             </div>`;
         }
 
@@ -3355,7 +3583,7 @@
             return createProgressionIdForGym(currentGymId);
         }
 
-        function addProgressionItem(name, status = 'not_acquired', apparatus = 'unclassified', family = 'unclassified') {
+        function addProgressionItem(name, status = 'not_acquired', apparatus = 'unclassified', families = []) {
             if (!currentGymId) throw new Error('Ouvrez d’abord une fiche gymnaste.');
             const normalizedName = normalizeProgressionName(name);
             if (!normalizedName) throw new Error("Indiquez le nom de l'élément.");
@@ -3365,19 +3593,20 @@
                 id: createProgressionId(),
                 name: normalizedName,
                 apparatus: normalizeProgressionApparatus(apparatus),
-                family: normalizeProgressionFamily(family),
+                families: normalizeProgressionFamilies(families),
                 updatedAt: now
             };
             getProgressionElements().push(item);
             getGymnastProgressionStatusMap()[item.id] = {
                 status: normalizeProgressionStatus(status),
+                quality: {},
                 updatedAt: now
             };
             saveAllData();
-            return {...item, status: normalizeProgressionStatus(status)};
+            return {...item, status: normalizeProgressionStatus(status), quality: {}};
         }
 
-        function renameProgressionItem(itemId, name, apparatus, family) {
+        function renameProgressionItem(itemId, name, apparatus, families) {
             const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) throw new Error('Élément introuvable.');
             const normalizedName = normalizeProgressionName(name);
@@ -3385,7 +3614,15 @@
             if (progressionNameExists(normalizedName, itemId)) throw new Error('Cet élément existe déjà dans le tableau.');
             item.name = normalizedName;
             if (apparatus !== undefined) item.apparatus = normalizeProgressionApparatus(apparatus);
-            if (family !== undefined) item.family = normalizeProgressionFamily(family);
+            if (families !== undefined) {
+                item.families = normalizeProgressionFamilies(families);
+                Object.values(data.progressions || {}).forEach(statuses => {
+                    if (!statuses || typeof statuses !== 'object' || Array.isArray(statuses)) return;
+                    const record = statuses[itemId];
+                    if (!record || typeof record !== 'object' || Array.isArray(record)) return;
+                    record.quality = normalizeProgressionQuality(record.quality, item.families);
+                });
+            }
             item.updatedAt = new Date().toISOString();
             saveAllData();
             return item;
@@ -3394,11 +3631,35 @@
         function setProgressionStatus(itemId, status) {
             const element = getProgressionElements().find(entry => entry.id === itemId);
             if (!element) throw new Error('Élément introuvable.');
+            const statuses = getGymnastProgressionStatusMap();
+            const previous = statuses[itemId] && typeof statuses[itemId] === 'object'
+                ? statuses[itemId]
+                : {};
             const record = {
                 status: normalizeProgressionStatus(status),
+                quality: normalizeProgressionQuality(previous.quality, element.families),
                 updatedAt: new Date().toISOString()
             };
-            getGymnastProgressionStatusMap()[itemId] = record;
+            statuses[itemId] = record;
+            saveAllData();
+            renderProgressionTable();
+            renderProgressionStatistics();
+            return {...element, ...record};
+        }
+
+        function setProgressionQuality(itemId, quality) {
+            const element = getProgressionElements().find(entry => entry.id === itemId);
+            if (!element) throw new Error('Élément introuvable.');
+            const statuses = getGymnastProgressionStatusMap();
+            const previous = statuses[itemId] && typeof statuses[itemId] === 'object'
+                ? statuses[itemId]
+                : {};
+            const record = {
+                status: normalizeProgressionStatus(previous.status),
+                quality: normalizeProgressionQuality(quality, element.families),
+                updatedAt: new Date().toISOString()
+            };
+            statuses[itemId] = record;
             saveAllData();
             renderProgressionTable();
             renderProgressionStatistics();
@@ -3471,17 +3732,34 @@
             return false;
         }
 
+        function getProgressionFamilyInputs() {
+            return [...document.querySelectorAll('#progression-family input[name="progression-family"]')];
+        }
+
+        function getSelectedProgressionFamilies() {
+            return normalizeProgressionFamilies(
+                getProgressionFamilyInputs().filter(input => input.checked).map(input => input.value)
+            );
+        }
+
+        function setSelectedProgressionFamilies(families) {
+            const selected = new Set(normalizeProgressionFamilies(families));
+            getProgressionFamilyInputs().forEach(input => {
+                input.checked = selected.has(input.value);
+            });
+        }
+
         function saveProgressionItem(event) {
             event.preventDefault();
             const input = document.getElementById('progression-element-name');
             const apparatus = document.getElementById('progression-apparatus');
-            const family = document.getElementById('progression-family');
+            const families = getSelectedProgressionFamilies();
             const editId = document.getElementById('edit-progression-id').value;
             try {
-                if (!apparatus.value || !family.value)
-                    throw new Error("Choisissez l'agrès et la famille technique.");
-                if (editId) renameProgressionItem(editId, input.value, apparatus.value, family.value);
-                else addProgressionItem(input.value, 'not_acquired', apparatus.value, family.value);
+                if (!apparatus.value || families.length === 0)
+                    throw new Error("Choisissez l'agrès et au moins une famille technique.");
+                if (editId) renameProgressionItem(editId, input.value, apparatus.value, families);
+                else addProgressionItem(input.value, 'not_acquired', apparatus.value, families);
                 cancelProgressionEdit();
                 renderProgressionTable();
                 renderProgressionStatistics();
@@ -3497,7 +3775,7 @@
             document.getElementById('edit-progression-id').value = item.id;
             document.getElementById('progression-element-name').value = item.name;
             document.getElementById('progression-apparatus').value = item.apparatus === 'unclassified' ? '' : item.apparatus;
-            document.getElementById('progression-family').value = item.family === 'unclassified' ? '' : item.family;
+            setSelectedProgressionFamilies(item.families);
             document.getElementById('btn-save-progression').textContent = 'Enregistrer';
             document.getElementById('btn-cancel-progression-edit').classList.remove('hidden');
             document.getElementById('progression-element-name').focus();
@@ -3507,7 +3785,7 @@
             document.getElementById('edit-progression-id').value = '';
             document.getElementById('progression-element-name').value = '';
             document.getElementById('progression-apparatus').value = '';
-            document.getElementById('progression-family').value = '';
+            setSelectedProgressionFamilies([]);
             document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
             document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
         }
@@ -3568,6 +3846,77 @@
             return button;
         }
 
+        function openProgressionQualityModal(itemId) {
+            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            if (!item) return;
+            const families = normalizeProgressionFamilies(item.families);
+            if (families.length === 0) {
+                alert("⚠️ Classez d'abord cet élément dans au moins une famille technique.");
+                return;
+            }
+            document.getElementById('progression-quality-item-id').value = item.id;
+            document.getElementById('progression-quality-title').textContent = `Qualité technique — ${item.name}`;
+            const fields = document.getElementById('progression-quality-fields');
+            fields.innerHTML = '';
+            families.forEach(family => {
+                const definition = PROGRESSION_FAMILIES.find(entry => entry.key === family);
+                const row = document.createElement('label');
+                row.className = 'block rounded-lg border border-gray-200 bg-gray-50 p-2';
+                const name = document.createElement('span');
+                name.className = 'mb-1 block font-bold text-gray-700';
+                name.textContent = definition ? definition.label : family;
+                const select = document.createElement('select');
+                select.dataset.qualityFamily = family;
+                select.className = 'w-full rounded-md border border-gray-300 bg-white p-2 text-xs';
+                const empty = document.createElement('option');
+                empty.value = '';
+                empty.textContent = 'Non évalué — exclu du radar technique';
+                select.appendChild(empty);
+                PROGRESSION_QUALITY_LEVELS.forEach(level => {
+                    const option = document.createElement('option');
+                    option.value = String(level.value);
+                    option.textContent = `${level.label} (${level.percent} %)`;
+                    select.appendChild(option);
+                });
+                const currentRating = normalizeProgressionQualityRating(item.quality && item.quality[family]);
+                select.value = currentRating === null ? '' : String(currentRating);
+                row.append(name, select);
+                fields.appendChild(row);
+            });
+            document.getElementById('modal-progression-quality').classList.remove('hidden');
+        }
+
+        function closeProgressionQualityModal() {
+            document.getElementById('modal-progression-quality').classList.add('hidden');
+            document.getElementById('progression-quality-item-id').value = '';
+            document.getElementById('progression-quality-fields').innerHTML = '';
+        }
+
+        function saveProgressionQuality() {
+            const itemId = document.getElementById('progression-quality-item-id').value;
+            if (!itemId) return;
+            const quality = {};
+            document.querySelectorAll('#progression-quality-fields [data-quality-family]').forEach(select => {
+                const rating = normalizeProgressionQualityRating(select.value);
+                if (rating !== null) quality[select.dataset.qualityFamily] = rating;
+            });
+            try {
+                setProgressionQuality(itemId, quality);
+                closeProgressionQualityModal();
+            } catch (error) {
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        function getProgressionQualityBadgeClasses(value) {
+            const rating = normalizeProgressionQualityRating(value);
+            if (rating === 1) return 'bg-red-50 text-red-700';
+            if (rating === 2) return 'bg-amber-50 text-amber-700';
+            if (rating === 3) return 'bg-blue-50 text-blue-700';
+            if (rating === 4) return 'bg-green-50 text-green-700';
+            return 'bg-gray-100 text-gray-600';
+        }
+
         function createProgressionClassificationBadges(item) {
             const container = document.createElement('div');
             container.className = 'mt-1 flex flex-wrap gap-1';
@@ -3577,13 +3926,23 @@
                 ? 'rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700'
                 : 'rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700';
             apparatus.textContent = apparatusMissing ? 'Agrès à classer' : getProgressionApparatusLabel(item.apparatus);
-            const family = document.createElement('span');
-            const familyMissing = normalizeProgressionFamily(item.family) === 'unclassified';
-            family.className = familyMissing
-                ? 'rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700'
-                : 'rounded bg-purple-50 px-1.5 py-0.5 text-[9px] font-bold text-purple-700';
-            family.textContent = familyMissing ? 'Famille à classer' : getProgressionFamilyLabel(item.family);
-            container.append(apparatus, family);
+            container.appendChild(apparatus);
+            const families = normalizeProgressionFamilies(item.families);
+            if (families.length === 0) {
+                const missing = document.createElement('span');
+                missing.className = 'rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700';
+                missing.textContent = 'Famille à classer';
+                container.appendChild(missing);
+            } else {
+                families.forEach(family => {
+                    const definition = PROGRESSION_FAMILIES.find(entry => entry.key === family);
+                    const rating = item.quality && item.quality[family];
+                    const badge = document.createElement('span');
+                    badge.className = `rounded px-1.5 py-0.5 text-[9px] font-bold ${getProgressionQualityBadgeClasses(rating)}`;
+                    badge.textContent = `${definition ? definition.label : family} : ${getProgressionQualityLabel(rating)}`;
+                    container.appendChild(badge);
+                });
+            }
             return container;
         }
 
@@ -3614,12 +3973,17 @@
                 edit.className = 'font-bold text-blue-600';
                 edit.textContent = 'Modifier';
                 edit.onclick = () => startProgressionEdit(item.id);
+                const quality = document.createElement('button');
+                quality.type = 'button';
+                quality.className = 'font-bold text-purple-700';
+                quality.textContent = 'Qualité';
+                quality.onclick = () => openProgressionQualityModal(item.id);
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'font-bold text-red-600';
                 remove.textContent = 'Supprimer';
                 remove.onclick = () => deleteProgressionItem(item.id);
-                actions.append(up, down, edit, remove);
+                actions.append(up, down, quality, edit, remove);
                 nameCell.append(name, classifications, actions);
                 row.append(
                     nameCell,
@@ -3655,6 +4019,11 @@
 
                 const cardActions = document.createElement('div');
                 cardActions.className = 'mt-2 flex justify-end gap-4 text-[10px]';
+                const mobileQuality = document.createElement('button');
+                mobileQuality.type = 'button';
+                mobileQuality.className = 'font-bold text-purple-700';
+                mobileQuality.textContent = 'Qualité';
+                mobileQuality.onclick = () => openProgressionQualityModal(item.id);
                 const mobileEdit = document.createElement('button');
                 mobileEdit.type = 'button';
                 mobileEdit.className = 'font-bold text-blue-600';
@@ -3665,7 +4034,7 @@
                 mobileRemove.className = 'font-bold text-red-600';
                 mobileRemove.textContent = 'Supprimer';
                 mobileRemove.onclick = () => deleteProgressionItem(item.id);
-                cardActions.append(mobileEdit, mobileRemove);
+                cardActions.append(mobileQuality, mobileEdit, mobileRemove);
                 card.append(cardHeader, cardClassifications, statusButtons, cardActions);
                 mobileList.appendChild(card);
             });
@@ -3699,11 +4068,32 @@
             });
         }
 
+        function wrapProgressionRadarLabel(label, maxLineLength = 14) {
+            const words = String(label || '').trim().split(/\s+/).filter(Boolean);
+            const lines = [];
+            words.forEach(rawWord => {
+                const word = rawWord.length > maxLineLength
+                    ? `${rawWord.slice(0, Math.max(1, maxLineLength - 1))}…`
+                    : rawWord;
+                const current = lines[lines.length - 1] || '';
+                if (!current || `${current} ${word}`.length > maxLineLength) lines.push(word);
+                else lines[lines.length - 1] = `${current} ${word}`;
+            });
+            if (lines.length <= 2) return lines;
+            return [lines[0], `${lines.slice(1).join(' ').slice(0, maxLineLength - 1)}…`];
+        }
+
         function createProgressionRadarChart(canvas, radar, color) {
+            const availableWidth = Math.max(
+                Number(canvas.parentElement && canvas.parentElement.clientWidth) || Number(canvas.clientWidth) || 0,
+                280
+            );
+            const maxLineLength = availableWidth < 340 ? 11 : availableWidth < 420 ? 14 : 17;
+            const labelFontSize = availableWidth < 340 ? 8 : availableWidth < 420 ? 9 : 10;
             return new Chart(canvas.getContext('2d'), {
                 type: 'radar',
                 data: {
-                    labels: radar.entries.map(entry => entry.label),
+                    labels: radar.entries.map(entry => wrapProgressionRadarLabel(entry.label, maxLineLength)),
                     datasets: [{
                         label: 'Progression',
                         data: radar.entries.map(entry => entry.value),
@@ -3718,15 +4108,24 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    resizeDelay: 120,
+                    devicePixelRatio: Math.min(Number(window.devicePixelRatio) || 1, 2),
+                    layout: {padding: availableWidth < 340 ? 8 : 14},
                     animation: false,
                     plugins: {
                         legend: {display: false},
                         tooltip: {
                             callbacks: {
+                                title(context) {
+                                    const entry = radar.entries[context[0] && context[0].dataIndex];
+                                    return entry ? entry.label : '';
+                                },
                                 label(context) {
                                     const value = Number(context.raw);
                                     const entry = radar.entries[context.dataIndex];
-                                    return `${value} % · ${entry.count} élément${entry.count === 1 ? '' : 's'}`;
+                                    return radar.dimension === 'family'
+                                        ? `${value} % · ${entry.count}/${entry.associatedCount} évalué${entry.count === 1 ? '' : 's'}`
+                                        : `${value} % · ${entry.count} élément${entry.count === 1 ? '' : 's'}`;
                                 }
                             }
                         }
@@ -3747,10 +4146,8 @@
                             },
                             pointLabels: {
                                 color: '#374151',
-                                font: {size: 9, weight: '600'},
-                                callback(label) {
-                                    return label.length > 18 ? `${label.slice(0, 16)}…` : label;
-                                }
+                                padding: availableWidth < 340 ? 3 : 5,
+                                font: {size: labelFontSize, weight: '600'}
                             },
                             grid: {color: '#ddd6fe'},
                             angleLines: {color: '#e5e7eb'}
@@ -3758,6 +4155,28 @@
                     }
                 }
             });
+        }
+
+        function resizeProgressionRadarCharts() {
+            if (progressionRadarResizeFrame !== null && typeof cancelAnimationFrame === 'function')
+                cancelAnimationFrame(progressionRadarResizeFrame);
+            const resize = () => {
+                progressionRadarResizeFrame = null;
+                [progressionFamilyRadarChart, progressionApparatusRadarChart].forEach(chart => {
+                    if (chart && typeof chart.resize === 'function') chart.resize();
+                });
+            };
+            if (typeof requestAnimationFrame === 'function')
+                progressionRadarResizeFrame = requestAnimationFrame(resize);
+            else resize();
+        }
+
+        function observeProgressionRadarSize() {
+            if (progressionRadarResizeObserver || typeof ResizeObserver === 'undefined') return;
+            progressionRadarResizeObserver = new ResizeObserver(() => resizeProgressionRadarCharts());
+            document.querySelectorAll('.progression-radar-shell').forEach(element =>
+                progressionRadarResizeObserver.observe(element)
+            );
         }
 
         function renderProgressionRadarChart(items) {
@@ -3786,9 +4205,12 @@
                 missing.push(`${familyRadar.unclassifiedCount} sans famille technique`);
             if (apparatusRadar.unclassifiedCount)
                 missing.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
+            if (familyRadar.unevaluatedCount)
+                missing.push(`${familyRadar.unevaluatedCount} avec une qualité technique incomplète`);
+            const calculationNote = 'Radar technique : à corriger 25 %, fragile 50 %, correct 75 %, maîtrisé 100 % ; non évalué exclu. Radar par agrès : pas acquis 0 %, en cours 50 %, acquis 100 %.';
             note.textContent = missing.length
-                ? `À classer : ${missing.join(' · ')}. Ces éléments ne sont pas inclus dans le radar concerné.`
-                : 'Moyenne des éléments : pas acquis = 0 %, en cours = 50 %, acquis = 100 %.';
+                ? `À compléter : ${missing.join(' · ')}. ${calculationNote}`
+                : calculationNote;
             progressionFamilyRadarChart = createProgressionRadarChart(
                 familyCanvas,
                 familyRadar,
@@ -3799,6 +4221,8 @@
                 apparatusRadar,
                 {border: '#2563eb', background: 'rgba(37, 99, 235, 0.16)'}
             );
+            observeProgressionRadarSize();
+            resizeProgressionRadarCharts();
         }
 
         function renderProgressionStatistics() {
@@ -3878,36 +4302,39 @@
                 doc.text('Profils de progression', 14, 49);
                 doc.setFontSize(8);
                 doc.setTextColor(107, 33, 168);
-                doc.text('Familles techniques', 57, 57, {align: 'center'});
+                doc.text('Qualité technique', 57, 57, {align: 'center'});
                 doc.setTextColor(29, 78, 216);
-                doc.text('Agrès', 153, 57, {align: 'center'});
+                doc.text('Acquisition par agrès', 153, 57, {align: 'center'});
                 const familyRadar = drawProgressionRadarPDF(doc, items, 57, 84, 19, 'family');
                 const apparatusRadar = drawProgressionRadarPDF(doc, items, 153, 84, 19, 'apparatus');
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7);
                 doc.setTextColor(107, 114, 128);
-                doc.text('0 % : pas acquis · 50 % : en cours · 100 % : acquis', 105, 113, {align: 'center'});
+                doc.text('Technique : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé', 105, 111, {align: 'center'});
+                doc.text('Agrès : 0 % pas acquis · 50 % en cours · 100 % acquis', 105, 115, {align: 'center'});
                 const classificationWarnings = [];
                 if (familyRadar.unclassifiedCount)
                     classificationWarnings.push(`${familyRadar.unclassifiedCount} sans famille`);
                 if (apparatusRadar.unclassifiedCount)
                     classificationWarnings.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
+                if (familyRadar.unevaluatedCount)
+                    classificationWarnings.push(`${familyRadar.unevaluatedCount} avec qualité incomplète`);
                 if (classificationWarnings.length)
-                    doc.text(`À classer : ${classificationWarnings.join(' · ')} (non inclus dans le radar concerné)`, 105, 118, {align: 'center'});
+                    doc.text(`À compléter : ${classificationWarnings.join(' · ')}`, 105, 120, {align: 'center'});
 
                 doc.autoTable({
-                    startY: classificationWarnings.length ? 124 : 120,
-                    head: [["Nom de l'élément", 'Agrès', 'Famille', 'Pas acquis', 'En cours', 'Acquis']],
+                    startY: classificationWarnings.length ? 126 : 121,
+                    head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Pas acquis', 'En cours', 'Acquis']],
                     body: items.map(item => [
                         item.name,
                         getProgressionApparatusLabel(item.apparatus),
-                        getProgressionFamilyLabel(item.family),
+                        getProgressionFamilyQualityText(item),
                         item.status === 'not_acquired' ? 'X' : '',
                         item.status === 'in_progress' ? 'X' : '',
                         item.status === 'acquired' ? 'X' : ''
                     ]),
                     theme: 'grid',
-                    styles: {fontSize: 7.5, cellPadding: 2, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
+                    styles: {fontSize: 7, cellPadding: 2, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                     headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
                     columnStyles: {
                         0: {cellWidth: 48, halign: 'left', fontStyle: 'bold'},
@@ -4739,10 +5166,192 @@
             }
             const reader = new FileReader();
             reader.onload = loadEvent => {
+                customSigleDrawingData = null;
                 document.getElementById('sigle-image-preview').src = loadEvent.target.result;
                 document.getElementById('sigle-image-preview-container').classList.remove('hidden');
+                const status = document.getElementById('sigle-drawing-status');
+                if (status) status.textContent = 'Le fichier sélectionné sera utilisé. Le dessin reste modifiable tant que vous ne cliquez pas sur « Utiliser ».';
             };
             reader.readAsDataURL(file);
+        }
+
+        function getSigleDrawingCanvas() {
+            return document.getElementById('sigle-drawing-canvas');
+        }
+
+        function fillSigleDrawingCanvasWhite(context, canvas) {
+            context.save();
+            context.globalCompositeOperation = 'source-over';
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.restore();
+        }
+
+        function getSigleDrawingPoint(event) {
+            const canvas = getSigleDrawingCanvas();
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (event.clientX - rect.left) * (canvas.width / rect.width),
+                y: (event.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function saveSigleDrawingSnapshot() {
+            const canvas = getSigleDrawingCanvas();
+            if (!canvas || !sigleDrawingContext) return;
+            sigleDrawingHistory.push({
+                image: sigleDrawingContext.getImageData(0, 0, canvas.width, canvas.height),
+                hasContent: sigleDrawingHasContent
+            });
+            if (sigleDrawingHistory.length > 12) sigleDrawingHistory.shift();
+        }
+
+        function updateSigleDrawingToolUI() {
+            const draw = document.getElementById('btn-sigle-draw');
+            const erase = document.getElementById('btn-sigle-erase');
+            if (!draw || !erase) return;
+            draw.className = sigleDrawingTool === 'draw'
+                ? 'rounded border border-pink-300 bg-pink-100 px-2 py-1.5 font-bold text-pink-700'
+                : 'rounded border border-gray-200 bg-white px-2 py-1.5 font-bold text-gray-600';
+            erase.className = sigleDrawingTool === 'erase'
+                ? 'rounded border border-pink-300 bg-pink-100 px-2 py-1.5 font-bold text-pink-700'
+                : 'rounded border border-gray-200 bg-white px-2 py-1.5 font-bold text-gray-600';
+        }
+
+        function setSigleDrawingTool(tool) {
+            sigleDrawingTool = tool === 'erase' ? 'erase' : 'draw';
+            updateSigleDrawingToolUI();
+        }
+
+        function startSigleDrawing(event) {
+            if (!sigleDrawingContext || (event.pointerType === 'mouse' && event.button !== 0)) return;
+            event.preventDefault();
+            saveSigleDrawingSnapshot();
+            customSigleDrawingData = null;
+            document.getElementById('sigle-drawing-status').textContent = 'Dessin modifié : appuyez sur « Utiliser » pour actualiser l’aperçu.';
+            sigleDrawingPointerActive = true;
+            const canvas = getSigleDrawingCanvas();
+            if (typeof canvas.setPointerCapture === 'function') canvas.setPointerCapture(event.pointerId);
+            const point = getSigleDrawingPoint(event);
+            const width = Number(document.getElementById('sigle-drawing-width').value) || 8;
+            const color = document.getElementById('sigle-drawing-color').value || '#111827';
+            sigleDrawingContext.globalCompositeOperation = 'source-over';
+            sigleDrawingContext.lineCap = 'round';
+            sigleDrawingContext.lineJoin = 'round';
+            sigleDrawingContext.lineWidth = width;
+            sigleDrawingContext.strokeStyle = sigleDrawingTool === 'erase' ? '#ffffff' : color;
+            sigleDrawingContext.fillStyle = sigleDrawingTool === 'erase' ? '#ffffff' : color;
+            sigleDrawingContext.beginPath();
+            sigleDrawingContext.arc(point.x, point.y, width / 2, 0, Math.PI * 2);
+            sigleDrawingContext.fill();
+            sigleDrawingContext.beginPath();
+            sigleDrawingContext.moveTo(point.x, point.y);
+            if (sigleDrawingTool === 'draw') sigleDrawingHasContent = true;
+        }
+
+        function continueSigleDrawing(event) {
+            if (!sigleDrawingPointerActive || !sigleDrawingContext) return;
+            event.preventDefault();
+            const point = getSigleDrawingPoint(event);
+            sigleDrawingContext.lineTo(point.x, point.y);
+            sigleDrawingContext.stroke();
+        }
+
+        function endSigleDrawing(event) {
+            if (!sigleDrawingPointerActive) return;
+            event.preventDefault();
+            sigleDrawingPointerActive = false;
+            if (sigleDrawingContext) sigleDrawingContext.closePath();
+            const canvas = getSigleDrawingCanvas();
+            if (canvas && typeof canvas.releasePointerCapture === 'function' && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId))
+                canvas.releasePointerCapture(event.pointerId);
+        }
+
+        function initializeSigleDrawingCanvas(reset = false) {
+            const canvas = getSigleDrawingCanvas();
+            if (!canvas) return;
+            if (!sigleDrawingContext) {
+                sigleDrawingContext = canvas.getContext('2d', {willReadFrequently: true});
+                canvas.onpointerdown = startSigleDrawing;
+                canvas.onpointermove = continueSigleDrawing;
+                canvas.onpointerup = endSigleDrawing;
+                canvas.onpointercancel = endSigleDrawing;
+                fillSigleDrawingCanvasWhite(sigleDrawingContext, canvas);
+            }
+            if (reset) {
+                fillSigleDrawingCanvasWhite(sigleDrawingContext, canvas);
+                sigleDrawingHistory = [];
+                sigleDrawingHasContent = false;
+                sigleDrawingPointerActive = false;
+                sigleDrawingTool = 'draw';
+            }
+            updateSigleDrawingToolUI();
+        }
+
+        function openSigleDrawingEditor() {
+            document.getElementById('sigle-drawing-panel').classList.remove('hidden');
+            initializeSigleDrawingCanvas(false);
+            document.getElementById('sigle-drawing-status').textContent = 'Dessinez le symbole puis appuyez sur « Utiliser ».';
+            getSigleDrawingCanvas().scrollIntoView({block: 'nearest', behavior: 'smooth'});
+        }
+
+        function undoSigleDrawing() {
+            initializeSigleDrawingCanvas(false);
+            const snapshot = sigleDrawingHistory.pop();
+            if (!snapshot) return;
+            sigleDrawingContext.putImageData(snapshot.image, 0, 0);
+            sigleDrawingHasContent = snapshot.hasContent;
+            customSigleDrawingData = null;
+            document.getElementById('sigle-drawing-status').textContent = 'Dernier trait annulé.';
+        }
+
+        function clearSigleDrawing() {
+            initializeSigleDrawingCanvas(false);
+            if (sigleDrawingHasContent) saveSigleDrawingSnapshot();
+            fillSigleDrawingCanvasWhite(sigleDrawingContext, getSigleDrawingCanvas());
+            sigleDrawingHasContent = false;
+            customSigleDrawingData = null;
+            document.getElementById('sigle-drawing-status').textContent = 'Zone effacée.';
+        }
+
+        function sigleDrawingContainsInk() {
+            if (!sigleDrawingContext) return false;
+            const canvas = getSigleDrawingCanvas();
+            const pixels = sigleDrawingContext.getImageData(0, 0, canvas.width, canvas.height).data;
+            for (let index = 0; index < pixels.length; index += 4) {
+                if (pixels[index] < 250 || pixels[index + 1] < 250 || pixels[index + 2] < 250) return true;
+            }
+            return false;
+        }
+
+        function useSigleDrawing() {
+            initializeSigleDrawingCanvas(false);
+            if (!sigleDrawingHasContent || !sigleDrawingContainsInk()) {
+                alert('⚠️ Dessinez un symbole avant de l’utiliser.');
+                return;
+            }
+            const source = getSigleDrawingCanvas();
+            const output = document.createElement('canvas');
+            output.width = 160;
+            output.height = 160;
+            const context = output.getContext('2d');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, output.width, output.height);
+            context.drawImage(source, 0, 0, output.width, output.height);
+            customSigleDrawingData = output.toDataURL('image/png');
+            document.getElementById('sigle-image-file').value = '';
+            document.getElementById('sigle-image-preview').src = customSigleDrawingData;
+            document.getElementById('sigle-image-preview-container').classList.remove('hidden');
+            document.getElementById('sigle-drawing-status').textContent = 'Dessin prêt à être enregistré comme image du mouvement.';
+        }
+
+        function resetSigleDrawingEditor() {
+            customSigleDrawingData = null;
+            const panel = document.getElementById('sigle-drawing-panel');
+            if (panel) panel.classList.add('hidden');
+            if (getSigleDrawingCanvas()) initializeSigleDrawingCanvas(true);
+            const status = document.getElementById('sigle-drawing-status');
+            if (status) status.textContent = 'Dessinez le symbole puis appuyez sur « Utiliser ».';
         }
 
         function cancelCustomSigleEdit() {
@@ -4756,6 +5365,7 @@
             document.getElementById('sigle-image-label').innerText = 'Image du mouvement :';
             document.getElementById('sigle-image-preview').removeAttribute('src');
             document.getElementById('sigle-image-preview-container').classList.add('hidden');
+            resetSigleDrawingEditor();
             document.getElementById('btn-save-custom-sigle').innerText = "Enregistrer l'image";
             document.getElementById('btn-cancel-custom-sigle-edit').classList.add('hidden');
             refreshCustomSigleFolderSelect(currentSigleManagerFolderId);
@@ -4903,6 +5513,7 @@
             const item = data.customSigles[index];
             if (!item) return;
             const scoring = getCustomSigleScoring(item);
+            resetSigleDrawingEditor();
             editingCustomSigleIndex = index;
             document.getElementById('modal-custom-sigle-title').innerText = `Modifier ${item.nom}`;
             document.getElementById('sigle-abrev-input').value = item.abrev || '';
@@ -5022,8 +5633,12 @@
             const currentItem = editingCustomSigleIndex === null
                 ? null
                 : data.customSigles[editingCustomSigleIndex];
-            if (!fileInput.files[0] && (!currentItem || !currentItem.img))
-                return alert("Veuillez sélectionner une image à enregistrer.");
+            if (!fileInput.files[0] && !customSigleDrawingData && (!currentItem || !currentItem.img))
+                return alert("Veuillez sélectionner une image ou dessiner un symbole à enregistrer.");
+            if (customSigleDrawingData && !fileInput.files[0]) {
+                commitCustomSigleSave(abrev, nom, customSigleDrawingData, folderId, movementValue.value, bonusValue.value);
+                return;
+            }
             if (!fileInput.files[0]) {
                 commitCustomSigleSave(abrev, nom, currentItem.img, folderId, movementValue.value, bonusValue.value);
                 return;
@@ -6637,7 +7252,7 @@
             const rows = items.map(item => `<tr style="text-align:center; page-break-inside:avoid;">
                 <td style="border:1px solid #e5e7eb; padding:7px; text-align:left; font-weight:600;">${escapeHtml(item.name)}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionApparatusLabel(item.apparatus))}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyLabel(item.family))}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyQualityText(item))}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_acquired' ? 'X' : ''}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#d97706; font-weight:bold;">${item.status === 'in_progress' ? 'X' : ''}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
@@ -6649,15 +7264,15 @@
                     <div style="flex:1; border:1px solid #fde68a; background:#fffbeb; color:#b45309; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.in_progress}</strong>En cours</div>
                     <div style="flex:1; border:1px solid #bbf7d0; background:#f0fdf4; color:#15803d; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.acquired}</strong>Acquis (${summary.acquiredPercent} %)</div>
                 </div>
-                <h3 style="font-size:12px; color:#6b21a8; margin:18px 0 5px; text-align:center;">Profil par familles techniques</h3>
+                <h3 style="font-size:12px; color:#6b21a8; margin:18px 0 5px; text-align:center;">Qualité par familles techniques</h3>
                 ${buildProgressionRadarSvg(items, 'family')}
-                <h3 style="font-size:12px; color:#1d4ed8; margin:18px 0 5px; text-align:center; page-break-before:auto;">Progression par agrès</h3>
+                <h3 style="font-size:12px; color:#1d4ed8; margin:18px 0 5px; text-align:center; page-break-before:auto;">Acquisition par agrès</h3>
                 ${buildProgressionRadarSvg(items, 'apparatus')}
                 <table style="width:100%; border-collapse:collapse; margin-top:18px; font-size:10px;">
                     <thead><tr style="background:#f3e8ff; color:#581c87;">
                         <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:31%;">Nom de l'élément</th>
                         <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:13%;">Agrès</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:26%;">Famille</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:26%;">Famille(s) et qualité</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">Pas acquis</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">En cours</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">Acquis</th>
@@ -7159,6 +7774,9 @@
         }
 
         document.addEventListener('fullscreenchange', updateFullscreenControls);
+        window.addEventListener('resize', resizeProgressionRadarCharts, {passive: true});
+        if (window.screen && window.screen.orientation && typeof window.screen.orientation.addEventListener === 'function')
+            window.screen.orientation.addEventListener('change', resizeProgressionRadarCharts);
 
         function resetAppData() {
             if (confirm(
