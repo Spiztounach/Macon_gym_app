@@ -670,12 +670,14 @@
                                 <span id="progression-statistics-percent" class="rounded-full bg-white px-3 py-1.5 text-sm font-black text-purple-700 shadow-sm">0 %</span>
                             </div>
                             <div class="h-3 overflow-hidden rounded-full bg-white border border-purple-100 flex" aria-label="Répartition de la progression">
-                                <div id="progression-bar-not-acquired" class="h-full bg-red-400 transition-all" style="width:0%"></div>
+                                <div id="progression-bar-not-performed" class="h-full bg-red-400 transition-all" style="width:0%"></div>
+                                <div id="progression-bar-studied" class="h-full bg-blue-400 transition-all" style="width:0%"></div>
                                 <div id="progression-bar-in-progress" class="h-full bg-amber-400 transition-all" style="width:0%"></div>
                                 <div id="progression-bar-acquired" class="h-full bg-green-500 transition-all" style="width:0%"></div>
                             </div>
-                            <div class="grid grid-cols-3 gap-2 text-center">
-                                <div class="rounded-lg border border-red-100 bg-white p-2"><span id="progression-count-not-acquired" class="block text-lg font-black text-red-600">0</span><span class="text-[9px] font-semibold text-gray-500">Pas acquis</span></div>
+                            <div class="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+                                <div class="rounded-lg border border-red-100 bg-white p-2"><span id="progression-count-not-performed" class="block text-lg font-black text-red-600">0</span><span class="text-[9px] font-semibold text-gray-500">Non réalisé</span></div>
+                                <div class="rounded-lg border border-blue-100 bg-white p-2"><span id="progression-count-studied" class="block text-lg font-black text-blue-600">0</span><span class="text-[9px] font-semibold text-gray-500">Étudié</span></div>
                                 <div class="rounded-lg border border-amber-100 bg-white p-2"><span id="progression-count-in-progress" class="block text-lg font-black text-amber-600">0</span><span class="text-[9px] font-semibold text-gray-500">En cours</span></div>
                                 <div class="rounded-lg border border-green-100 bg-white p-2"><span id="progression-count-acquired" class="block text-lg font-black text-green-600">0</span><span class="text-[9px] font-semibold text-gray-500">Acquis</span></div>
                             </div>
@@ -696,7 +698,7 @@
                                 </div>
                                 <p id="progression-radar-note" class="text-center text-[9px] text-gray-500"></p>
                             </div>
-                            <div class="grid gap-2 md:grid-cols-3 text-left">
+                            <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4 text-left">
                                 <div class="rounded-lg border border-green-200 bg-white p-2.5">
                                     <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-green-700">✓ Acquis / validés</h4>
                                     <ul id="progression-list-acquired" class="space-y-1 text-[10px] text-gray-700"></ul>
@@ -705,9 +707,13 @@
                                     <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-amber-700">● En cours</h4>
                                     <ul id="progression-list-in-progress" class="space-y-1 text-[10px] text-gray-700"></ul>
                                 </div>
+                                <div class="rounded-lg border border-blue-200 bg-white p-2.5">
+                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-blue-700">◐ Étudié</h4>
+                                    <ul id="progression-list-studied" class="space-y-1 text-[10px] text-gray-700"></ul>
+                                </div>
                                 <div class="rounded-lg border border-red-200 bg-white p-2.5">
-                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-red-700">✕ Pas acquis / non validés</h4>
-                                    <ul id="progression-list-not-acquired" class="space-y-1 text-[10px] text-gray-700"></ul>
+                                    <h4 class="mb-1.5 text-[10px] font-black uppercase tracking-wide text-red-700">✕ Non réalisé</h4>
+                                    <ul id="progression-list-not-performed" class="space-y-1 text-[10px] text-gray-700"></ul>
                                 </div>
                             </div>
                         </div>
@@ -735,7 +741,7 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
-                                    <p class="text-[10px] text-purple-600">La liste des éléments est commune à toutes les gymnastes. Seul l'état d'acquisition est personnel.</p>
+                                    <p class="text-[10px] text-purple-600">La liste des éléments et leurs agrès est commune à toutes les gymnastes. Chaque gymnaste possède une évaluation personnelle et indépendante sur chaque agrès.</p>
                                 </div>
                                 <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
                             </div>
@@ -745,18 +751,20 @@
                             <form id="form-progression" onsubmit="saveProgressionItem(event)" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
                                 <input type="hidden" id="edit-progression-id">
                                 <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
-                                <select id="progression-apparatus" class="min-w-0 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
-                                    <option value="">Choisir l'agrès…</option>
-                                    <option value="saut">Saut</option>
-                                    <option value="barres">Barres</option>
-                                    <option value="poutre">Poutre</option>
-                                    <option value="sol">Sol</option>
-                                    <option value="transversal">Transversal</option>
-                                </select>
                                 <div class="flex gap-2">
                                     <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="hidden flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
                                     <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
                                 </div>
+                                <fieldset id="progression-apparatus" class="rounded-lg border border-blue-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
+                                    <legend class="px-1 text-[10px] font-bold text-blue-700">Agrès — plusieurs choix possibles, avec une évaluation distincte</legend>
+                                    <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="saut" class="h-4 w-4 shrink-0 accent-blue-600">Saut</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="barres" class="h-4 w-4 shrink-0 accent-blue-600">Barres</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="poutre" class="h-4 w-4 shrink-0 accent-blue-600">Poutre</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="sol" class="h-4 w-4 shrink-0 accent-blue-600">Sol</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="transversal" class="h-4 w-4 shrink-0 accent-blue-600">Transversal</label>
+                                    </div>
+                                </fieldset>
                                 <fieldset id="progression-family" class="rounded-lg border border-purple-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
                                     <legend class="px-1 text-[10px] font-bold text-purple-700">Familles techniques — plusieurs choix possibles</legend>
                                     <div class="grid grid-cols-1 gap-1.5 min-[390px]:grid-cols-2 lg:grid-cols-4">
@@ -773,12 +781,19 @@
                             </form>
                         </div>
 
+                        <div class="rounded-xl border border-purple-100 bg-white p-3 text-[10px] text-gray-600">
+                            <p><strong class="text-green-700">Acquis :</strong> respect de la technique et de la rythmique de l’exercice.</p>
+                            <p><strong class="text-amber-700">En cours :</strong> réalisé avec une petite erreur technique, rythmique ou d’amplitude.</p>
+                            <p><strong class="text-blue-700">Étudié :</strong> réalisé globalement ou partiellement.</p>
+                            <p><strong class="text-red-700">Non réalisé :</strong> élément non effectué.</p>
+                        </div>
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
                             <table class="w-full border-collapse text-xs">
                                 <thead class="bg-gray-100 text-gray-700">
                                     <tr>
-                                        <th class="w-[55%] border-b border-r border-gray-200 p-2.5 text-left">Nom de l'élément</th>
-                                        <th class="border-b border-r border-gray-200 p-2 text-center text-red-700">Pas acquis</th>
+                                        <th class="w-[44%] border-b border-r border-gray-200 p-2.5 text-left">Nom de l'élément</th>
+                                        <th class="border-b border-r border-gray-200 p-2 text-center text-red-700">Non réalisé</th>
+                                        <th class="border-b border-r border-gray-200 p-2 text-center text-blue-700">Étudié</th>
                                         <th class="border-b border-r border-gray-200 p-2 text-center text-amber-700">En cours</th>
                                         <th class="border-b border-gray-200 p-2 text-center text-green-700">Acquis</th>
                                     </tr>
@@ -820,6 +835,13 @@
                                 rows="4"
                                 oninput="updateMovementStartScoreDisplay()"
                                 placeholder="Écrivez le mouvement ou insérez les sigles..."></textarea>
+                            <div class="mt-2 rounded-xl border border-pink-200 bg-pink-50 p-3">
+                                <div class="mb-2 flex items-center justify-between gap-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-pink-700">Aperçu visuel de la composition</span>
+                                    <span class="text-[9px] text-pink-500">Mis à jour automatiquement</span>
+                                </div>
+                                <div id="movement-composition-preview" class="flex min-h-16 flex-wrap items-center gap-2 rounded-lg border border-pink-100 bg-white p-2"></div>
+                            </div>
                             <div class="mt-2 rounded-xl border border-purple-200 bg-purple-50 p-3">
                                 <div class="flex items-center justify-between gap-3">
                                     <span class="text-xs font-bold text-purple-800">Note de départ calculée</span>
@@ -1265,6 +1287,7 @@
             </div>
             <div class="min-h-0 overflow-y-auto p-4 space-y-3">
                 <input type="hidden" id="progression-quality-item-id">
+                <input type="hidden" id="progression-quality-apparatus">
                 <p class="rounded-lg border border-purple-100 bg-purple-50 p-2 text-[10px] leading-relaxed text-purple-800">
                     Le statut indique si l’élément est réalisé. La qualité évalue séparément chaque famille technique et alimente le radar technique.
                 </p>
@@ -1392,10 +1415,16 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.17.0';
+        const APP_VERSION = '1.18.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
-        const PROGRESSION_STATUSES = ['not_acquired', 'in_progress', 'acquired'];
+        const PROGRESSION_STATUSES = ['not_performed', 'studied', 'in_progress', 'acquired'];
+        const PROGRESSION_STATUS_DEFINITIONS = {
+            not_performed: {label: 'Non réalisé', percent: 0},
+            studied: {label: 'Étudié', percent: 35},
+            in_progress: {label: 'En cours', percent: 70},
+            acquired: {label: 'Acquis', percent: 100}
+        };
         const PROGRESSION_APPARATUS = [
             {key: 'saut', label: 'Saut'},
             {key: 'barres', label: 'Barres'},
@@ -1542,12 +1571,32 @@
         }
 
         function normalizeProgressionStatus(value) {
-            return PROGRESSION_STATUSES.includes(value) ? value : 'not_acquired';
+            const key = String(value || '').trim();
+            if (PROGRESSION_STATUSES.includes(key)) return key;
+            const legacy = {
+                not_acquired: 'not_performed',
+                pas_acquis: 'not_performed',
+                non_realise: 'not_performed',
+                etudie: 'studied'
+            };
+            return legacy[key] || 'not_performed';
         }
 
         function normalizeProgressionApparatus(value) {
             const key = String(value || '').trim();
             return PROGRESSION_APPARATUS.some(item => item.key === key) ? key : 'unclassified';
+        }
+
+        function normalizeProgressionApparatuses(value) {
+            const source = Array.isArray(value)
+                ? value
+                : value === undefined || value === null
+                    ? []
+                    : String(value).split(',');
+            const normalized = [...new Set(source
+                .map(item => normalizeProgressionApparatus(item))
+                .filter(item => item !== 'unclassified'))];
+            return normalized.length ? normalized : ['unclassified'];
         }
 
         function normalizeProgressionFamily(value) {
@@ -1569,6 +1618,14 @@
         function getProgressionApparatusLabel(value) {
             const item = PROGRESSION_APPARATUS.find(entry => entry.key === normalizeProgressionApparatus(value));
             return item ? item.label : 'À classer';
+        }
+
+        function getProgressionApparatusLabels(value) {
+            return normalizeProgressionApparatuses(value).map(getProgressionApparatusLabel);
+        }
+
+        function getProgressionStatusLabel(value) {
+            return PROGRESSION_STATUS_DEFINITIONS[normalizeProgressionStatus(value)].label;
         }
 
         function getProgressionFamilyLabels(value) {
@@ -1624,6 +1681,43 @@
             }).join(' · ');
         }
 
+        function normalizeProgressionAssessment(value, families = []) {
+            const record = value && typeof value === 'object' && !Array.isArray(value)
+                ? value
+                : {status: value};
+            return {
+                status: normalizeProgressionStatus(record.status),
+                quality: normalizeProgressionQuality(record.quality, families),
+                updatedAt: String(record.updatedAt || '')
+            };
+        }
+
+        function normalizeProgressionRecord(value, element) {
+            const record = value && typeof value === 'object' && !Array.isArray(value)
+                ? value
+                : {status: value};
+            const families = normalizeProgressionFamilies(element && element.families);
+            const apparatuses = normalizeProgressionApparatuses(
+                element && (element.apparatuses !== undefined ? element.apparatuses : element.apparatus)
+            );
+            const source = record.assessments && typeof record.assessments === 'object' && !Array.isArray(record.assessments)
+                ? record.assessments
+                : null;
+            const assessments = {};
+            apparatuses.forEach((apparatus, index) => {
+                const raw = source && Object.hasOwn(source, apparatus)
+                    ? source[apparatus]
+                    : !source && index === 0
+                        ? record
+                        : {};
+                assessments[apparatus] = normalizeProgressionAssessment(raw, families);
+            });
+            return {
+                assessments,
+                updatedAt: String(record.updatedAt || '')
+            };
+        }
+
         function normalizeProgressionData(target) {
             const source = target.progressions && typeof target.progressions === 'object' && !Array.isArray(target.progressions)
                 ? target.progressions
@@ -1634,18 +1728,22 @@
             const elements = [];
             const elementsByName = new Map();
             const usedIds = new Set();
+            const elementIdAliases = new Map();
 
-            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatus = '', families = []) => {
+            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatuses = [], families = []) => {
                 const name = normalizeProgressionName(rawName);
                 if (!name) return null;
                 const key = name.toLocaleLowerCase('fr');
-                const normalizedApparatus = normalizeProgressionApparatus(apparatus);
+                const normalizedApparatuses = normalizeProgressionApparatuses(apparatuses);
                 const normalizedFamilies = normalizeProgressionFamilies(families);
                 if (elementsByName.has(key)) {
                     const existing = elementsByName.get(key);
-                    if (existing.apparatus === 'unclassified' && normalizedApparatus !== 'unclassified')
-                        existing.apparatus = normalizedApparatus;
+                    existing.apparatuses = normalizeProgressionApparatuses([
+                        ...existing.apparatuses.filter(item => item !== 'unclassified'),
+                        ...normalizedApparatuses.filter(item => item !== 'unclassified')
+                    ]);
                     existing.families = normalizeProgressionFamilies([...existing.families, ...normalizedFamilies]);
+                    if (preferredId) elementIdAliases.set(String(preferredId), existing.id);
                     return existing;
                 }
                 const baseId = String(preferredId || `PROG-COMMON-${elements.length + 1}`).trim() || `PROG-COMMON-${elements.length + 1}`;
@@ -1658,13 +1756,15 @@
                 const element = {
                     id,
                     name,
-                    apparatus: normalizedApparatus,
+                    apparatuses: normalizedApparatuses,
                     families: normalizedFamilies,
                     updatedAt: String(updatedAt || '')
                 };
                 elements.push(element);
                 elementsByName.set(key, element);
                 usedIds.add(id);
+                elementIdAliases.set(id, id);
+                if (preferredId) elementIdAliases.set(String(preferredId), id);
                 return element;
             };
 
@@ -1674,7 +1774,7 @@
                     element.name,
                     element.id,
                     element.updatedAt,
-                    element.apparatus,
+                    element.apparatuses !== undefined ? element.apparatuses : element.apparatus,
                     element.families !== undefined ? element.families : element.family
                 );
             });
@@ -1702,28 +1802,26 @@
                             item.name,
                             item.id,
                             item.updatedAt,
-                            item.apparatus,
+                            item.apparatuses !== undefined ? item.apparatuses : item.apparatus,
                             item.families !== undefined ? item.families : item.family
                         );
-                        if (!element || statuses[element.id]) return;
-                        statuses[element.id] = {
-                            status: normalizeProgressionStatus(item.status),
-                            quality: normalizeProgressionQuality(item.quality, element.families),
-                            updatedAt: String(item.updatedAt || '')
-                        };
+                        if (!element) return;
+                        const existing = statuses[element.id] || {assessments: {}, updatedAt: ''};
+                        const itemApparatuses = normalizeProgressionApparatuses(
+                            item.apparatuses !== undefined ? item.apparatuses : item.apparatus
+                        );
+                        itemApparatuses.forEach(apparatus => {
+                            existing.assessments[apparatus] = normalizeProgressionAssessment(item, element.families);
+                        });
+                        existing.updatedAt = String(item.updatedAt || existing.updatedAt || '');
+                        statuses[element.id] = normalizeProgressionRecord(existing, element);
                     });
                 } else if (saved && typeof saved === 'object') {
                     Object.entries(saved).forEach(([elementId, value]) => {
-                        if (!usedIds.has(elementId)) return;
-                        const record = value && typeof value === 'object' && !Array.isArray(value)
-                            ? value
-                            : {status: value};
-                        const element = elements.find(entry => entry.id === elementId);
-                        statuses[elementId] = {
-                            status: normalizeProgressionStatus(record.status),
-                            quality: normalizeProgressionQuality(record.quality, element ? element.families : []),
-                            updatedAt: String(record.updatedAt || '')
-                        };
+                        const canonicalId = elementIdAliases.get(elementId) || elementId;
+                        if (!usedIds.has(canonicalId)) return;
+                        const element = elements.find(entry => entry.id === canonicalId);
+                        statuses[canonicalId] = normalizeProgressionRecord(value, element);
                     });
                 }
                 normalized[gymId] = statuses;
@@ -3362,27 +3460,34 @@
         function getGymnastProgression(gymId = currentGymId) {
             if (!gymId) return [];
             const statuses = getGymnastProgressionStatusMap(gymId);
-            return getProgressionElements().map(element => {
-                const record = statuses[element.id] && typeof statuses[element.id] === 'object'
-                    ? statuses[element.id]
-                    : {};
+            return getProgressionElements().flatMap((element, catalogIndex) => {
                 const families = normalizeProgressionFamilies(
                     element.families !== undefined ? element.families : element.family
                 );
-                return {
-                    id: element.id,
-                    name: element.name,
-                    apparatus: normalizeProgressionApparatus(element.apparatus),
-                    families,
-                    status: normalizeProgressionStatus(record.status),
-                    quality: normalizeProgressionQuality(record.quality, families),
-                    updatedAt: String(record.updatedAt || element.updatedAt || '')
-                };
+                const apparatuses = normalizeProgressionApparatuses(
+                    element.apparatuses !== undefined ? element.apparatuses : element.apparatus
+                );
+                const record = normalizeProgressionRecord(statuses[element.id] || {}, {...element, apparatuses, families});
+                return apparatuses.map(apparatus => {
+                    const assessment = normalizeProgressionAssessment(record.assessments[apparatus], families);
+                    return {
+                        id: element.id,
+                        assessmentId: `${element.id}::${apparatus}`,
+                        name: element.name,
+                        apparatus,
+                        apparatuses,
+                        families,
+                        status: assessment.status,
+                        quality: assessment.quality,
+                        catalogIndex,
+                        updatedAt: String(assessment.updatedAt || record.updatedAt || element.updatedAt || '')
+                    };
+                });
             });
         }
 
         function calculateProgressionSummary(items) {
-            const summary = {total: 0, not_acquired: 0, in_progress: 0, acquired: 0, acquiredPercent: 0};
+            const summary = {total: 0, not_performed: 0, studied: 0, in_progress: 0, acquired: 0, acquiredPercent: 0};
             (Array.isArray(items) ? items : []).forEach(item => {
                 const status = normalizeProgressionStatus(item && item.status);
                 summary.total += 1;
@@ -3396,7 +3501,7 @@
 
         function getProgressionRadarValue(status) {
             const normalized = normalizeProgressionStatus(status);
-            return normalized === 'acquired' ? 100 : normalized === 'in_progress' ? 50 : 0;
+            return PROGRESSION_STATUS_DEFINITIONS[normalized].percent;
         }
 
         function getProgressionRadarData(items, dimension = 'family') {
@@ -3488,7 +3593,7 @@
             }).join(' ');
             const chartColor = dimension === 'apparatus' ? '#2563eb' : '#7e22ce';
             const scaleNote = dimension === 'apparatus'
-                ? 'Acquisition : 0 % pas acquis · 50 % en cours · 100 % acquis'
+                ? 'Progression : 0 % non réalisé · 35 % étudié · 70 % en cours · 100 % acquis'
                 : 'Qualité : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé';
             const dots = displayEntries.map((entry, index) => {
                 const p = point(index, entry.value / 100);
@@ -3583,7 +3688,7 @@
             return createProgressionIdForGym(currentGymId);
         }
 
-        function addProgressionItem(name, status = 'not_acquired', apparatus = 'unclassified', families = []) {
+        function addProgressionItem(name, status = 'not_performed', apparatuses = ['unclassified'], families = []) {
             if (!currentGymId) throw new Error('Ouvrez d’abord une fiche gymnaste.');
             const normalizedName = normalizeProgressionName(name);
             if (!normalizedName) throw new Error("Indiquez le nom de l'élément.");
@@ -3592,78 +3697,102 @@
             const item = {
                 id: createProgressionId(),
                 name: normalizedName,
-                apparatus: normalizeProgressionApparatus(apparatus),
+                apparatuses: normalizeProgressionApparatuses(apparatuses),
                 families: normalizeProgressionFamilies(families),
                 updatedAt: now
             };
             getProgressionElements().push(item);
             getGymnastProgressionStatusMap()[item.id] = {
-                status: normalizeProgressionStatus(status),
-                quality: {},
+                assessments: Object.fromEntries(item.apparatuses.map(apparatus => [apparatus, {
+                    status: normalizeProgressionStatus(status),
+                    quality: {},
+                    updatedAt: now
+                }])),
                 updatedAt: now
             };
             saveAllData();
-            return {...item, status: normalizeProgressionStatus(status), quality: {}};
+            return {
+                ...item,
+                apparatus: item.apparatuses[0],
+                status: normalizeProgressionStatus(status),
+                quality: {}
+            };
         }
 
-        function renameProgressionItem(itemId, name, apparatus, families) {
+        function renameProgressionItem(itemId, name, apparatuses, families) {
             const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) throw new Error('Élément introuvable.');
             const normalizedName = normalizeProgressionName(name);
             if (!normalizedName) throw new Error("Le nom de l'élément ne peut pas être vide.");
             if (progressionNameExists(normalizedName, itemId)) throw new Error('Cet élément existe déjà dans le tableau.');
             item.name = normalizedName;
-            if (apparatus !== undefined) item.apparatus = normalizeProgressionApparatus(apparatus);
+            if (apparatuses !== undefined) item.apparatuses = normalizeProgressionApparatuses(apparatuses);
             if (families !== undefined) {
                 item.families = normalizeProgressionFamilies(families);
-                Object.values(data.progressions || {}).forEach(statuses => {
-                    if (!statuses || typeof statuses !== 'object' || Array.isArray(statuses)) return;
-                    const record = statuses[itemId];
-                    if (!record || typeof record !== 'object' || Array.isArray(record)) return;
-                    record.quality = normalizeProgressionQuality(record.quality, item.families);
-                });
             }
+            Object.values(data.progressions || {}).forEach(statuses => {
+                if (!statuses || typeof statuses !== 'object' || Array.isArray(statuses)) return;
+                const saved = statuses[itemId];
+                if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
+                statuses[itemId] = normalizeProgressionRecord(saved, item);
+            });
             item.updatedAt = new Date().toISOString();
             saveAllData();
             return item;
         }
 
-        function setProgressionStatus(itemId, status) {
+        function setProgressionStatus(itemId, apparatus, status) {
             const element = getProgressionElements().find(entry => entry.id === itemId);
             if (!element) throw new Error('Élément introuvable.');
+            if (status === undefined) {
+                status = apparatus;
+                apparatus = normalizeProgressionApparatuses(element.apparatuses)[0];
+            }
+            const normalizedApparatus = normalizeProgressionApparatus(apparatus);
+            if (!normalizeProgressionApparatuses(element.apparatuses).includes(normalizedApparatus))
+                throw new Error('Agrès introuvable pour cet élément.');
             const statuses = getGymnastProgressionStatusMap();
-            const previous = statuses[itemId] && typeof statuses[itemId] === 'object'
-                ? statuses[itemId]
-                : {};
-            const record = {
+            const record = normalizeProgressionRecord(statuses[itemId] || {}, element);
+            const previous = normalizeProgressionAssessment(record.assessments[normalizedApparatus], element.families);
+            const now = new Date().toISOString();
+            record.assessments[normalizedApparatus] = {
                 status: normalizeProgressionStatus(status),
-                quality: normalizeProgressionQuality(previous.quality, element.families),
-                updatedAt: new Date().toISOString()
+                quality: previous.quality,
+                updatedAt: now
             };
+            record.updatedAt = now;
             statuses[itemId] = record;
             saveAllData();
             renderProgressionTable();
             renderProgressionStatistics();
-            return {...element, ...record};
+            return {...element, apparatus: normalizedApparatus, ...record.assessments[normalizedApparatus]};
         }
 
-        function setProgressionQuality(itemId, quality) {
+        function setProgressionQuality(itemId, apparatus, quality) {
             const element = getProgressionElements().find(entry => entry.id === itemId);
             if (!element) throw new Error('Élément introuvable.');
+            if (quality === undefined) {
+                quality = apparatus;
+                apparatus = normalizeProgressionApparatuses(element.apparatuses)[0];
+            }
+            const normalizedApparatus = normalizeProgressionApparatus(apparatus);
+            if (!normalizeProgressionApparatuses(element.apparatuses).includes(normalizedApparatus))
+                throw new Error('Agrès introuvable pour cet élément.');
             const statuses = getGymnastProgressionStatusMap();
-            const previous = statuses[itemId] && typeof statuses[itemId] === 'object'
-                ? statuses[itemId]
-                : {};
-            const record = {
-                status: normalizeProgressionStatus(previous.status),
+            const record = normalizeProgressionRecord(statuses[itemId] || {}, element);
+            const previous = normalizeProgressionAssessment(record.assessments[normalizedApparatus], element.families);
+            const now = new Date().toISOString();
+            record.assessments[normalizedApparatus] = {
+                status: previous.status,
                 quality: normalizeProgressionQuality(quality, element.families),
-                updatedAt: new Date().toISOString()
+                updatedAt: now
             };
+            record.updatedAt = now;
             statuses[itemId] = record;
             saveAllData();
             renderProgressionTable();
             renderProgressionStatistics();
-            return {...element, ...record};
+            return {...element, apparatus: normalizedApparatus, ...record.assessments[normalizedApparatus]};
         }
 
         function removeProgressionItem(itemId) {
@@ -3708,7 +3837,7 @@
             getProgressionElements().forEach(element => {
                 if (!sourceStatuses[element.id]) return;
                 if (copyMode === 'merge' && data.progressions[targetGymId][element.id]) return;
-                data.progressions[targetGymId][element.id] = {...sourceStatuses[element.id]};
+                data.progressions[targetGymId][element.id] = JSON.parse(JSON.stringify(sourceStatuses[element.id]));
                 added += 1;
             });
             if (added > 0 || copyMode === 'replace') saveAllData();
@@ -3732,6 +3861,22 @@
             return false;
         }
 
+        function getProgressionApparatusInputs() {
+            return [...document.querySelectorAll('#progression-apparatus input[name="progression-apparatus"]')];
+        }
+
+        function getSelectedProgressionApparatuses() {
+            const selected = getProgressionApparatusInputs().filter(input => input.checked).map(input => input.value);
+            return selected.length ? normalizeProgressionApparatuses(selected) : [];
+        }
+
+        function setSelectedProgressionApparatuses(apparatuses) {
+            const selected = new Set(normalizeProgressionApparatuses(apparatuses).filter(item => item !== 'unclassified'));
+            getProgressionApparatusInputs().forEach(input => {
+                input.checked = selected.has(input.value);
+            });
+        }
+
         function getProgressionFamilyInputs() {
             return [...document.querySelectorAll('#progression-family input[name="progression-family"]')];
         }
@@ -3752,14 +3897,14 @@
         function saveProgressionItem(event) {
             event.preventDefault();
             const input = document.getElementById('progression-element-name');
-            const apparatus = document.getElementById('progression-apparatus');
+            const apparatuses = getSelectedProgressionApparatuses();
             const families = getSelectedProgressionFamilies();
             const editId = document.getElementById('edit-progression-id').value;
             try {
-                if (!apparatus.value || families.length === 0)
-                    throw new Error("Choisissez l'agrès et au moins une famille technique.");
-                if (editId) renameProgressionItem(editId, input.value, apparatus.value, families);
-                else addProgressionItem(input.value, 'not_acquired', apparatus.value, families);
+                if (apparatuses.length === 0 || families.length === 0)
+                    throw new Error("Choisissez au moins un agrès et une famille technique.");
+                if (editId) renameProgressionItem(editId, input.value, apparatuses, families);
+                else addProgressionItem(input.value, 'not_performed', apparatuses, families);
                 cancelProgressionEdit();
                 renderProgressionTable();
                 renderProgressionStatistics();
@@ -3770,11 +3915,11 @@
         }
 
         function startProgressionEdit(itemId) {
-            const item = getGymnastProgression().find(entry => entry.id === itemId);
+            const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) return;
             document.getElementById('edit-progression-id').value = item.id;
             document.getElementById('progression-element-name').value = item.name;
-            document.getElementById('progression-apparatus').value = item.apparatus === 'unclassified' ? '' : item.apparatus;
+            setSelectedProgressionApparatuses(item.apparatuses !== undefined ? item.apparatuses : item.apparatus);
             setSelectedProgressionFamilies(item.families);
             document.getElementById('btn-save-progression').textContent = 'Enregistrer';
             document.getElementById('btn-cancel-progression-edit').classList.remove('hidden');
@@ -3784,7 +3929,7 @@
         function cancelProgressionEdit() {
             document.getElementById('edit-progression-id').value = '';
             document.getElementById('progression-element-name').value = '';
-            document.getElementById('progression-apparatus').value = '';
+            setSelectedProgressionApparatuses([]);
             setSelectedProgressionFamilies([]);
             document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
             document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
@@ -3810,12 +3955,12 @@
             cell.className = 'border-r border-b border-gray-200 p-2 text-center last:border-r-0';
             const radio = document.createElement('input');
             radio.type = 'radio';
-            radio.name = `progression-status-${currentGymId}-${item.id}`;
+            radio.name = `progression-status-${currentGymId}-${item.id}-${item.apparatus}`;
             radio.value = status;
             radio.checked = item.status === status;
             radio.className = `h-5 w-5 cursor-pointer ${colorClass}`;
-            radio.setAttribute('aria-label', `${item.name} — ${status === 'not_acquired' ? 'Pas acquis' : status === 'in_progress' ? 'En cours' : 'Acquis'}`);
-            radio.onchange = () => setProgressionStatus(item.id, status);
+            radio.setAttribute('aria-label', `${item.name} — ${getProgressionApparatusLabel(item.apparatus)} — ${getProgressionStatusLabel(status)}`);
+            radio.onchange = () => setProgressionStatus(item.id, item.apparatus, status);
             cell.appendChild(radio);
             return cell;
         }
@@ -3842,12 +3987,15 @@
             }`;
             button.textContent = label;
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
-            button.onclick = () => setProgressionStatus(item.id, status);
+            button.onclick = () => setProgressionStatus(item.id, item.apparatus, status);
             return button;
         }
 
-        function openProgressionQualityModal(itemId) {
-            const item = getGymnastProgression().find(entry => entry.id === itemId);
+        function openProgressionQualityModal(itemId, apparatus) {
+            const normalizedApparatus = normalizeProgressionApparatus(apparatus);
+            const item = getGymnastProgression().find(entry =>
+                entry.id === itemId && entry.apparatus === normalizedApparatus
+            );
             if (!item) return;
             const families = normalizeProgressionFamilies(item.families);
             if (families.length === 0) {
@@ -3855,7 +4003,8 @@
                 return;
             }
             document.getElementById('progression-quality-item-id').value = item.id;
-            document.getElementById('progression-quality-title').textContent = `Qualité technique — ${item.name}`;
+            document.getElementById('progression-quality-apparatus').value = item.apparatus;
+            document.getElementById('progression-quality-title').textContent = `Qualité technique — ${item.name} · ${getProgressionApparatusLabel(item.apparatus)}`;
             const fields = document.getElementById('progression-quality-fields');
             fields.innerHTML = '';
             families.forEach(family => {
@@ -3889,11 +4038,13 @@
         function closeProgressionQualityModal() {
             document.getElementById('modal-progression-quality').classList.add('hidden');
             document.getElementById('progression-quality-item-id').value = '';
+            document.getElementById('progression-quality-apparatus').value = '';
             document.getElementById('progression-quality-fields').innerHTML = '';
         }
 
         function saveProgressionQuality() {
             const itemId = document.getElementById('progression-quality-item-id').value;
+            const apparatus = document.getElementById('progression-quality-apparatus').value;
             if (!itemId) return;
             const quality = {};
             document.querySelectorAll('#progression-quality-fields [data-quality-family]').forEach(select => {
@@ -3901,7 +4052,7 @@
                 if (rating !== null) quality[select.dataset.qualityFamily] = rating;
             });
             try {
-                setProgressionQuality(itemId, quality);
+                setProgressionQuality(itemId, apparatus, quality);
                 closeProgressionQualityModal();
             } catch (error) {
                 alert(`❌ ${error.message}`);
@@ -3954,8 +4105,9 @@
             body.innerHTML = '';
             mobileList.innerHTML = '';
             const items = getGymnastProgression();
+            const catalogTotal = getProgressionElements().length;
             empty.classList.toggle('hidden', items.length > 0);
-            items.forEach((item, index) => {
+            items.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 const nameCell = document.createElement('td');
@@ -3966,8 +4118,8 @@
                 const classifications = createProgressionClassificationBadges(item);
                 const actions = document.createElement('div');
                 actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
-                const up = createProgressionMoveButton(item, index, -1, items.length);
-                const down = createProgressionMoveButton(item, index, 1, items.length);
+                const up = createProgressionMoveButton(item, item.catalogIndex, -1, catalogTotal);
+                const down = createProgressionMoveButton(item, item.catalogIndex, 1, catalogTotal);
                 const edit = document.createElement('button');
                 edit.type = 'button';
                 edit.className = 'font-bold text-blue-600';
@@ -3977,7 +4129,7 @@
                 quality.type = 'button';
                 quality.className = 'font-bold text-purple-700';
                 quality.textContent = 'Qualité';
-                quality.onclick = () => openProgressionQualityModal(item.id);
+                quality.onclick = () => openProgressionQualityModal(item.id, item.apparatus);
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'font-bold text-red-600';
@@ -3987,7 +4139,8 @@
                 nameCell.append(name, classifications, actions);
                 row.append(
                     nameCell,
-                    createProgressionStatusCell(item, 'not_acquired', 'accent-red-600'),
+                    createProgressionStatusCell(item, 'not_performed', 'accent-red-600'),
+                    createProgressionStatusCell(item, 'studied', 'accent-blue-600'),
                     createProgressionStatusCell(item, 'in_progress', 'accent-amber-500'),
                     createProgressionStatusCell(item, 'acquired', 'accent-green-600')
                 );
@@ -4003,16 +4156,17 @@
                 const orderButtons = document.createElement('div');
                 orderButtons.className = 'flex shrink-0 gap-1';
                 orderButtons.append(
-                    createProgressionMoveButton(item, index, -1, items.length),
-                    createProgressionMoveButton(item, index, 1, items.length)
+                    createProgressionMoveButton(item, item.catalogIndex, -1, catalogTotal),
+                    createProgressionMoveButton(item, item.catalogIndex, 1, catalogTotal)
                 );
                 cardHeader.append(cardName, orderButtons);
                 const cardClassifications = createProgressionClassificationBadges(item);
 
                 const statusButtons = document.createElement('div');
-                statusButtons.className = 'mt-3 flex gap-1.5';
+                statusButtons.className = 'mt-3 grid grid-cols-2 gap-1.5';
                 statusButtons.append(
-                    createProgressionMobileStatusButton(item, 'not_acquired', 'Pas acquis', 'border-red-300 bg-red-50 text-red-700'),
+                    createProgressionMobileStatusButton(item, 'not_performed', 'Non réalisé', 'border-red-300 bg-red-50 text-red-700'),
+                    createProgressionMobileStatusButton(item, 'studied', 'Étudié', 'border-blue-300 bg-blue-50 text-blue-700'),
                     createProgressionMobileStatusButton(item, 'in_progress', 'En cours', 'border-amber-300 bg-amber-50 text-amber-700'),
                     createProgressionMobileStatusButton(item, 'acquired', 'Acquis', 'border-green-300 bg-green-50 text-green-700')
                 );
@@ -4023,7 +4177,7 @@
                 mobileQuality.type = 'button';
                 mobileQuality.className = 'font-bold text-purple-700';
                 mobileQuality.textContent = 'Qualité';
-                mobileQuality.onclick = () => openProgressionQualityModal(item.id);
+                mobileQuality.onclick = () => openProgressionQualityModal(item.id, item.apparatus);
                 const mobileEdit = document.createElement('button');
                 mobileEdit.type = 'button';
                 mobileEdit.className = 'font-bold text-blue-600';
@@ -4062,7 +4216,7 @@
                 bullet.textContent = '•';
                 const name = document.createElement('span');
                 name.className = 'break-words font-semibold';
-                name.textContent = item.name;
+                name.textContent = `${item.name} — ${getProgressionApparatusLabel(item.apparatus)}`;
                 line.append(bullet, name);
                 container.appendChild(line);
             });
@@ -4207,7 +4361,7 @@
                 missing.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
             if (familyRadar.unevaluatedCount)
                 missing.push(`${familyRadar.unevaluatedCount} avec une qualité technique incomplète`);
-            const calculationNote = 'Radar technique : à corriger 25 %, fragile 50 %, correct 75 %, maîtrisé 100 % ; non évalué exclu. Radar par agrès : pas acquis 0 %, en cours 50 %, acquis 100 %.';
+            const calculationNote = 'Radar technique : à corriger 25 %, fragile 50 %, correct 75 %, maîtrisé 100 % ; non évalué exclu. Radar par agrès : non réalisé 0 %, étudié 35 %, en cours 70 %, acquis 100 %.';
             note.textContent = missing.length
                 ? `À compléter : ${missing.join(' · ')}. ${calculationNote}`
                 : calculationNote;
@@ -4231,14 +4385,16 @@
             const total = document.getElementById('progression-statistics-total');
             if (!total) return summary;
             total.textContent = summary.total
-                ? `${summary.total} élément${summary.total === 1 ? '' : 's'} suivi${summary.total === 1 ? '' : 's'} · ${summary.acquired} acquis`
+                ? `${summary.total} évaluation${summary.total === 1 ? '' : 's'} par agrès · ${summary.acquired} acquise${summary.acquired === 1 ? '' : 's'}`
                 : 'Aucun élément enregistré';
             document.getElementById('progression-statistics-percent').textContent = `${summary.acquiredPercent} %`;
-            document.getElementById('progression-count-not-acquired').textContent = String(summary.not_acquired);
+            document.getElementById('progression-count-not-performed').textContent = String(summary.not_performed);
+            document.getElementById('progression-count-studied').textContent = String(summary.studied);
             document.getElementById('progression-count-in-progress').textContent = String(summary.in_progress);
             document.getElementById('progression-count-acquired').textContent = String(summary.acquired);
             const percent = count => summary.total ? (count / summary.total) * 100 : 0;
-            document.getElementById('progression-bar-not-acquired').style.width = `${percent(summary.not_acquired)}%`;
+            document.getElementById('progression-bar-not-performed').style.width = `${percent(summary.not_performed)}%`;
+            document.getElementById('progression-bar-studied').style.width = `${percent(summary.studied)}%`;
             document.getElementById('progression-bar-in-progress').style.width = `${percent(summary.in_progress)}%`;
             document.getElementById('progression-bar-acquired').style.width = `${percent(summary.acquired)}%`;
             renderProgressionStatusList(
@@ -4247,14 +4403,19 @@
                 'Aucun élément validé.'
             );
             renderProgressionStatusList(
+                'progression-list-studied',
+                items.filter(item => item.status === 'studied'),
+                'Aucun élément étudié.'
+            );
+            renderProgressionStatusList(
                 'progression-list-in-progress',
                 items.filter(item => item.status === 'in_progress'),
                 'Aucun élément en cours.'
             );
             renderProgressionStatusList(
-                'progression-list-not-acquired',
-                items.filter(item => item.status === 'not_acquired'),
-                'Aucun élément non validé.'
+                'progression-list-not-performed',
+                items.filter(item => item.status === 'not_performed'),
+                'Aucun élément non réalisé.'
             );
             renderProgressionRadarChart(items);
             return summary;
@@ -4290,11 +4451,12 @@
 
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.text(`Éléments : ${summary.total}`, 14, 39);
-                doc.text(`Pas acquis : ${summary.not_acquired}`, 55, 39);
-                doc.text(`En cours : ${summary.in_progress}`, 103, 39);
-                doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 145, 39);
+                doc.setFontSize(8.5);
+                doc.text(`Évaluations : ${summary.total}`, 14, 39);
+                doc.text(`Non réalisé : ${summary.not_performed}`, 50, 39);
+                doc.text(`Étudié : ${summary.studied}`, 91, 39);
+                doc.text(`En cours : ${summary.in_progress}`, 122, 39);
+                doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 158, 39);
 
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
@@ -4311,7 +4473,7 @@
                 doc.setFontSize(7);
                 doc.setTextColor(107, 114, 128);
                 doc.text('Technique : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé', 105, 111, {align: 'center'});
-                doc.text('Agrès : 0 % pas acquis · 50 % en cours · 100 % acquis', 105, 115, {align: 'center'});
+                doc.text('Agrès : 0 % non réalisé · 35 % étudié · 70 % en cours · 100 % acquis', 105, 115, {align: 'center'});
                 const classificationWarnings = [];
                 if (familyRadar.unclassifiedCount)
                     classificationWarnings.push(`${familyRadar.unclassifiedCount} sans famille`);
@@ -4324,25 +4486,27 @@
 
                 doc.autoTable({
                     startY: classificationWarnings.length ? 126 : 121,
-                    head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Pas acquis', 'En cours', 'Acquis']],
+                    head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
                     body: items.map(item => [
                         item.name,
                         getProgressionApparatusLabel(item.apparatus),
                         getProgressionFamilyQualityText(item),
-                        item.status === 'not_acquired' ? 'X' : '',
+                        item.status === 'not_performed' ? 'X' : '',
+                        item.status === 'studied' ? 'X' : '',
                         item.status === 'in_progress' ? 'X' : '',
                         item.status === 'acquired' ? 'X' : ''
                     ]),
                     theme: 'grid',
-                    styles: {fontSize: 7, cellPadding: 2, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
+                    styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                     headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
                     columnStyles: {
-                        0: {cellWidth: 48, halign: 'left', fontStyle: 'bold'},
-                        1: {cellWidth: 23, halign: 'left'},
-                        2: {cellWidth: 44, halign: 'left'},
-                        3: {cellWidth: 24, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                        4: {cellWidth: 24, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                        5: {cellWidth: 24, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                        0: {cellWidth: 36, halign: 'left', fontStyle: 'bold'},
+                        1: {cellWidth: 19, halign: 'left'},
+                        2: {cellWidth: 45, halign: 'left'},
+                        3: {cellWidth: 22, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                        4: {cellWidth: 22, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                        5: {cellWidth: 22, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                        6: {cellWidth: 22, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                     },
                     margin: {left: 11, right: 11, bottom: 14},
                     rowPageBreak: 'avoid'
@@ -4799,9 +4963,103 @@
             };
         }
 
+        function getMovementCompositionTokenDefinitions() {
+            const defaults = defaultSiglesGym.map(item => ({
+                token: `${item.symbole} (${item.abrev})`,
+                code: item.abrev,
+                name: item.nom,
+                symbol: item.symbole,
+                image: '',
+                type: 'default'
+            }));
+            const customs = (Array.isArray(data.customSigles) ? data.customSigles : [])
+                .filter(item => item && String(item.abrev || '').trim())
+                .map(item => ({
+                    token: `[${item.abrev}]`,
+                    code: item.abrev,
+                    name: item.nom || item.abrev,
+                    symbol: '',
+                    image: item.img || '',
+                    type: 'custom'
+                }));
+            return [...defaults, ...customs].sort((a, b) => b.token.length - a.token.length);
+        }
+
+        function renderMovementCompositionPreview(content = undefined) {
+            const preview = document.getElementById('movement-composition-preview');
+            if (!preview) return [];
+            const area = document.getElementById('txt-mouvement-content');
+            const text = String(content === undefined && area ? area.value : content || '');
+            const definitions = getMovementCompositionTokenDefinitions();
+            const renderedTokens = [];
+            preview.innerHTML = '';
+
+            if (!text.trim()) {
+                const empty = document.createElement('p');
+                empty.className = 'w-full text-center text-[10px] italic text-gray-400';
+                empty.textContent = 'Ajoutez des mouvements pour afficher les dessins dans leur ordre de passage.';
+                preview.appendChild(empty);
+                return renderedTokens;
+            }
+
+            const appendText = value => {
+                const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+                if (!normalized) return;
+                const label = document.createElement('span');
+                label.className = 'max-w-full break-words rounded-md bg-gray-100 px-2 py-1 text-[10px] text-gray-600';
+                label.textContent = normalized;
+                preview.appendChild(label);
+            };
+            const appendToken = definition => {
+                const card = document.createElement('figure');
+                card.className = 'flex w-20 shrink-0 flex-col items-center rounded-lg border border-pink-200 bg-white p-1.5 text-center shadow-sm';
+                card.title = `${definition.name} — ${definition.code}`;
+                if (definition.type === 'custom' && definition.image) {
+                    const image = document.createElement('img');
+                    image.src = definition.image;
+                    image.alt = definition.name;
+                    image.className = 'h-12 w-12 object-contain';
+                    card.appendChild(image);
+                } else {
+                    const symbol = document.createElement('span');
+                    symbol.className = 'flex h-12 w-12 items-center justify-center text-3xl';
+                    symbol.textContent = definition.symbol || '🖼️';
+                    card.appendChild(symbol);
+                }
+                const caption = document.createElement('figcaption');
+                caption.className = 'mt-1 w-full truncate text-[9px] font-bold text-pink-700';
+                caption.textContent = definition.code;
+                card.appendChild(caption);
+                preview.appendChild(card);
+                renderedTokens.push(definition.token);
+            };
+
+            let offset = 0;
+            while (offset < text.length) {
+                let nextDefinition = null;
+                let nextIndex = text.length;
+                definitions.forEach(definition => {
+                    const found = text.indexOf(definition.token, offset);
+                    if (found >= 0 && found < nextIndex) {
+                        nextDefinition = definition;
+                        nextIndex = found;
+                    }
+                });
+                if (!nextDefinition) {
+                    appendText(text.slice(offset));
+                    break;
+                }
+                appendText(text.slice(offset, nextIndex));
+                appendToken(nextDefinition);
+                offset = nextIndex + nextDefinition.token.length;
+            }
+            return renderedTokens;
+        }
+
         function updateMovementStartScoreDisplay(content = undefined) {
             const area = document.getElementById('txt-mouvement-content');
-            const score = calculateMovementStartScore(content === undefined && area ? area.value : content);
+            const currentContent = content === undefined && area ? area.value : content;
+            const score = calculateMovementStartScore(currentContent);
             const totalOutput = document.getElementById('movement-start-score');
             const movementOutput = document.getElementById('movement-value-total');
             const bonusOutput = document.getElementById('movement-bonus-total');
@@ -4818,6 +5076,7 @@
                 warning.textContent = messages.join(' · ');
                 warning.classList.toggle('hidden', messages.length === 0);
             }
+            renderMovementCompositionPreview(currentContent);
             return score;
         }
 
@@ -5402,9 +5661,6 @@
             const activeDefaultSigles = isRoot ? defaultSiglesGym
                 .map((item, index) => ({item, index}))
                 .filter(entry => !isDefaultSigleDeleted(entry.item)) : [];
-            const deletedDefaultSigles = isRoot ? defaultSiglesGym
-                .map((item, index) => ({item, index}))
-                .filter(entry => isDefaultSigleDeleted(entry.item)) : [];
             const defaultList = activeDefaultSigles.length ? `<div class="space-y-2">
                 <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${activeDefaultSigles.map(({item, index}) => {
                 const scoring = getDefaultSigleScoring(item);
@@ -5443,25 +5699,7 @@
                     </div>
                 </div>
             `).join('')}</div>` : '';
-            const deletedList = deletedDefaultSigles.length
-                ? `
-                    <div class="border-t border-gray-200 pt-2 mt-3">
-                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-2">Images intégrées supprimées</p>
-                        <div class="space-y-2">
-                            ${deletedDefaultSigles.map(({item, index}) => `
-                                <div class="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-2 opacity-75">
-                                    <span class="w-10 h-10 flex items-center justify-center text-xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="font-bold text-gray-600 truncate">${escapeHtml(item.nom)}</p>
-                                        <p class="text-[10px] text-gray-400 font-semibold">${escapeHtml(item.abrev)}</p>
-                                    </div>
-                                    <button type="button" onclick="restoreDefaultSigle(${index})" class="px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 font-semibold">↩ Restaurer</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`
-                : '';
-            list.innerHTML = `${defaultList}${customList}${deletedList}` ||
+            list.innerHTML = `${defaultList}${customList}` ||
                 '<p class="text-center text-gray-400 py-4">Ce dossier est vide.</p>';
             const editingItem = editingCustomSigleIndex === null ? null : data.customSigles[editingCustomSigleIndex];
             refreshCustomSigleFolderSelect(editingItem ? editingItem.folderId : currentSigleManagerFolderId);
@@ -5475,7 +5713,7 @@
         function deleteDefaultSigle(index) {
             const item = defaultSiglesGym[index];
             if (!item || isDefaultSigleDeleted(item)) return;
-            if (!confirm(`Supprimer « ${item.nom} » de la palette ?\n\nLes mouvements déjà enregistrés ne seront pas modifiés.`))
+            if (!confirm(`Supprimer définitivement « ${item.nom} » de la palette ?\n\nLe symbole ne sera plus proposé. Les mouvements déjà enregistrés ne seront pas modifiés.`))
                 return;
             const previousDeleted = [...data.deletedDefaultSigles];
             data.deletedDefaultSigles.push(item.abrev);
@@ -5485,24 +5723,6 @@
                 data.deletedDefaultSigles = previousDeleted;
                 console.error('[GymSuivi] Suppression du sigle intégré non enregistrée :', error);
                 alert("❌ La suppression n'a pas pu être enregistrée.");
-                return;
-            }
-            renderSiglesPalette();
-            renderCustomSiglesManager();
-        }
-
-        function restoreDefaultSigle(index) {
-            const item = defaultSiglesGym[index];
-            if (!item || !isDefaultSigleDeleted(item)) return;
-            const previousDeleted = [...data.deletedDefaultSigles];
-            data.deletedDefaultSigles = data.deletedDefaultSigles
-                .filter(abrev => abrev !== item.abrev);
-            try {
-                saveAllData();
-            } catch (error) {
-                data.deletedDefaultSigles = previousDeleted;
-                console.error('[GymSuivi] Restauration du sigle intégré non enregistrée :', error);
-                alert("❌ La restauration n'a pas pu être enregistrée.");
                 return;
             }
             renderSiglesPalette();
@@ -7253,27 +7473,31 @@
                 <td style="border:1px solid #e5e7eb; padding:7px; text-align:left; font-weight:600;">${escapeHtml(item.name)}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionApparatusLabel(item.apparatus))}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyQualityText(item))}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_acquired' ? 'X' : ''}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_performed' ? 'X' : ''}</td>
+                <td style="border:1px solid #e5e7eb; padding:7px; color:#2563eb; font-weight:bold;">${item.status === 'studied' ? 'X' : ''}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#d97706; font-weight:bold;">${item.status === 'in_progress' ? 'X' : ''}</td>
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
             </tr>`).join('');
             return `<section style="margin-top:35px;">
                 <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937;">🎯 Progression des éléments</h2>
-                <div style="display:flex; gap:8px; margin:12px 0; text-align:center; font-size:11px;">
-                    <div style="flex:1; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.not_acquired}</strong>Pas acquis</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; text-align:center; font-size:11px;">
+                    <div style="flex:1; min-width:90px; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.not_performed}</strong>Non réalisé</div>
+                    <div style="flex:1; min-width:90px; border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.studied}</strong>Étudié</div>
                     <div style="flex:1; border:1px solid #fde68a; background:#fffbeb; color:#b45309; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.in_progress}</strong>En cours</div>
                     <div style="flex:1; border:1px solid #bbf7d0; background:#f0fdf4; color:#15803d; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.acquired}</strong>Acquis (${summary.acquiredPercent} %)</div>
                 </div>
+                <p style="margin:8px 0; color:#4b5563; font-size:9px; line-height:1.5;"><strong>Acquis :</strong> technique et rythmique respectées · <strong>En cours :</strong> petite erreur technique, rythmique ou d’amplitude · <strong>Étudié :</strong> réalisé globalement ou partiellement · <strong>Non réalisé :</strong> élément non effectué.</p>
                 <h3 style="font-size:12px; color:#6b21a8; margin:18px 0 5px; text-align:center;">Qualité par familles techniques</h3>
                 ${buildProgressionRadarSvg(items, 'family')}
                 <h3 style="font-size:12px; color:#1d4ed8; margin:18px 0 5px; text-align:center; page-break-before:auto;">Acquisition par agrès</h3>
                 ${buildProgressionRadarSvg(items, 'apparatus')}
                 <table style="width:100%; border-collapse:collapse; margin-top:18px; font-size:10px;">
                     <thead><tr style="background:#f3e8ff; color:#581c87;">
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:31%;">Nom de l'élément</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:13%;">Agrès</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:26%;">Famille(s) et qualité</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px;">Pas acquis</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:25%;">Nom de l'élément</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:11%;">Agrès</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:24%;">Famille(s) et qualité</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px;">Non réalisé</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px;">Étudié</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">En cours</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">Acquis</th>
                     </tr></thead>
