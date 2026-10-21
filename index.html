@@ -31,7 +31,7 @@
             .tab-content.active {
                 display: block;
             }
-            #screen-competition {
+            #screen-competition, #screen-planning {
                 width: min(96vw, 1100px);
                 margin-left: 50%;
                 transform: translateX(-50%);
@@ -99,7 +99,7 @@
                 }
             }
             /* Garder les boutons des fenêtres accessibles avec une faible hauteur. */
-            #modal-add > div, #modal-team > div, #modal-custom-sigle > div, #modal-levels > div {
+            #modal-add > div, #modal-team > div, #modal-custom-sigle > div, #modal-levels > div, #modal-planning-editor > div {
                 display: flex;
                 flex-direction: column;
                 max-height: calc(100vh - 2rem);
@@ -108,12 +108,14 @@
             #modal-add > div > :first-child,
             #modal-team > div > :first-child,
             #modal-custom-sigle > div > :first-child,
-            #modal-levels > div > :first-child {
+            #modal-levels > div > :first-child,
+            #modal-planning-editor > div > :first-child {
                 flex-shrink: 0;
             }
             #form-add-gym, #modal-team > div > :last-child,
             #modal-custom-sigle > div > :last-child,
-            #modal-levels > div > :last-child {
+            #modal-levels > div > :last-child,
+            #planning-editor-form {
                 min-height: 0;
                 overflow-y: auto;
             }
@@ -123,7 +125,7 @@
                     width: 100%;
                     max-width: 1200px;
                 }
-                #screen-competition {
+                #screen-competition, #screen-planning {
                     width: 100%;
                     margin-left: 0;
                     transform: none;
@@ -1108,6 +1110,71 @@
                 </div>
             </section>
 
+            <!-- ══════════════════════════════════════ SCREEN PLANIFICATION ═══ -->
+            <section id="screen-planning" class="hidden space-y-4">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-700">Planification GAF U13 🗓️</h2>
+                        <p class="text-xs text-gray-500">Organisation de la saison du général vers le détail.</p>
+                    </div>
+                    <span id="planning-source-badge" class="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-bold text-teal-700">Modèle 2026–2027</span>
+                </div>
+
+                <div class="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
+                    <p class="text-xs font-bold text-gray-700">Programmation de départ</p>
+                    <p class="mt-1 text-[10px] leading-relaxed text-gray-500">GAF Fédérale A 10–13 ans, trois entraînements par semaine. Le modèle reprend les 14 périodes P01 à P14 et les semaines du calendrier fourni. Tous les champs restent modifiables.</p>
+                    <div id="planning-summary" class="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1 rounded-xl bg-gray-200 p-1 text-[10px] sm:text-xs">
+                    <button id="btn-planning-tab-macro" type="button" onclick="switchPlanningTab('macro')" class="rounded-lg bg-white py-2 font-bold text-teal-700 shadow-sm">Macrocycle</button>
+                    <button id="btn-planning-tab-meso" type="button" onclick="switchPlanningTab('meso')" class="rounded-lg py-2 font-bold text-gray-500">Mésocycles</button>
+                    <button id="btn-planning-tab-micro" type="button" onclick="switchPlanningTab('micro')" class="rounded-lg py-2 font-bold text-gray-500">Microcycles</button>
+                </div>
+
+                <div id="planning-tab-macro" class="space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">Vue saisonnière</h3>
+                            <p class="text-[10px] text-gray-400">Une vue globale de la saison et de ses objectifs.</p>
+                        </div>
+                        <button type="button" onclick="openPlanningEditor('macrocycle')" class="rounded-lg bg-teal-700 px-3 py-2 text-[10px] font-bold text-white">＋ Ajouter</button>
+                    </div>
+                    <div id="planning-macro-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
+                </div>
+
+                <div id="planning-tab-meso" class="hidden space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">Blocs de travail</h3>
+                            <p class="text-[10px] text-gray-400">Périodes de plusieurs semaines avec charge et résultat attendu.</p>
+                        </div>
+                        <button type="button" onclick="openPlanningEditor('mesocycle')" class="rounded-lg bg-blue-700 px-3 py-2 text-[10px] font-bold text-white">＋ Ajouter</button>
+                    </div>
+                    <div id="planning-meso-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
+                </div>
+
+                <div id="planning-tab-micro" class="hidden space-y-3">
+                    <div class="flex flex-wrap items-end justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">Semaines et séances</h3>
+                            <p class="text-[10px] text-gray-400">Objectifs, intensité, agrès prioritaires et contenu prévu.</p>
+                        </div>
+                        <button type="button" onclick="openPlanningEditor('microcycle')" class="rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white">＋ Ajouter</button>
+                    </div>
+                    <div class="grid gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-2">
+                        <label class="text-[10px] font-bold text-gray-600">Mésocycle
+                            <select id="planning-micro-filter" onchange="renderPlanningMicrocycles()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal"></select>
+                        </label>
+                        <label class="text-[10px] font-bold text-gray-600">Rechercher
+                            <input id="planning-micro-search" type="search" oninput="renderPlanningMicrocycles()" placeholder="Objectif, agrès, séance…" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal">
+                        </label>
+                    </div>
+                    <p id="planning-micro-count" class="text-[10px] font-semibold text-gray-500"></p>
+                    <div id="planning-micro-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
+                </div>
+            </section>
+
 
     </main>
 
@@ -1117,6 +1184,40 @@
         id="btn-add-gym"
         class="hidden fixed bottom-6 right-6 bg-pink-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl text-2xl font-bold hover:bg-pink-700 transition"
         onclick="openAddModal()">+</button>
+
+    <!-- ═══════════════════════════════════════ MODAL PLANIFICATION ═══ -->
+    <div id="modal-planning-editor" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-2xl overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex items-center justify-between gap-3 bg-teal-700 p-4 font-bold text-white">
+                <span id="planning-editor-title">Modifier la planification</span>
+                <button type="button" onclick="closePlanningEditor()" class="text-white">✕</button>
+            </div>
+            <form id="planning-editor-form" onsubmit="savePlanningEditor(event)" class="space-y-3 p-4">
+                <input id="planning-editor-type" type="hidden">
+                <input id="planning-editor-id" type="hidden">
+                <div id="planning-editor-fields" class="grid grid-cols-1 gap-3 sm:grid-cols-2"></div>
+                <div class="flex gap-2 border-t border-gray-100 pt-3">
+                    <button type="button" onclick="closePlanningEditor()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                    <button type="submit" class="flex-1 rounded-lg bg-teal-700 py-2 font-bold text-white">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-planning-detail" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 bg-slate-800 p-4 font-bold text-white">
+                <span id="planning-detail-title">Détail du cycle</span>
+                <button type="button" onclick="closePlanningDetail()" class="text-white">✕</button>
+            </div>
+            <div id="planning-detail-content" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"></div>
+            <div class="grid shrink-0 grid-cols-3 gap-2 border-t border-gray-100 p-4">
+                <button type="button" onclick="closePlanningDetail()" class="rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Fermer</button>
+                <button id="planning-detail-delete" type="button" class="rounded-lg border border-red-200 bg-red-50 py-2 font-semibold text-red-700">Supprimer</button>
+                <button id="planning-detail-edit" type="button" class="rounded-lg bg-teal-700 py-2 font-bold text-white">Modifier</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ══════════════════════════════════════════ MODAL GYMNASTE ═══ -->
     <div
@@ -1251,7 +1352,7 @@
                     </div>
                 </div>
 
-                <p class="text-[10px] leading-relaxed text-gray-500">Le bloc Compétition reste protégé. Renommer une catégorie conserve toutes ses fiches et statistiques.</p>
+                <p class="text-[10px] leading-relaxed text-gray-500">Les blocs Compétition et Planification restent protégés. Renommer une catégorie conserve toutes ses fiches et statistiques.</p>
             </div>
         </div>
     </div>
@@ -1451,9 +1552,11 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.19.0';
+        const APP_VERSION = '1.20.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
+        const PLANNING_LEVEL_ID = 'PLAN-ZONE';
+        const PLANNING_LEVEL_NAME = '🗓️ Planification';
         const PROGRESSION_STATUSES = ['not_performed', 'studied', 'in_progress', 'acquired'];
         const PROGRESSION_STATUS_DEFINITIONS = {
             not_performed: {label: 'Non réalisé', percent: 0},
@@ -1507,6 +1610,389 @@
             {code: '16+', label: '16 ans et plus', min: 16, max: null},
             {code: '18+', label: '18 ans et plus', min: 18, max: null}
         ];
+        const DEFAULT_PLANNING_MESOCYCLES = [
+            {id: 'P01', code: 'P01', name: 'Diagnostic et préparation générale', startDate: '2026-08-31', endDate: '2026-10-16', load: 'Progressive', objective: 'Évaluer les quatre agrès et construire les bases physiques', expected: 'Profils individuels identifiés et fondamentaux repris', status: 'Planifié', notes: ''},
+            {id: 'P02', code: 'P02', name: 'Stage Toussaint - acquisition', startDate: '2026-10-20', endDate: '2026-10-29', load: 'Élevée et ondulée', objective: 'Acquérir, individualiser et tester les éléments', expected: 'Première composition cible et solution sécurisée', status: 'Planifié', notes: 'Les heures de stage sont des amplitudes brutes.'},
+            {id: 'P03', code: 'P03', name: 'Choix des programmes', startDate: '2026-11-02', endDate: '2026-11-20', load: 'Moyenne à élevée', objective: 'Choisir les éléments, bonus et solutions de remplacement', expected: 'Programmes A et B fixés pour chaque gymnaste', status: 'Planifié', notes: ''},
+            {id: 'P04', code: 'P04', name: 'Construction des enchaînements', startDate: '2026-11-23', endDate: '2026-12-11', load: 'Élevée', objective: "Assembler les liaisons et parties d'enchaînement", expected: 'Parties mémorisées et réalisables sans aide importante', status: 'Planifié', notes: ''},
+            {id: 'P05', code: 'P05', name: 'Premier contrôle complet', startDate: '2026-12-14', endDate: '2026-12-17', load: 'Moyenne', objective: 'Présenter les mouvements complets et relever les instabilités', expected: 'Composition sécurisée avant la coupure de Noël', status: 'Planifié', notes: ''},
+            {id: 'P06', code: 'P06', name: 'Pause de Noël', startDate: '2026-12-19', endDate: '2027-01-03', load: 'Repos', objective: 'Récupérer et maintenir une mobilité légère', expected: 'Retour sans fatigue résiduelle', status: 'Planifié', notes: ''},
+            {id: 'P07', code: 'P07', name: 'Précompétition', startDate: '2027-01-04', endDate: '2027-01-21', load: 'Pic puis allègement', objective: 'Répéter, simuler puis réduire le volume', expected: 'Routines stables et gymnastes disponibles', status: 'Planifié', notes: ''},
+            {id: 'P08', code: 'P08', name: 'Compétition 1', startDate: '2027-01-23', endDate: '2027-01-24', load: 'Pic', objective: 'Mettre en œuvre les programmes validés', expected: 'Résultats et observations exploitables', status: 'Planifié', notes: ''},
+            {id: 'P09', code: 'P09', name: 'Récupération et correction', startDate: '2027-01-25', endDate: '2027-02-12', load: 'Légère à moyenne', objective: 'Récupérer, analyser et corriger les principales fautes', expected: 'Priorités techniques post-compétition établies', status: 'Planifié', notes: ''},
+            {id: 'P10', code: 'P10', name: 'Stage février - développement', startDate: '2027-02-15', endDate: '2027-02-22', load: 'Élevée et ondulée', objective: 'Développer les acquisitions ciblées et les liaisons', expected: 'Nouveaux objectifs validés sans surcharge', status: 'Planifié', notes: 'Les heures de stage sont des amplitudes brutes.'},
+            {id: 'P11', code: 'P11', name: 'Deuxième période compétitive', startDate: '2027-03-01', endDate: '2027-04-08', load: 'À ajuster', objective: 'Stabiliser les programmes et préparer l’échéance suivante', expected: 'Pic replacé dès que la date de compétition est connue', status: 'Planifié', notes: ''},
+            {id: 'P12', code: 'P12', name: 'Vacances de printemps - à confirmer', startDate: '2027-04-12', endDate: '2027-04-22', load: 'À confirmer', objective: 'Prévoir un stage seulement après validation des dates', expected: 'Volume non comptabilisé à ce stade', status: 'À confirmer', notes: ''},
+            {id: 'P13', code: 'P13', name: 'Fin de saison', startDate: '2027-04-26', endDate: '2027-07-01', load: 'Moyenne à élevée', objective: 'Finales éventuelles puis développement pour la saison suivante', expected: 'Bilan technique et objectifs 2027-2028', status: 'Planifié', notes: ''},
+            {id: 'P14', code: 'P14', name: 'Transition - à confirmer', startDate: '2027-07-05', endDate: '2027-07-12', load: 'Légère', objective: 'Évaluer, récupérer et terminer la saison', expected: 'Dates et contenu à confirmer', status: 'À confirmer', notes: ''}
+        ];
+        const DEFAULT_PLANNING_SESSION_ROWS = `
+2026-08-31|18:15|20:15|Entraînement|P01
+2026-09-02|14:00|16:30|Entraînement|P01
+2026-09-03|18:15|20:15|Entraînement|P01
+2026-09-07|18:15|20:15|Entraînement|P01
+2026-09-09|14:00|16:30|Entraînement|P01
+2026-09-10|18:15|20:15|Entraînement|P01
+2026-09-14|18:15|20:15|Entraînement|P01
+2026-09-16|14:00|16:30|Entraînement|P01
+2026-09-17|18:15|20:15|Entraînement|P01
+2026-09-21|18:15|20:15|Entraînement|P01
+2026-09-23|14:00|16:30|Entraînement|P01
+2026-09-24|18:15|20:15|Entraînement|P01
+2026-09-28|18:15|20:15|Entraînement|P01
+2026-09-30|14:00|16:30|Entraînement|P01
+2026-10-01|18:15|20:15|Entraînement|P01
+2026-10-05|18:15|20:15|Entraînement|P01
+2026-10-07|14:00|16:30|Entraînement|P01
+2026-10-08|18:15|20:15|Entraînement|P01
+2026-10-12|18:15|20:15|Entraînement|P01
+2026-10-14|14:00|16:30|Entraînement|P01
+2026-10-15|18:15|20:15|Entraînement|P01
+2026-10-20|13:00|18:00|Stage|P02
+2026-10-22|09:00|17:00|Stage|P02
+2026-10-23|09:00|17:00|Stage|P02
+2026-10-26|09:00|17:00|Stage|P02
+2026-10-29|09:00|17:00|Stage|P02
+2026-11-02|18:15|20:15|Entraînement|P03
+2026-11-04|14:00|16:30|Entraînement|P03
+2026-11-05|18:15|20:15|Entraînement|P03
+2026-11-09|18:15|20:15|Entraînement|P03
+2026-11-12|18:15|20:15|Entraînement|P03
+2026-11-16|18:15|20:15|Entraînement|P03
+2026-11-18|14:00|16:30|Entraînement|P03
+2026-11-19|18:15|20:15|Entraînement|P03
+2026-11-23|18:15|20:15|Entraînement|P04
+2026-11-25|14:00|16:30|Entraînement|P04
+2026-11-26|18:15|20:15|Entraînement|P04
+2026-11-30|18:15|20:15|Entraînement|P04
+2026-12-02|14:00|16:30|Entraînement|P04
+2026-12-03|18:15|20:15|Entraînement|P04
+2026-12-07|18:15|20:15|Entraînement|P04
+2026-12-09|14:00|16:30|Entraînement|P04
+2026-12-10|18:15|20:15|Entraînement|P04
+2026-12-14|18:15|20:15|Entraînement|P05
+2026-12-16|14:00|16:30|Entraînement|P05
+2026-12-17|18:15|20:15|Entraînement|P05
+2027-01-04|18:15|20:15|Entraînement|P07
+2027-01-06|14:00|16:30|Entraînement|P07
+2027-01-07|18:15|20:15|Entraînement|P07
+2027-01-11|18:15|20:15|Entraînement|P07
+2027-01-13|14:00|16:30|Entraînement|P07
+2027-01-14|18:15|20:15|Entraînement|P07
+2027-01-18|18:15|20:15|Entraînement|P07
+2027-01-20|14:00|16:30|Entraînement|P07
+2027-01-21|18:15|20:15|Entraînement|P07
+2027-01-23|||Compétition|P08
+2027-01-24|||Compétition|P08
+2027-01-25|18:15|20:15|Entraînement|P09
+2027-01-27|14:00|16:30|Entraînement|P09
+2027-01-28|18:15|20:15|Entraînement|P09
+2027-02-01|18:15|20:15|Entraînement|P09
+2027-02-03|14:00|16:30|Entraînement|P09
+2027-02-04|18:15|20:15|Entraînement|P09
+2027-02-08|18:15|20:15|Entraînement|P09
+2027-02-10|14:00|16:30|Entraînement|P09
+2027-02-11|18:15|20:15|Entraînement|P09
+2027-02-15|09:00|17:00|Stage|P10
+2027-02-16|09:00|15:00|Stage|P10
+2027-02-22|09:00|17:00|Stage|P10
+2027-03-01|18:15|20:15|Entraînement|P11
+2027-03-03|14:00|16:30|Entraînement|P11
+2027-03-04|18:15|20:15|Entraînement|P11
+2027-03-08|18:15|20:15|Entraînement|P11
+2027-03-10|14:00|16:30|Entraînement|P11
+2027-03-11|18:15|20:15|Entraînement|P11
+2027-03-15|18:15|20:15|Entraînement|P11
+2027-03-17|14:00|16:30|Entraînement|P11
+2027-03-18|18:15|20:15|Entraînement|P11
+2027-03-22|18:15|20:15|Entraînement|P11
+2027-03-24|14:00|16:30|Entraînement|P11
+2027-03-25|18:15|20:15|Entraînement|P11
+2027-03-31|14:00|16:30|Entraînement|P11
+2027-04-01|18:15|20:15|Entraînement|P11
+2027-04-05|18:15|20:15|Entraînement|P11
+2027-04-07|14:00|16:30|Entraînement|P11
+2027-04-08|18:15|20:15|Entraînement|P11
+2027-04-26|18:15|20:15|Entraînement|P13
+2027-04-28|14:00|16:30|Entraînement|P13
+2027-04-29|18:15|20:15|Entraînement|P13
+2027-05-03|18:15|20:15|Entraînement|P13
+2027-05-05|14:00|16:30|Entraînement|P13
+2027-05-10|18:15|20:15|Entraînement|P13
+2027-05-12|14:00|16:30|Entraînement|P13
+2027-05-13|18:15|20:15|Entraînement|P13
+2027-05-19|14:00|16:30|Entraînement|P13
+2027-05-20|18:15|20:15|Entraînement|P13
+2027-05-24|18:15|20:15|Entraînement|P13
+2027-05-26|14:00|16:30|Entraînement|P13
+2027-05-27|18:15|20:15|Entraînement|P13
+2027-05-31|18:15|20:15|Entraînement|P13
+2027-06-02|14:00|16:30|Entraînement|P13
+2027-06-03|18:15|20:15|Entraînement|P13
+2027-06-07|18:15|20:15|Entraînement|P13
+2027-06-09|14:00|16:30|Entraînement|P13
+2027-06-10|18:15|20:15|Entraînement|P13
+2027-06-14|18:15|20:15|Entraînement|P13
+2027-06-16|14:00|16:30|Entraînement|P13
+2027-06-17|18:15|20:15|Entraînement|P13
+2027-06-21|18:15|20:15|Entraînement|P13
+2027-06-23|14:00|16:30|Entraînement|P13
+2027-06-24|18:15|20:15|Entraînement|P13
+2027-06-28|18:15|20:15|Entraînement|P13
+2027-06-30|14:00|16:30|Entraînement|P13
+2027-07-01|18:15|20:15|Entraînement|P13`;
+
+        function planningDateFromIso(value) {
+            const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+            if (!match) return null;
+            const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0, 0);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function planningDateToIso(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getPlanningWeekStart(value) {
+            const date = planningDateFromIso(value);
+            if (!date) return '';
+            const day = (date.getDay() + 6) % 7;
+            date.setDate(date.getDate() - day);
+            return planningDateToIso(date);
+        }
+
+        function addPlanningDays(value, days) {
+            const date = planningDateFromIso(value);
+            if (!date) return '';
+            date.setDate(date.getDate() + Number(days || 0));
+            return planningDateToIso(date);
+        }
+
+        function formatPlanningDate(value) {
+            const date = planningDateFromIso(value);
+            return date ? date.toLocaleDateString('fr-FR') : 'Date non renseignée';
+        }
+
+        function createDefaultPlanningData() {
+            const defaultMacrocycleId = 'MACRO-GAF-U13-2026-2027';
+            const mesocycles = JSON.parse(JSON.stringify(DEFAULT_PLANNING_MESOCYCLES));
+            mesocycles.forEach(mesocycle => { mesocycle.macrocycleId = defaultMacrocycleId; });
+            const mesocyclesById = new Map(mesocycles.map(item => [item.id, item]));
+            const groups = new Map();
+            DEFAULT_PLANNING_SESSION_ROWS.trim().split('\n').forEach((line, index) => {
+                const [date, startTime, endTime, type, mesocycleId] = line.trim().split('|');
+                if (!date || !mesocycleId) return;
+                const weekStart = getPlanningWeekStart(date);
+                const key = `${mesocycleId}-${weekStart}`;
+                if (!groups.has(key)) groups.set(key, {mesocycleId, weekStart, sessions: []});
+                groups.get(key).sessions.push({
+                    id: `SESSION-${date}-${String(index + 1).padStart(3, '0')}`,
+                    date, startTime, endTime, type, status: 'Planifié', notes: ''
+                });
+            });
+            const microcycles = Array.from(groups.values()).map(group => {
+                const mesocycle = mesocyclesById.get(group.mesocycleId) || {};
+                const isCompetition = group.mesocycleId === 'P08';
+                return {
+                    id: `MICRO-${group.mesocycleId}-${group.weekStart}`,
+                    name: isCompetition ? 'Compétition 1' : `Semaine du ${formatPlanningDate(group.weekStart)}`,
+                    startDate: isCompetition ? '2027-01-23' : group.weekStart,
+                    endDate: isCompetition ? '2027-01-24' : addPlanningDays(group.weekStart, 6),
+                    mesocycleId: group.mesocycleId,
+                    intensity: mesocycle.load || '',
+                    objective: mesocycle.objective || '',
+                    apparatuses: 'Saut, Barres, Poutre, Sol',
+                    status: 'Planifié',
+                    sessions: group.sessions,
+                    notes: ''
+                };
+            });
+            [
+                ['P06', '2026-12-21', 'Pause de Noël — semaine 1'],
+                ['P06', '2026-12-28', 'Pause de Noël — semaine 2'],
+                ['P12', '2027-04-12', 'Vacances de printemps — semaine 1'],
+                ['P12', '2027-04-19', 'Vacances de printemps — semaine 2'],
+                ['P14', '2027-07-05', 'Transition de fin de saison']
+            ].forEach(([mesocycleId, weekStart, name]) => {
+                const mesocycle = mesocyclesById.get(mesocycleId) || {};
+                microcycles.push({
+                    id: `MICRO-${mesocycleId}-${weekStart}`,
+                    name,
+                    startDate: weekStart,
+                    endDate: addPlanningDays(weekStart, 6),
+                    mesocycleId,
+                    intensity: mesocycle.load || '',
+                    objective: mesocycle.objective || '',
+                    apparatuses: '',
+                    status: mesocycle.status || 'Planifié',
+                    sessions: [],
+                    notes: mesocycleId === 'P06' ? 'Récupération et mobilité légère.' : 'Contenu à confirmer.'
+                });
+            });
+            microcycles.sort((left, right) => left.startDate.localeCompare(right.startDate) || left.mesocycleId.localeCompare(right.mesocycleId));
+            return {
+                templateVersion: 1,
+                source: 'Programmation saisonnière GAF Fédérale A 10–13 ans 2026–2027',
+                macrocycles: [{
+                    id: defaultMacrocycleId,
+                    name: 'Saison GAF Fédérale A U13',
+                    season: '2026-2027',
+                    group: 'GAF Fédérale A 10–13 ans',
+                    startDate: '2026-08-31',
+                    endDate: '2027-07-12',
+                    sessionsPerWeek: 3,
+                    deadlineDate: '2027-01-23',
+                    deadlineLabel: 'Première compétition',
+                    objective: 'Construire les bases, choisir puis stabiliser les programmes et préparer les échéances compétitives.',
+                    status: 'En cours',
+                    notes: 'Les volumes de stage correspondent aux amplitudes horaires brutes et sont recalculés à partir des séances.'
+                }],
+                mesocycles,
+                microcycles
+            };
+        }
+
+        function normalizePlanningText(value, maxLength = 1000) {
+            return String(value === undefined || value === null ? '' : value).trim().slice(0, maxLength);
+        }
+
+        function normalizePlanningId(value, fallback) {
+            const id = String(value || '').trim().replace(/[^A-Za-z0-9_-]/g, '-').replace(/-+/g, '-').slice(0, 100);
+            return id || fallback;
+        }
+
+        function normalizePlanningSession(value, fallbackId) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            return {
+                id: normalizePlanningId(source.id, fallbackId),
+                date: /^\d{4}-\d{2}-\d{2}$/.test(String(source.date || '')) ? String(source.date) : '',
+                startTime: /^\d{2}:\d{2}$/.test(String(source.startTime || '')) ? String(source.startTime) : '',
+                endTime: /^\d{2}:\d{2}$/.test(String(source.endTime || '')) ? String(source.endTime) : '',
+                type: normalizePlanningText(source.type || 'Entraînement', 60),
+                status: normalizePlanningText(source.status || 'Planifié', 60),
+                notes: normalizePlanningText(source.notes, 1000)
+            };
+        }
+
+        function normalizePlanningData(target) {
+            if (!target || typeof target !== 'object' || Array.isArray(target)) return target;
+            if (!target.planning || typeof target.planning !== 'object' || Array.isArray(target.planning)) {
+                target.planning = createDefaultPlanningData();
+                return target;
+            }
+            const planning = target.planning;
+            planning.templateVersion = Number(planning.templateVersion) || 1;
+            planning.source = normalizePlanningText(planning.source, 200);
+            const normalizeList = (list, prefix, mapper) => {
+                const seen = new Set();
+                return (Array.isArray(list) ? list : []).filter(item => item && typeof item === 'object' && !Array.isArray(item)).map((item, index) => {
+                    const mapped = mapper(item, index);
+                    let id = normalizePlanningId(mapped.id, `${prefix}-${index + 1}`);
+                    let suffix = 2;
+                    while (seen.has(id)) id = `${normalizePlanningId(mapped.id, `${prefix}-${index + 1}`)}-${suffix++}`;
+                    seen.add(id);
+                    return {...mapped, id};
+                });
+            };
+            planning.macrocycles = normalizeList(planning.macrocycles, 'MACRO', item => ({
+                id: item.id,
+                name: normalizePlanningText(item.name || 'Macrocycle', 100),
+                season: normalizePlanningText(item.season, 30),
+                group: normalizePlanningText(item.group, 100),
+                startDate: normalizePlanningText(item.startDate, 10),
+                endDate: normalizePlanningText(item.endDate, 10),
+                sessionsPerWeek: Math.max(0, Number(item.sessionsPerWeek) || 0),
+                deadlineDate: normalizePlanningText(item.deadlineDate, 10),
+                deadlineLabel: normalizePlanningText(item.deadlineLabel, 100),
+                objective: normalizePlanningText(item.objective, 2000),
+                status: normalizePlanningText(item.status || 'Planifié', 60),
+                notes: normalizePlanningText(item.notes, 3000),
+                updatedAt: normalizePlanningText(item.updatedAt, 40)
+            }));
+            const validMacroIds = new Set(planning.macrocycles.map(item => item.id));
+            planning.mesocycles = normalizeList(planning.mesocycles, 'MESO', item => ({
+                id: item.id,
+                macrocycleId: validMacroIds.has(String(item.macrocycleId || '')) ? String(item.macrocycleId) : '',
+                code: normalizePlanningText(item.code, 20),
+                name: normalizePlanningText(item.name || 'Mésocycle', 120),
+                startDate: normalizePlanningText(item.startDate, 10),
+                endDate: normalizePlanningText(item.endDate, 10),
+                load: normalizePlanningText(item.load, 100),
+                objective: normalizePlanningText(item.objective, 2000),
+                expected: normalizePlanningText(item.expected, 2000),
+                status: normalizePlanningText(item.status || 'Planifié', 60),
+                notes: normalizePlanningText(item.notes, 3000),
+                updatedAt: normalizePlanningText(item.updatedAt, 40)
+            }));
+            const validMesoIds = new Set(planning.mesocycles.map(item => item.id));
+            planning.microcycles = normalizeList(planning.microcycles, 'MICRO', (item, index) => {
+                const id = normalizePlanningId(item.id, `MICRO-${index + 1}`);
+                return {
+                    id,
+                    name: normalizePlanningText(item.name || 'Microcycle', 120),
+                    startDate: normalizePlanningText(item.startDate, 10),
+                    endDate: normalizePlanningText(item.endDate, 10),
+                    mesocycleId: validMesoIds.has(String(item.mesocycleId || '')) ? String(item.mesocycleId) : '',
+                    intensity: normalizePlanningText(item.intensity, 100),
+                    objective: normalizePlanningText(item.objective, 2000),
+                    apparatuses: normalizePlanningText(item.apparatuses, 300),
+                    status: normalizePlanningText(item.status || 'Planifié', 60),
+                    sessions: (Array.isArray(item.sessions) ? item.sessions : []).map((session, sessionIndex) =>
+                        normalizePlanningSession(session, `SESSION-${id}-${sessionIndex + 1}`)
+                    ),
+                    notes: normalizePlanningText(item.notes, 3000),
+                    updatedAt: normalizePlanningText(item.updatedAt, 40)
+                };
+            });
+            target.planning = planning;
+            return target;
+        }
+
+        function planningTimeToMinutes(value) {
+            const match = /^(\d{2}):(\d{2})$/.exec(String(value || ''));
+            if (!match) return null;
+            const hours = Number(match[1]);
+            const minutes = Number(match[2]);
+            if (hours > 23 || minutes > 59) return null;
+            return hours * 60 + minutes;
+        }
+
+        function calculatePlanningSessionHours(session) {
+            const start = planningTimeToMinutes(session && session.startTime);
+            const end = planningTimeToMinutes(session && session.endTime);
+            if (start === null || end === null) return 0;
+            const duration = end >= start ? end - start : 24 * 60 - start + end;
+            return Math.round((duration / 60) * 100) / 100;
+        }
+
+        function summarizePlanningSessions(sessions) {
+            const safeSessions = Array.isArray(sessions) ? sessions : [];
+            const typeCounts = safeSessions.reduce((counts, session) => {
+                const key = normalizePlanningText(session && session.type || 'Autre', 60) || 'Autre';
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+            }, {});
+            return {
+                sessions: safeSessions.length,
+                hours: Math.round(safeSessions.reduce((sum, session) => sum + calculatePlanningSessionHours(session), 0) * 100) / 100,
+                training: typeCounts['Entraînement'] || 0,
+                stages: typeCounts.Stage || 0,
+                competitions: typeCounts['Compétition'] || 0,
+                typeCounts
+            };
+        }
+
+        function calculatePlanningVolume(macrocycle, deadlineOnly = false) {
+            const macro = macrocycle && typeof macrocycle === 'object' ? macrocycle : {};
+            const startDate = macro.startDate || '';
+            const endDate = deadlineOnly && macro.deadlineDate ? macro.deadlineDate : (macro.endDate || '');
+            const sessions = (data.planning && Array.isArray(data.planning.microcycles) ? data.planning.microcycles : [])
+                .flatMap(microcycle => Array.isArray(microcycle.sessions) ? microcycle.sessions : [])
+                .filter(session => (!startDate || session.date >= startDate) && (!endDate || session.date <= endDate))
+                .filter(session => !(deadlineOnly && macro.deadlineDate && session.date === macro.deadlineDate && session.type === 'Compétition'));
+            return summarizePlanningSessions(sessions);
+        }
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -1543,6 +2029,9 @@
                 }, {
                     id: "COMP-ZONE",
                     name: "🏆 Compétition & Équipes"
+                }, {
+                    id: "PLAN-ZONE",
+                    name: "🗓️ Planification"
                 }
             ],
             gymnastes: [],
@@ -1556,10 +2045,14 @@
             movementFolders: [],
             defaultSigleScoring: {},
             deletedDefaultSigles: [],
+            planning: createDefaultPlanningData(),
             appName: "GymSuivi",
             appLogo: "",
             birthdayNotificationsEnabled: false
         };
+        normalizeLevelCollection(data);
+        normalizeProgressionData(data);
+        normalizePlanningData(data);
         const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
         let editingCustomSigleIndex = null;
@@ -1589,7 +2082,7 @@
                 if (!level || typeof level !== 'object' || Array.isArray(level)) return;
                 const id = String(level.id || '').trim();
                 const name = normalizeLevelName(level.name);
-                if (!id || id === COMPETITION_LEVEL_ID || !name || seenIds.has(id)) return;
+                if (!id || [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(id) || !name || seenIds.has(id)) return;
                 seenIds.add(id);
                 normalized.push({...level, id, name});
             });
@@ -1597,6 +2090,7 @@
                 normalized.push({id: 'NIV-A', name: 'Fédéral A'}, {id: 'NIV-B', name: 'Fédéral B'});
             }
             normalized.push({id: COMPETITION_LEVEL_ID, name: COMPETITION_LEVEL_NAME});
+            normalized.push({id: PLANNING_LEVEL_ID, name: PLANNING_LEVEL_NAME});
             target.levels = normalized;
             return target;
         }
@@ -1867,8 +2361,6 @@
             return target;
         }
 
-        normalizeLevelCollection(data);
-        normalizeProgressionData(data);
         // Fonction globale pour compresser et redimensionner une image avant stockage
         function compressImage(file, maxWidth, maxHeight, quality, callback) {
             const reader = new FileReader();
@@ -1933,6 +2425,7 @@
                     data.deletedDefaultSigles = [];
                 normalizeLevelCollection(data);
                 normalizeProgressionData(data);
+                normalizePlanningData(data);
                 }
             catch (e) {
                 console.error('[GymSuivi] Erreur lecture localStorage :', e);
@@ -1942,6 +2435,7 @@
         function saveAllData() {
             normalizeLevelCollection(data);
             normalizeProgressionData(data);
+            normalizePlanningData(data);
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller)
                 syncBirthdayStateWithServiceWorker(false).catch(() => {});
@@ -2056,6 +2550,7 @@
                             data.deletedDefaultSigles = [];
                         normalizeLevelCollection(data);
                         normalizeProgressionData(data);
+                        normalizePlanningData(data);
                         saveAllData();
                         renderLevels();
                         applyCustomAppIdentity();
@@ -2222,7 +2717,9 @@
                 throw driveDataError('Sauvegarde invalide (progression) : aucune donnée remplacée.');
             if (!Array.isArray(result.progressionElements))
                 throw driveDataError('Sauvegarde invalide (référentiel de progression) : aucune donnée remplacée.');
-            return normalizeProgressionData(normalizeLevelCollection(result));
+            if (!result.planning || typeof result.planning !== 'object' || Array.isArray(result.planning))
+                throw driveDataError('Sauvegarde invalide (planification) : aucune donnée remplacée.');
+            return normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result)));
         }
 
         function hasDriveContent(snapshot) {
@@ -2233,6 +2730,7 @@
                 Object.values(snapshot.progressions || {}).some(statuses =>
                     statuses && typeof statuses === 'object' && Object.keys(statuses).length > 0
                 ) ||
+                JSON.stringify(snapshot.planning) !== JSON.stringify(INITIAL_GYM_DATA.planning) ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
         }
@@ -2328,6 +2826,7 @@
                 renderTeamsList();
                 switchCompetitionTab(currentCompetitionTab);
             }
+            if (!document.getElementById('screen-planning').classList.contains('hidden')) renderPlanning();
             applyCustomAppIdentity();
             updateBirthdayNotificationUI();
             ensureBirthdayCheckInterval();
@@ -2794,9 +3293,11 @@
         let currentLiveCompetitionId = null;
         let currentLiveApparatus = 'saut';
         let liveCompetitionSaveTimer = null;
+        let currentPlanningTab = 'macro';
+        let planningSessionEditorCounter = 0;
         let screenHistory = ['screen-levels'];
 
-        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-settings'];
+        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-settings'];
 
         function showScreen(screenId) {
             ALL_SCREENS.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -2859,13 +3360,14 @@
                     renderTeamsList();
                     switchCompetitionTab(currentCompetitionTab);
                 }
+                if (prev === 'screen-planning') renderPlanning();
                 }
             }
 
         // ────────────────────────────────────────────────────────────── RENDU DES
         // NIVEAUX ──────────────────────────────────────────────────────────────
         function getGymLevels() {
-            return data.levels.filter(level => level.id !== COMPETITION_LEVEL_ID);
+            return data.levels.filter(level => ![COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(level.id));
         }
 
         function getLevelById(levelId) {
@@ -2892,15 +3394,15 @@
             if (!normalizedName) throw new Error('Indiquez un nom de catégorie.');
             if (levelNameExists(normalizedName)) throw new Error('Une catégorie porte déjà ce nom.');
             const level = {id: createLevelId(), name: normalizedName};
-            const competitionIndex = data.levels.findIndex(item => item.id === COMPETITION_LEVEL_ID);
-            data.levels.splice(competitionIndex < 0 ? data.levels.length : competitionIndex, 0, level);
+            const protectedIndex = data.levels.findIndex(item => [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(item.id));
+            data.levels.splice(protectedIndex < 0 ? data.levels.length : protectedIndex, 0, level);
             saveAllData();
             return level;
         }
 
         function renameGymLevel(levelId, name) {
             const level = getLevelById(levelId);
-            if (!level || level.id === COMPETITION_LEVEL_ID) throw new Error('Cette catégorie est protégée.');
+            if (!level || [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(level.id)) throw new Error('Cette catégorie est protégée.');
             const normalizedName = normalizeLevelName(name);
             if (!normalizedName) throw new Error('Le nom de la catégorie ne peut pas être vide.');
             if (levelNameExists(normalizedName, levelId)) throw new Error('Une catégorie porte déjà ce nom.');
@@ -3090,7 +3592,9 @@
                         .length;
                     const badge = lvl.id === COMPETITION_LEVEL_ID
                         ? '🌟 Gestion Multi-Équipes'
-                        : `${count} gymnaste(s)`;
+                        : lvl.id === PLANNING_LEVEL_ID
+                            ? 'Macrocycle · Mésocycles · Microcycles'
+                            : `${count} gymnaste(s)`;
 
                     let styleStr = '';
                     if (lvl.id === 'NIV-A' && userColors['fed-a']) 
@@ -3122,7 +3626,7 @@
             if (niveauSel) {
                 niveauSel.innerHTML = data
                     .levels
-                    .filter(l => l.id !== COMPETITION_LEVEL_ID)
+                    .filter(l => ![COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(l.id))
                     .map(l => `<option value="${l.id}">${l.name}</option>`)
                     .join('');
             }
@@ -3133,6 +3637,11 @@
                 renderTeamsList();
                 switchCompetitionTab(currentCompetitionTab);
                 showScreen('screen-competition');
+                return;
+            }
+            if (id === PLANNING_LEVEL_ID) {
+                switchPlanningTab(currentPlanningTab);
+                showScreen('screen-planning');
                 return;
             }
             currentLevelId = id;
@@ -3147,6 +3656,518 @@
                 exportStatus.classList.add('hidden');
             renderGymnastes();
             showScreen('screen-gymnastes');
+        }
+
+        // ────────────────────────────────────────────────────────────── PLANIFICATION
+        // ──────────────────────────────────────────────────────────────
+        function getPlanningCollection(type) {
+            normalizePlanningData(data);
+            if (type === 'macrocycle') return data.planning.macrocycles;
+            if (type === 'mesocycle') return data.planning.mesocycles;
+            if (type === 'microcycle') return data.planning.microcycles;
+            return [];
+        }
+
+        function getPlanningEntity(type, id) {
+            return getPlanningCollection(type).find(item => item.id === id) || null;
+        }
+
+        function getPlanningTypeLabel(type) {
+            return type === 'macrocycle' ? 'Macrocycle' : type === 'mesocycle' ? 'Mésocycle' : 'Microcycle';
+        }
+
+        function createPlanningEntityId(type) {
+            const prefix = type === 'macrocycle' ? 'MACRO' : type === 'mesocycle' ? 'MESO' : 'MICRO';
+            let id;
+            do {
+                id = `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+            } while (getPlanningCollection(type).some(item => item.id === id));
+            return id;
+        }
+
+        function formatPlanningHours(value) {
+            return `${Number(value || 0).toLocaleString('fr-FR', {maximumFractionDigits: 2})} h`;
+        }
+
+        function formatPlanningPeriod(startDate, endDate) {
+            if (!startDate && !endDate) return 'Dates à renseigner';
+            if (startDate && endDate) return `${formatPlanningDate(startDate)} → ${formatPlanningDate(endDate)}`;
+            return formatPlanningDate(startDate || endDate);
+        }
+
+        function getPlanningStatusClasses(status) {
+            const key = normalizePlanningText(status, 60).toLocaleLowerCase('fr');
+            if (key.includes('termin')) return 'bg-green-100 text-green-700';
+            if (key.includes('cours')) return 'bg-blue-100 text-blue-700';
+            if (key.includes('confirm')) return 'bg-amber-100 text-amber-700';
+            return 'bg-gray-100 text-gray-600';
+        }
+
+        function getPlanningMicrocycleVolume(microcycle) {
+            return summarizePlanningSessions(microcycle && microcycle.sessions);
+        }
+
+        function getPlanningMesocycleVolume(mesocycle) {
+            const sessions = getPlanningCollection('microcycle')
+                .filter(microcycle => microcycle.mesocycleId === (mesocycle && mesocycle.id))
+                .flatMap(microcycle => microcycle.sessions || []);
+            return summarizePlanningSessions(sessions);
+        }
+
+        function createPlanningCard(type, item) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500';
+            const status = `<span class="rounded-full px-2 py-1 text-[9px] font-bold ${getPlanningStatusClasses(item.status)}">${escapeHtml(item.status || 'Planifié')}</span>`;
+            let badge = '';
+            let description = '';
+            let metrics = '';
+            if (type === 'macrocycle') {
+                const volume = calculatePlanningVolume(item);
+                badge = escapeHtml(item.season || 'Saison');
+                description = escapeHtml(item.group || item.objective || '');
+                metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
+            } else if (type === 'mesocycle') {
+                const volume = getPlanningMesocycleVolume(item);
+                badge = escapeHtml(item.code || 'MÉSO');
+                description = escapeHtml(item.objective || 'Objectif à renseigner');
+                metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
+            } else {
+                const volume = getPlanningMicrocycleVolume(item);
+                const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
+                badge = escapeHtml(mesocycle ? mesocycle.code : 'Sans mésocycle');
+                description = escapeHtml(item.objective || item.apparatuses || 'Contenu à renseigner');
+                metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
+            }
+            button.innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-teal-700">${badge}</span>
+                        <h4 class="mt-1 text-sm font-bold text-gray-800">${escapeHtml(item.name)}</h4>
+                    </div>
+                    ${status}
+                </div>
+                <p class="mt-2 text-[10px] font-semibold text-gray-500">${escapeHtml(formatPlanningPeriod(item.startDate, item.endDate))}</p>
+                <p class="mt-2 line-clamp-2 text-[10px] leading-relaxed text-gray-500">${description}</p>
+                <div class="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                    <span class="text-[10px] font-bold text-gray-600">${escapeHtml(metrics)}</span>
+                    <span class="text-[10px] font-bold text-teal-700">Ouvrir la carte →</span>
+                </div>`;
+            button.onclick = () => openPlanningDetail(type, item.id);
+            return button;
+        }
+
+        function renderPlanningSummary() {
+            const container = document.getElementById('planning-summary');
+            if (!container) return;
+            const macro = getPlanningCollection('macrocycle')[0] || {};
+            const volume = calculatePlanningVolume(macro);
+            const deadline = calculatePlanningVolume(macro, true);
+            container.innerHTML = `
+                <div class="rounded-lg bg-teal-50 p-2"><strong class="block text-base text-teal-700">${volume.sessions}</strong><span class="text-gray-500">séances / dates</span></div>
+                <div class="rounded-lg bg-blue-50 p-2"><strong class="block text-base text-blue-700">${escapeHtml(formatPlanningHours(volume.hours))}</strong><span class="text-gray-500">volume saison</span></div>
+                <div class="rounded-lg bg-purple-50 p-2"><strong class="block text-base text-purple-700">${deadline.sessions}</strong><span class="text-gray-500">avant échéance</span></div>`;
+            const badge = document.getElementById('planning-source-badge');
+            if (badge) badge.textContent = macro.season ? `Modèle ${macro.season.replace('-', '–')}` : 'Planification personnalisée';
+        }
+
+        function renderPlanningMacrocycles() {
+            const container = document.getElementById('planning-macro-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const items = [...getPlanningCollection('macrocycle')].sort((a, b) => a.startDate.localeCompare(b.startDate));
+            if (!items.length) {
+                container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun macrocycle. Appuyez sur « Ajouter ».</p>';
+                return;
+            }
+            items.forEach(item => container.appendChild(createPlanningCard('macrocycle', item)));
+        }
+
+        function renderPlanningMesocycles() {
+            const container = document.getElementById('planning-meso-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const items = [...getPlanningCollection('mesocycle')].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.code.localeCompare(b.code));
+            if (!items.length) {
+                container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun mésocycle. Appuyez sur « Ajouter ».</p>';
+                return;
+            }
+            items.forEach(item => container.appendChild(createPlanningCard('mesocycle', item)));
+        }
+
+        function renderPlanningMicrocycleFilter() {
+            const select = document.getElementById('planning-micro-filter');
+            if (!select) return;
+            const selected = select.value || 'all';
+            select.innerHTML = '<option value="all">Tous les mésocycles</option>';
+            [...getPlanningCollection('mesocycle')]
+                .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.code.localeCompare(b.code))
+                .forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${item.code ? `${item.code} — ` : ''}${item.name}`;
+                    select.appendChild(option);
+                });
+            select.value = Array.from(select.options).some(option => option.value === selected) ? selected : 'all';
+        }
+
+        function renderPlanningMicrocycles() {
+            const container = document.getElementById('planning-micro-list');
+            if (!container) return;
+            const filter = document.getElementById('planning-micro-filter');
+            const searchInput = document.getElementById('planning-micro-search');
+            const selectedMeso = filter ? filter.value : 'all';
+            const search = String(searchInput ? searchInput.value : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr').trim();
+            const items = [...getPlanningCollection('microcycle')]
+                .filter(item => selectedMeso === 'all' || item.mesocycleId === selectedMeso)
+                .filter(item => {
+                    if (!search) return true;
+                    const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
+                    const haystack = [item.name, item.objective, item.apparatuses, item.notes, mesocycle && mesocycle.code, mesocycle && mesocycle.name]
+                        .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+                    return haystack.includes(search);
+                })
+                .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'));
+            container.innerHTML = '';
+            const count = document.getElementById('planning-micro-count');
+            if (count) count.textContent = `${items.length} microcycle${items.length === 1 ? '' : 's'} affiché${items.length === 1 ? '' : 's'}`;
+            if (!items.length) {
+                container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun microcycle ne correspond aux filtres.</p>';
+                return;
+            }
+            items.forEach(item => container.appendChild(createPlanningCard('microcycle', item)));
+        }
+
+        function renderPlanning() {
+            normalizePlanningData(data);
+            renderPlanningSummary();
+            renderPlanningMacrocycles();
+            renderPlanningMesocycles();
+            renderPlanningMicrocycleFilter();
+            renderPlanningMicrocycles();
+        }
+
+        function switchPlanningTab(tab) {
+            currentPlanningTab = ['macro', 'meso', 'micro'].includes(tab) ? tab : 'macro';
+            ['macro', 'meso', 'micro'].forEach(name => {
+                const panel = document.getElementById(`planning-tab-${name}`);
+                const button = document.getElementById(`btn-planning-tab-${name}`);
+                if (panel) panel.classList.toggle('hidden', name !== currentPlanningTab);
+                if (button) {
+                    button.classList.toggle('bg-white', name === currentPlanningTab);
+                    button.classList.toggle('text-teal-700', name === currentPlanningTab);
+                    button.classList.toggle('shadow-sm', name === currentPlanningTab);
+                    button.classList.toggle('text-gray-500', name !== currentPlanningTab);
+                }
+            });
+            renderPlanning();
+        }
+
+        function planningDetailRow(label, value, full = false) {
+            return `<div class="${full ? 'sm:col-span-2' : ''} rounded-lg border border-gray-100 bg-gray-50 p-3"><span class="block text-[9px] font-bold uppercase tracking-wider text-gray-400">${escapeHtml(label)}</span><p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-gray-700">${escapeHtml(value || 'Non renseigné')}</p></div>`;
+        }
+
+        function planningVolumeCards(volume, deadlineLabel = '') {
+            return `<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div class="rounded-lg bg-teal-50 p-3 text-center"><strong class="block text-lg text-teal-700">${volume.sessions}</strong><span class="text-[9px] text-gray-500">${deadlineLabel || 'séances / dates'}</span></div>
+                <div class="rounded-lg bg-blue-50 p-3 text-center"><strong class="block text-lg text-blue-700">${escapeHtml(formatPlanningHours(volume.hours))}</strong><span class="text-[9px] text-gray-500">volume horaire</span></div>
+                <div class="rounded-lg bg-purple-50 p-3 text-center"><strong class="block text-lg text-purple-700">${volume.training}</strong><span class="text-[9px] text-gray-500">entraînements</span></div>
+                <div class="rounded-lg bg-amber-50 p-3 text-center"><strong class="block text-lg text-amber-700">${volume.stages}</strong><span class="text-[9px] text-gray-500">jours de stage</span></div>
+            </div>`;
+        }
+
+        function planningChildCardsHtml(type, items, title) {
+            const children = Array.isArray(items) ? items : [];
+            if (!children.length) return `<div class="rounded-xl border border-dashed border-gray-200 p-3 text-center text-[10px] text-gray-400">Aucun ${type === 'mesocycle' ? 'mésocycle' : 'microcycle'} rattaché.</div>`;
+            return `<div class="space-y-2"><p class="text-[9px] font-bold uppercase tracking-wider text-gray-400">${escapeHtml(title)}</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-2">${children
+                .slice().sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'))
+                .map(child => `<button type="button" data-planning-child-type="${type}" data-planning-child-id="${escapeHtml(child.id)}" class="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-teal-300"><span class="block text-[9px] font-bold text-teal-700">${escapeHtml(type === 'mesocycle' ? child.code || 'MÉSO' : formatPlanningPeriod(child.startDate, child.endDate))}</span><strong class="mt-1 block text-xs text-gray-700">${escapeHtml(child.name)}</strong></button>`).join('')}</div></div>`;
+        }
+
+        function buildPlanningDetailHtml(type, item) {
+            const status = `<span class="inline-flex rounded-full px-2 py-1 text-[9px] font-bold ${getPlanningStatusClasses(item.status)}">${escapeHtml(item.status || 'Planifié')}</span>`;
+            if (type === 'macrocycle') {
+                const total = calculatePlanningVolume(item);
+                const deadline = calculatePlanningVolume(item, true);
+                return `${status}
+                    ${planningVolumeCards(total)}
+                    <div class="rounded-xl border border-purple-100 bg-purple-50 p-3">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-purple-500">Échéance de planification</p>
+                        <p class="mt-1 text-sm font-bold text-purple-800">${escapeHtml(item.deadlineLabel || 'Échéance')} · ${escapeHtml(formatPlanningDate(item.deadlineDate))}</p>
+                        <p class="mt-1 text-[10px] text-purple-700">${deadline.sessions} séance${deadline.sessions === 1 ? '' : 's'} et ${escapeHtml(formatPlanningHours(deadline.hours))} programmées avant cette date.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        ${planningDetailRow('Saison', item.season)}
+                        ${planningDetailRow('Groupe', item.group)}
+                        ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
+                        ${planningDetailRow('Rythme de référence', `${item.sessionsPerWeek || 0} séance(s) par semaine`)}
+                        ${planningDetailRow('Objectif général', item.objective, true)}
+                        ${planningDetailRow('Notes', item.notes, true)}
+                    </div>
+                    ${planningChildCardsHtml('mesocycle', getPlanningCollection('mesocycle').filter(mesocycle => mesocycle.macrocycleId === item.id), 'Mésocycles de ce macrocycle')}`;
+            }
+            if (type === 'mesocycle') {
+                const volume = getPlanningMesocycleVolume(item);
+                const macrocycle = getPlanningEntity('macrocycle', item.macrocycleId);
+                return `${status}${planningVolumeCards(volume)}
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        ${planningDetailRow('Code', item.code)}
+                        ${planningDetailRow('Macrocycle', macrocycle ? macrocycle.name : 'Non rattaché')}
+                        ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
+                        ${planningDetailRow('Charge cible', item.load)}
+                        ${planningDetailRow('Microcycles liés', String(getPlanningCollection('microcycle').filter(micro => micro.mesocycleId === item.id).length))}
+                        ${planningDetailRow('Objectif principal', item.objective, true)}
+                        ${planningDetailRow('Résultat attendu', item.expected, true)}
+                        ${planningDetailRow('Notes', item.notes, true)}
+                    </div>
+                    ${planningChildCardsHtml('microcycle', getPlanningCollection('microcycle').filter(microcycle => microcycle.mesocycleId === item.id), 'Microcycles de ce mésocycle')}`;
+            }
+            const volume = getPlanningMicrocycleVolume(item);
+            const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
+            const sessions = (item.sessions || []).slice().sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+            const sessionRows = sessions.length ? sessions.map(session => `
+                <tr class="border-t border-gray-100">
+                    <td class="p-2 text-left">${escapeHtml(formatPlanningDate(session.date))}</td>
+                    <td class="p-2">${escapeHtml(session.startTime && session.endTime ? `${session.startTime}–${session.endTime}` : 'Horaire libre')}</td>
+                    <td class="p-2">${escapeHtml(session.type)}</td>
+                    <td class="p-2">${escapeHtml(formatPlanningHours(calculatePlanningSessionHours(session)))}</td>
+                    <td class="p-2 text-left">${escapeHtml(session.notes || '')}</td>
+                </tr>`).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-400">Aucune séance programmée.</td></tr>';
+            return `${status}${planningVolumeCards(volume)}
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
+                    ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
+                    ${planningDetailRow('Intensité / charge', item.intensity)}
+                    ${planningDetailRow('Agrès prioritaires', item.apparatuses)}
+                    ${planningDetailRow('Objectif', item.objective, true)}
+                    ${planningDetailRow('Notes', item.notes, true)}
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
+                    <table class="w-full min-w-[620px] text-center text-[10px]"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-2 text-left">Date</th><th class="p-2">Horaire</th><th class="p-2">Type</th><th class="p-2">Durée</th><th class="p-2 text-left">Notes</th></tr></thead><tbody>${sessionRows}</tbody></table>
+                </div>`;
+        }
+
+        function openPlanningDetail(type, id) {
+            const item = getPlanningEntity(type, id);
+            if (!item) return;
+            document.getElementById('planning-detail-title').textContent = `${getPlanningTypeLabel(type)} — ${item.name}`;
+            const content = document.getElementById('planning-detail-content');
+            content.innerHTML = buildPlanningDetailHtml(type, item);
+            content.querySelectorAll('[data-planning-child-id]').forEach(button => {
+                button.onclick = () => openPlanningDetail(button.dataset.planningChildType, button.dataset.planningChildId);
+            });
+            document.getElementById('planning-detail-edit').onclick = () => {
+                closePlanningDetail();
+                openPlanningEditor(type, id);
+            };
+            document.getElementById('planning-detail-delete').onclick = () => deletePlanningEntity(type, id);
+            document.getElementById('modal-planning-detail').classList.remove('hidden');
+        }
+
+        function closePlanningDetail() {
+            document.getElementById('modal-planning-detail').classList.add('hidden');
+        }
+
+        function planningEditorField(name, label, value, options = {}) {
+            const full = options.full ? ' sm:col-span-2' : '';
+            const required = options.required ? ' required' : '';
+            const type = options.type || 'text';
+            const help = options.help ? `<span class="mt-1 block text-[9px] font-normal text-gray-400">${escapeHtml(options.help)}</span>` : '';
+            if (type === 'textarea') {
+                return `<label class="text-[10px] font-bold text-gray-600${full}">${escapeHtml(label)}<textarea name="${escapeHtml(name)}" rows="${Number(options.rows || 3)}"${required} class="mt-1 w-full rounded-lg border border-gray-300 p-2 text-xs font-normal">${escapeHtml(value || '')}</textarea>${help}</label>`;
+            }
+            if (type === 'select') {
+                const optionHtml = (options.options || []).map(option => `<option value="${escapeHtml(option.value)}"${String(option.value) === String(value || '') ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('');
+                return `<label class="text-[10px] font-bold text-gray-600${full}">${escapeHtml(label)}<select name="${escapeHtml(name)}"${required} class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal">${optionHtml}</select>${help}</label>`;
+            }
+            return `<label class="text-[10px] font-bold text-gray-600${full}">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="${escapeHtml(type)}" value="${escapeHtml(value || '')}"${required}${options.min !== undefined ? ` min="${Number(options.min)}"` : ''}${options.step !== undefined ? ` step="${Number(options.step)}"` : ''} class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal">${help}</label>`;
+        }
+
+        function openPlanningEditor(type, id = '') {
+            const existing = id ? getPlanningEntity(type, id) : null;
+            const item = existing || {};
+            const fields = document.getElementById('planning-editor-fields');
+            document.getElementById('planning-editor-type').value = type;
+            document.getElementById('planning-editor-id').value = existing ? existing.id : '';
+            document.getElementById('planning-editor-title').textContent = `${existing ? 'Modifier' : 'Ajouter'} un ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}`;
+            if (type === 'macrocycle') {
+                fields.innerHTML = [
+                    planningEditorField('name', 'Nom', item.name, {required: true}),
+                    planningEditorField('season', 'Saison', item.season, {required: true}),
+                    planningEditorField('group', 'Groupe / catégorie', item.group, {full: true}),
+                    planningEditorField('startDate', 'Début', item.startDate, {type: 'date'}),
+                    planningEditorField('endDate', 'Fin', item.endDate, {type: 'date'}),
+                    planningEditorField('sessionsPerWeek', 'Séances de référence par semaine', item.sessionsPerWeek, {type: 'number', min: 0, step: 1}),
+                    planningEditorField('status', 'Statut', item.status || 'Planifié'),
+                    planningEditorField('deadlineLabel', "Nom de l'échéance", item.deadlineLabel || 'Échéance principale'),
+                    planningEditorField('deadlineDate', "Date de l'échéance", item.deadlineDate, {type: 'date', help: 'Le nombre de séances et les heures avant cette date seront calculés automatiquement.'}),
+                    planningEditorField('objective', 'Objectif général', item.objective, {type: 'textarea', full: true}),
+                    planningEditorField('notes', 'Notes', item.notes, {type: 'textarea', full: true})
+                ].join('');
+            } else if (type === 'mesocycle') {
+                const macrocycleOptions = [{value: '', label: 'Non rattaché'}].concat(getPlanningCollection('macrocycle').map(macrocycle => ({
+                    value: macrocycle.id,
+                    label: `${macrocycle.season ? `${macrocycle.season} — ` : ''}${macrocycle.name}`
+                })));
+                fields.innerHTML = [
+                    planningEditorField('code', 'Code', item.code, {required: true}),
+                    planningEditorField('name', 'Nom', item.name, {required: true}),
+                    planningEditorField('macrocycleId', 'Macrocycle lié', item.macrocycleId, {type: 'select', options: macrocycleOptions, full: true}),
+                    planningEditorField('startDate', 'Début', item.startDate, {type: 'date'}),
+                    planningEditorField('endDate', 'Fin', item.endDate, {type: 'date'}),
+                    planningEditorField('load', 'Charge cible', item.load),
+                    planningEditorField('status', 'Statut', item.status || 'Planifié'),
+                    planningEditorField('objective', 'Objectif principal', item.objective, {type: 'textarea', full: true}),
+                    planningEditorField('expected', 'Résultat attendu', item.expected, {type: 'textarea', full: true}),
+                    planningEditorField('notes', 'Notes', item.notes, {type: 'textarea', full: true})
+                ].join('');
+            } else {
+                const mesocycleOptions = [{value: '', label: 'Non rattaché'}].concat(getPlanningCollection('mesocycle').map(mesocycle => ({
+                    value: mesocycle.id,
+                    label: `${mesocycle.code ? `${mesocycle.code} — ` : ''}${mesocycle.name}`
+                })));
+                fields.innerHTML = [
+                    planningEditorField('name', 'Nom', item.name, {required: true}),
+                    planningEditorField('mesocycleId', 'Mésocycle lié', item.mesocycleId, {type: 'select', options: mesocycleOptions}),
+                    planningEditorField('startDate', 'Début', item.startDate, {type: 'date'}),
+                    planningEditorField('endDate', 'Fin', item.endDate, {type: 'date'}),
+                    planningEditorField('intensity', 'Intensité / charge', item.intensity),
+                    planningEditorField('status', 'Statut', item.status || 'Planifié'),
+                    planningEditorField('apparatuses', 'Agrès prioritaires', item.apparatuses, {full: true}),
+                    planningEditorField('objective', 'Objectif de la semaine', item.objective, {type: 'textarea', full: true}),
+                    planningEditorField('notes', 'Notes', item.notes, {type: 'textarea', full: true}),
+                    '<div class="sm:col-span-2 rounded-xl border border-purple-100 bg-purple-50 p-3"><div class="flex items-center justify-between gap-2"><div><p class="font-bold text-purple-800">Séances du microcycle</p><p class="text-[9px] text-purple-600">Les durées alimentent automatiquement les totaux de la saison et de l’échéance.</p></div><button type="button" onclick="addPlanningSessionEditorRow()" class="rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white">＋ Séance</button></div><div id="planning-session-editor-list" class="mt-3 space-y-2"></div></div>'
+                ].join('');
+                planningSessionEditorCounter = 0;
+                (Array.isArray(item.sessions) ? item.sessions : []).forEach(session => addPlanningSessionEditorRow(session));
+            }
+            document.getElementById('modal-planning-editor').classList.remove('hidden');
+        }
+
+        function addPlanningSessionEditorRow(session = {}) {
+            const container = document.getElementById('planning-session-editor-list');
+            if (!container) return;
+            planningSessionEditorCounter += 1;
+            const row = document.createElement('div');
+            row.className = 'planning-session-row rounded-lg border border-purple-100 bg-white p-2';
+            row.dataset.sessionId = session.id || '';
+            row.innerHTML = `
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                    <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Date<input data-session-field="date" type="date" value="${escapeHtml(session.date || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                    <label class="text-[9px] font-bold text-gray-500">Début<input data-session-field="startTime" type="time" value="${escapeHtml(session.startTime || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                    <label class="text-[9px] font-bold text-gray-500">Fin<input data-session-field="endTime" type="time" value="${escapeHtml(session.endTime || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                    <button type="button" class="self-end rounded border border-red-200 bg-red-50 p-2 text-[10px] font-bold text-red-600" aria-label="Supprimer la séance">Supprimer</button>
+                    <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Type<input data-session-field="type" type="text" value="${escapeHtml(session.type || 'Entraînement')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                    <label class="text-[9px] font-bold text-gray-500">Statut<input data-session-field="status" type="text" value="${escapeHtml(session.status || 'Planifié')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                    <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Notes<input data-session-field="notes" type="text" value="${escapeHtml(session.notes || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                </div>`;
+            row.querySelector('button').onclick = () => row.remove();
+            container.appendChild(row);
+        }
+
+        function collectPlanningSessionEditorRows(microcycleId) {
+            return Array.from(document.querySelectorAll('#planning-session-editor-list .planning-session-row')).map((row, index) => {
+                const read = field => {
+                    const input = row.querySelector(`[data-session-field="${field}"]`);
+                    return input ? input.value : '';
+                };
+                return normalizePlanningSession({
+                    id: row.dataset.sessionId || `SESSION-${microcycleId}-${Date.now().toString(36)}-${index + 1}`,
+                    date: read('date'), startTime: read('startTime'), endTime: read('endTime'),
+                    type: read('type'), status: read('status'), notes: read('notes')
+                }, `SESSION-${microcycleId}-${index + 1}`);
+            });
+        }
+
+        function closePlanningEditor() {
+            document.getElementById('modal-planning-editor').classList.add('hidden');
+        }
+
+        function savePlanningEditor(event) {
+            event.preventDefault();
+            const type = document.getElementById('planning-editor-type').value;
+            const existingId = document.getElementById('planning-editor-id').value;
+            const form = new FormData(event.currentTarget);
+            const id = existingId || createPlanningEntityId(type);
+            const common = {
+                id,
+                name: normalizePlanningText(form.get('name'), 120),
+                startDate: normalizePlanningText(form.get('startDate'), 10),
+                endDate: normalizePlanningText(form.get('endDate'), 10),
+                status: normalizePlanningText(form.get('status') || 'Planifié', 60),
+                notes: normalizePlanningText(form.get('notes'), 3000),
+                updatedAt: new Date().toISOString()
+            };
+            if (!common.name) {
+                alert('Indiquez un nom pour ce cycle.');
+                return;
+            }
+            if (common.startDate && common.endDate && common.endDate < common.startDate) {
+                alert('La date de fin doit être postérieure à la date de début.');
+                return;
+            }
+            let next;
+            if (type === 'macrocycle') {
+                next = {...common,
+                    season: normalizePlanningText(form.get('season'), 30),
+                    group: normalizePlanningText(form.get('group'), 100),
+                    sessionsPerWeek: Math.max(0, Number(form.get('sessionsPerWeek')) || 0),
+                    deadlineLabel: normalizePlanningText(form.get('deadlineLabel'), 100),
+                    deadlineDate: normalizePlanningText(form.get('deadlineDate'), 10),
+                    objective: normalizePlanningText(form.get('objective'), 2000)
+                };
+            } else if (type === 'mesocycle') {
+                next = {...common,
+                    macrocycleId: normalizePlanningText(form.get('macrocycleId'), 100),
+                    code: normalizePlanningText(form.get('code'), 20),
+                    load: normalizePlanningText(form.get('load'), 100),
+                    objective: normalizePlanningText(form.get('objective'), 2000),
+                    expected: normalizePlanningText(form.get('expected'), 2000)
+                };
+            } else {
+                next = {...common,
+                    mesocycleId: normalizePlanningText(form.get('mesocycleId'), 100),
+                    intensity: normalizePlanningText(form.get('intensity'), 100),
+                    objective: normalizePlanningText(form.get('objective'), 2000),
+                    apparatuses: normalizePlanningText(form.get('apparatuses'), 300),
+                    sessions: collectPlanningSessionEditorRows(id)
+                };
+            }
+            const collection = getPlanningCollection(type);
+            const index = collection.findIndex(item => item.id === existingId);
+            if (index >= 0) collection[index] = next;
+            else collection.push(next);
+            normalizePlanningData(data);
+            saveAllData();
+            closePlanningEditor();
+            renderPlanning();
+        }
+
+        function deletePlanningEntity(type, id) {
+            const item = getPlanningEntity(type, id);
+            if (!item) return;
+            let warning = `Supprimer définitivement « ${item.name} » ?`;
+            if (type === 'macrocycle') {
+                const linked = getPlanningCollection('mesocycle').filter(mesocycle => mesocycle.macrocycleId === id).length;
+                if (linked) warning += `\n\n${linked} mésocycle${linked === 1 ? '' : 's'} sera${linked === 1 ? '' : 'ont'} conservé${linked === 1 ? '' : 's'}, mais sans macrocycle associé.`;
+            }
+            if (type === 'mesocycle') {
+                const linked = getPlanningCollection('microcycle').filter(microcycle => microcycle.mesocycleId === id).length;
+                if (linked) warning += `\n\n${linked} microcycle${linked === 1 ? '' : 's'} sera${linked === 1 ? '' : 'ont'} conservé${linked === 1 ? '' : 's'}, mais sans mésocycle associé.`;
+            }
+            if (!confirm(warning)) return;
+            if (type === 'macrocycle') getPlanningCollection('mesocycle').forEach(mesocycle => {
+                if (mesocycle.macrocycleId === id) mesocycle.macrocycleId = '';
+            });
+            if (type === 'mesocycle') getPlanningCollection('microcycle').forEach(microcycle => {
+                if (microcycle.mesocycleId === id) microcycle.mesocycleId = '';
+            });
+            const collection = getPlanningCollection(type);
+            const index = collection.findIndex(entry => entry.id === id);
+            if (index >= 0) collection.splice(index, 1);
+            saveAllData();
+            closePlanningDetail();
+            renderPlanning();
         }
 
         // ────────────────────────────────────────────────────────────── RENDU DES
