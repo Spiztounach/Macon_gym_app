@@ -409,6 +409,42 @@
                     </div>
                     <p id="level-stats-pdf-status" class="hidden text-[10px] font-semibold text-teal-700"></p>
                 </div>
+                <div id="gymnasts-list-controls" class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm space-y-2">
+                    <div class="grid gap-2 sm:grid-cols-3">
+                        <label class="text-[10px] font-bold text-gray-600">
+                            Rechercher
+                            <input id="gymnasts-search-input" type="search" autocomplete="off" placeholder="Nom ou prénom…" oninput="renderGymnastes()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal text-gray-700">
+                        </label>
+                        <label class="text-[10px] font-bold text-gray-600">
+                            Trier par
+                            <select id="gymnasts-sort-select" onchange="renderGymnastes()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal text-gray-700">
+                                <option value="name_asc">Nom — A à Z</option>
+                                <option value="first_name_asc">Prénom — A à Z</option>
+                                <option value="age_asc">Âge — plus jeune d’abord</option>
+                                <option value="age_desc">Âge — plus âgée d’abord</option>
+                                <option value="category_asc">Catégorie d’âge</option>
+                            </select>
+                        </label>
+                        <label class="text-[10px] font-bold text-gray-600">
+                            Filtrer par âge
+                            <select id="gymnasts-age-filter" onchange="renderGymnastes()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal text-gray-700">
+                                <option value="all">Tous les âges</option>
+                                <option value="under_7">Moins de 7 ans</option>
+                                <option value="poussine">Poussine — 7 à 9 ans</option>
+                                <option value="benjamine">Benjamine — 10 à 11 ans</option>
+                                <option value="minime">Minime — 12 à 13 ans</option>
+                                <option value="cadette">Cadette — 14 à 15 ans</option>
+                                <option value="junior">Junior — 16 à 17 ans</option>
+                                <option value="senior">Senior — 18 ans et plus</option>
+                                <option value="unknown">Âge non renseigné</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <p id="gymnasts-filter-count" class="text-[10px] font-semibold text-gray-500">0 gymnaste</p>
+                        <button type="button" onclick="resetGymnastListFilters()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[10px] font-bold text-gray-600 hover:bg-gray-100">Réinitialiser</button>
+                    </div>
+                </div>
                 <div id="gymnastes-list" class="grid grid-cols-2 gap-3"></div>
             </section>
 
@@ -757,12 +793,11 @@
                                 </div>
                                 <fieldset id="progression-apparatus" class="rounded-lg border border-blue-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
                                     <legend class="px-1 text-[10px] font-bold text-blue-700">Agrès — plusieurs choix possibles, avec une évaluation distincte</legend>
-                                    <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
+                                    <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="saut" class="h-4 w-4 shrink-0 accent-blue-600">Saut</label>
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="barres" class="h-4 w-4 shrink-0 accent-blue-600">Barres</label>
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="poutre" class="h-4 w-4 shrink-0 accent-blue-600">Poutre</label>
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="sol" class="h-4 w-4 shrink-0 accent-blue-600">Sol</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-apparatus" value="transversal" class="h-4 w-4 shrink-0 accent-blue-600">Transversal</label>
                                     </div>
                                 </fieldset>
                                 <fieldset id="progression-family" class="rounded-lg border border-purple-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
@@ -787,6 +822,7 @@
                             <p><strong class="text-blue-700">Étudié :</strong> réalisé globalement ou partiellement.</p>
                             <p><strong class="text-red-700">Non réalisé :</strong> élément non effectué.</p>
                         </div>
+                        <div id="progression-apparatus-tabs" class="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 sm:grid-cols-4" role="tablist" aria-label="Agrès du tableau de progression"></div>
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
                             <table class="w-full border-collapse text-xs">
                                 <thead class="bg-gray-100 text-gray-700">
@@ -1415,7 +1451,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.18.0';
+        const APP_VERSION = '1.19.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PROGRESSION_STATUSES = ['not_performed', 'studied', 'in_progress', 'acquired'];
@@ -1429,8 +1465,7 @@
             {key: 'saut', label: 'Saut'},
             {key: 'barres', label: 'Barres'},
             {key: 'poutre', label: 'Poutre'},
-            {key: 'sol', label: 'Sol'},
-            {key: 'transversal', label: 'Transversal'}
+            {key: 'sol', label: 'Sol'}
         ];
         const PROGRESSION_FAMILIES = [
             {key: 'acro_forward', label: 'Acrobatie avant'},
@@ -1593,9 +1628,7 @@
                 : value === undefined || value === null
                     ? []
                     : String(value).split(',');
-            const normalized = [...new Set(source
-                .map(item => normalizeProgressionApparatus(item))
-                .filter(item => item !== 'unclassified'))];
+            const normalized = [...new Set(source.map(item => normalizeProgressionApparatus(item)))];
             return normalized.length ? normalized : ['unclassified'];
         }
 
@@ -1707,6 +1740,8 @@
             apparatuses.forEach((apparatus, index) => {
                 const raw = source && Object.hasOwn(source, apparatus)
                     ? source[apparatus]
+                    : source && apparatus === 'unclassified' && Object.hasOwn(source, 'transversal')
+                        ? source.transversal
                     : !source && index === 0
                         ? record
                         : {};
@@ -1739,8 +1774,8 @@
                 if (elementsByName.has(key)) {
                     const existing = elementsByName.get(key);
                     existing.apparatuses = normalizeProgressionApparatuses([
-                        ...existing.apparatuses.filter(item => item !== 'unclassified'),
-                        ...normalizedApparatuses.filter(item => item !== 'unclassified')
+                        ...existing.apparatuses,
+                        ...normalizedApparatuses
                     ]);
                     existing.families = normalizeProgressionFamilies([...existing.families, ...normalizedFamilies]);
                     if (preferredId) elementIdAliases.set(String(preferredId), existing.id);
@@ -2752,6 +2787,7 @@
         let progressionApparatusRadarChart = null;
         let progressionRadarResizeFrame = null;
         let progressionRadarResizeObserver = null;
+        let currentProgressionApparatusTab = 'sol';
         let currentMvtAgres = "Saut";
         let currentCompetitionTeamId = null;
         let currentCompetitionTab = 'match';
@@ -3115,37 +3151,115 @@
 
         // ────────────────────────────────────────────────────────────── RENDU DES
         // GYMNASTES ──────────────────────────────────────────────────────────────
+        function normalizeGymnastListText(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase('fr')
+                .trim();
+        }
+
+        function getGymnastAgeCategoryKey(gymnast, referenceDate = new Date()) {
+            const age = calculateAge(gymnast && gymnast.ddn, referenceDate);
+            if (age === null) return 'unknown';
+            if (age < 7) return 'under_7';
+            if (age <= 9) return 'poussine';
+            if (age <= 11) return 'benjamine';
+            if (age <= 13) return 'minime';
+            if (age <= 15) return 'cadette';
+            if (age <= 17) return 'junior';
+            return 'senior';
+        }
+
+        function compareGymnastsForList(a, b, sortMode = 'name_asc', referenceDate = new Date()) {
+            const compareText = (left, right) => {
+                const leftText = String(left || '').trim();
+                const rightText = String(right || '').trim();
+                if (!leftText && !rightText) return 0;
+                if (!leftText) return 1;
+                if (!rightText) return -1;
+                return leftText.localeCompare(rightText, 'fr', {sensitivity: 'base'});
+            };
+            const byName = () => compareText(a && a.nom, b && b.nom) || compareText(a && a.prenom, b && b.prenom);
+            const byFirstName = () => compareText(a && a.prenom, b && b.prenom) || compareText(a && a.nom, b && b.nom);
+            const ageA = calculateAge(a && a.ddn, referenceDate);
+            const ageB = calculateAge(b && b.ddn, referenceDate);
+            const compareAge = direction => {
+                if (ageA === null && ageB === null) return byName();
+                if (ageA === null) return 1;
+                if (ageB === null) return -1;
+                return direction * (ageA - ageB) || byName();
+            };
+            if (sortMode === 'first_name_asc') return byFirstName();
+            if (sortMode === 'age_asc') return compareAge(1);
+            if (sortMode === 'age_desc') return compareAge(-1);
+            if (sortMode === 'category_asc') {
+                const order = ['under_7', 'poussine', 'benjamine', 'minime', 'cadette', 'junior', 'senior', 'unknown'];
+                const categoryA = order.indexOf(getGymnastAgeCategoryKey(a, referenceDate));
+                const categoryB = order.indexOf(getGymnastAgeCategoryKey(b, referenceDate));
+                return categoryA - categoryB || compareAge(1);
+            }
+            return byName();
+        }
+
+        function getFilteredSortedGymnasts(levelId, options, referenceDate = new Date()) {
+            options = options && typeof options === 'object' ? options : {};
+            const search = normalizeGymnastListText(options.search);
+            const ageCategory = String(options.ageCategory || 'all');
+            const sortMode = String(options.sortMode || 'name_asc');
+            return (Array.isArray(data.gymnastes) ? data.gymnastes : [])
+                .filter(gymnast => gymnast.niveauId === levelId)
+                .filter(gymnast => ageCategory === 'all' || getGymnastAgeCategoryKey(gymnast, referenceDate) === ageCategory)
+                .filter(gymnast => {
+                    if (!search) return true;
+                    const fullName = normalizeGymnastListText(`${gymnast.nom || ''} ${gymnast.prenom || ''}`);
+                    const reversedName = normalizeGymnastListText(`${gymnast.prenom || ''} ${gymnast.nom || ''}`);
+                    return fullName.includes(search) || reversedName.includes(search);
+                })
+                .sort((a, b) => compareGymnastsForList(a, b, sortMode, referenceDate));
+        }
+
+        function resetGymnastListFilters() {
+            const search = document.getElementById('gymnasts-search-input');
+            const sort = document.getElementById('gymnasts-sort-select');
+            const age = document.getElementById('gymnasts-age-filter');
+            if (search) search.value = '';
+            if (sort) sort.value = 'name_asc';
+            if (age) age.value = 'all';
+            renderGymnastes();
+        }
+
         function renderGymnastes() {
             const list = document.getElementById('gymnastes-list');
             list.innerHTML = '';
-            const filtered = data
-                .gymnastes
-                .filter(g => g.niveauId === currentLevelId)
-                .sort((a, b) => {
-                    const byLastName = String(a.nom || '').localeCompare(
-                        String(b.nom || ''), 'fr', {sensitivity: 'base'}
-                    );
-                    return byLastName || String(a.prenom || '').localeCompare(
-                        String(b.prenom || ''), 'fr', {sensitivity: 'base'}
-                    );
-                });
+            const search = document.getElementById('gymnasts-search-input');
+            const sort = document.getElementById('gymnasts-sort-select');
+            const ageFilter = document.getElementById('gymnasts-age-filter');
+            const filtered = getFilteredSortedGymnasts(currentLevelId, {
+                search: search ? search.value : '',
+                sortMode: sort ? sort.value : 'name_asc',
+                ageCategory: ageFilter ? ageFilter.value : 'all'
+            });
+            const total = data.gymnastes.filter(gymnast => gymnast.niveauId === currentLevelId).length;
+            const count = document.getElementById('gymnasts-filter-count');
+            if (count) count.textContent = `${filtered.length} affichée${filtered.length === 1 ? '' : 's'} sur ${total}`;
             if (filtered.length === 0) {
-                list.innerHTML = `<p class="text-gray-400 text-center col-span-2 py-4 italic text-xs">Aucune gymnaste. Appuyez sur + pour en ajouter une.</p>`;
+                list.innerHTML = total === 0
+                    ? `<p class="text-gray-400 text-center col-span-2 py-4 italic text-xs">Aucune gymnaste. Appuyez sur + pour en ajouter une.</p>`
+                    : `<div class="col-span-2 py-4 text-center"><p class="text-gray-400 italic text-xs">Aucune gymnaste ne correspond aux filtres.</p><button type="button" onclick="resetGymnastListFilters()" class="mt-2 text-[10px] font-bold text-teal-700">Réinitialiser les filtres</button></div>`;
                 return;
             }
             filtered.forEach(g => {
                 const pic = g.photo
                     ? `<img src="${g.photo}" class="w-7 h-7 rounded-full object-cover">`
-                    : `<div class="w-7 h-7 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-xs font-bold">${g.prenom[0]}</div>`;
+                    : `<div class="w-7 h-7 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-xs font-bold">${escapeHtml(String(g.prenom || '?').charAt(0) || '?')}</div>`;
                 list.innerHTML += `
                 <button onclick="openFiche('${g
                     .id}')"
                     class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between items-start text-left hover:border-pink-300 transition h-24">
                     <div class="flex items-center gap-2 w-full">
                         ${pic}
-                        <span class="font-bold text-gray-800 text-xs truncate block flex-1">${g
-                    .prenom} ${g
-                    .nom[0]}.</span>
+                        <span class="font-bold text-gray-800 text-xs truncate block flex-1">${escapeHtml(`${g.prenom || ''} ${g.nom || ''}`.trim())}</span>
                     </div>
                     <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-medium truncate w-full">${calculateCategory(
                         g.ddn
@@ -3905,6 +4019,8 @@
                     throw new Error("Choisissez au moins un agrès et une famille technique.");
                 if (editId) renameProgressionItem(editId, input.value, apparatuses, families);
                 else addProgressionItem(input.value, 'not_performed', apparatuses, families);
+                if (!apparatuses.includes(currentProgressionApparatusTab))
+                    currentProgressionApparatusTab = apparatuses[0];
                 cancelProgressionEdit();
                 renderProgressionTable();
                 renderProgressionStatistics();
@@ -4097,6 +4213,51 @@
             return container;
         }
 
+        function getProgressionApparatusTabDefinitions(items = []) {
+            const definitions = [...PROGRESSION_APPARATUS];
+            if ((Array.isArray(items) ? items : []).some(item =>
+                normalizeProgressionApparatus(item && item.apparatus) === 'unclassified'
+            )) definitions.push({key: 'unclassified', label: 'À classer'});
+            return definitions;
+        }
+
+        function switchProgressionApparatusTab(apparatus) {
+            const normalized = normalizeProgressionApparatus(apparatus);
+            const allowed = normalized !== 'unclassified' || apparatus === 'unclassified';
+            if (!allowed) return false;
+            currentProgressionApparatusTab = normalized;
+            renderProgressionTable();
+            return true;
+        }
+
+        function renderProgressionApparatusTabs(items) {
+            const container = document.getElementById('progression-apparatus-tabs');
+            const definitions = getProgressionApparatusTabDefinitions(items);
+            if (!container) return definitions;
+            if (!definitions.some(definition => definition.key === currentProgressionApparatusTab))
+                currentProgressionApparatusTab = definitions.some(definition => definition.key === 'sol')
+                    ? 'sol'
+                    : definitions[0].key;
+            container.innerHTML = '';
+            definitions.forEach(definition => {
+                const count = items.filter(item =>
+                    normalizeProgressionApparatus(item && item.apparatus) === definition.key
+                ).length;
+                const active = definition.key === currentProgressionApparatusTab;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.role = 'tab';
+                button.setAttribute('aria-selected', active ? 'true' : 'false');
+                button.className = active
+                    ? 'min-h-10 rounded-lg bg-white px-2 py-2 text-[10px] font-black text-purple-700 shadow-sm'
+                    : 'min-h-10 rounded-lg px-2 py-2 text-[10px] font-bold text-gray-500 hover:bg-white/70';
+                button.textContent = `${definition.label} (${count})`;
+                button.onclick = () => switchProgressionApparatusTab(definition.key);
+                container.appendChild(button);
+            });
+            return definitions;
+        }
+
         function renderProgressionTable() {
             const body = document.getElementById('progression-table-body');
             const mobileList = document.getElementById('progression-mobile-list');
@@ -4104,9 +4265,16 @@
             if (!body || !mobileList || !empty) return;
             body.innerHTML = '';
             mobileList.innerHTML = '';
-            const items = getGymnastProgression();
+            const allItems = getGymnastProgression();
+            renderProgressionApparatusTabs(allItems);
+            const items = allItems.filter(item =>
+                normalizeProgressionApparatus(item.apparatus) === currentProgressionApparatusTab
+            );
             const catalogTotal = getProgressionElements().length;
             empty.classList.toggle('hidden', items.length > 0);
+            empty.textContent = currentProgressionApparatusTab === 'unclassified'
+                ? 'Aucun élément restant à classer.'
+                : `Aucun élément enregistré en ${getProgressionApparatusLabel(currentProgressionApparatusTab)}.`;
             items.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
