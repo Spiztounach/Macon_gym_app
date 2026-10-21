@@ -509,9 +509,21 @@
                     <div
                         id="content-infos"
                         class="tab-content active space-y-3 text-gray-600 text-sm">
-                        <div>
-                            <span class="block text-[10px] uppercase font-semibold text-gray-400">Licence</span>
-                            <p id="info-licence" class="text-gray-800 font-medium"></p>
+                        <div class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2.5">
+                            <div>
+                                <span class="block text-[10px] uppercase font-semibold text-blue-500">Licence — document PDF</span>
+                                <p id="gym-licence-name" class="mt-0.5 text-xs font-bold text-gray-700">Aucun PDF importé</p>
+                                <p id="gym-licence-status" class="mt-0.5 text-[10px] text-gray-500">Le document reste disponible hors connexion sur cet appareil.</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="flex-1 cursor-pointer rounded-lg bg-blue-600 py-2 text-center text-xs font-bold text-white shadow transition hover:bg-blue-700">
+                                    📎 Ajouter / Remplacer
+                                    <input id="gym-licence-file" type="file" accept="application/pdf,.pdf" onchange="saveGymnastLicence(event)" class="hidden">
+                                </label>
+                                <a id="btn-open-gym-licence" href="#" target="_blank" rel="noopener" class="hidden rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50">👁️ Ouvrir</a>
+                                <a id="btn-download-gym-licence" href="#" download class="hidden rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50">⬇️ Télécharger</a>
+                                <button id="btn-delete-gym-licence" type="button" onclick="deleteGymnastLicence()" class="hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100">🗑️ Supprimer</button>
+                            </div>
                         </div>
                         <div>
                             <span class="block text-[10px] uppercase font-semibold text-gray-400">Date de naissance</span>
@@ -781,12 +793,15 @@
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
                                     <p class="text-[10px] text-purple-600">La liste des éléments et leurs agrès est commune à toutes les gymnastes. Chaque gymnaste possède une évaluation personnelle et indépendante sur chaque agrès.</p>
                                 </div>
-                                <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                                <div class="flex gap-2">
+                                    <button id="btn-open-progression-add" type="button" onclick="openProgressionAddPanel()" class="whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-700">＋ Ajouter</button>
+                                    <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                                </div>
                             </div>
                             <div class="rounded-lg border border-purple-200 bg-white px-3 py-2 text-[10px] text-purple-800">
                                 <strong>🌐 Référentiel commun :</strong> ajouter, renommer, déplacer ou supprimer un élément modifie la liste pour toutes les fiches, sans modifier leurs validations personnelles.
                             </div>
-                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
+                            <form id="form-progression" onsubmit="saveProgressionItem(event)" class="hidden grid gap-2 rounded-xl border border-purple-200 bg-purple-50/70 p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
                                 <input type="hidden" id="edit-progression-id">
                                 <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
                                 <div class="flex gap-2">
@@ -1121,8 +1136,14 @@
                 </div>
 
                 <div class="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
-                    <p class="text-xs font-bold text-gray-700">Programmation de départ</p>
-                    <p class="mt-1 text-[10px] leading-relaxed text-gray-500">GAF Fédérale A 10–13 ans, trois entraînements par semaine. Le modèle reprend les 14 périodes P01 à P14 et les semaines du calendrier fourni. Tous les champs restent modifiables.</p>
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Programmation de départ</p>
+                            <p class="mt-1 text-[10px] leading-relaxed text-gray-500">Horaires habituels, horaires de vacances, stages et événements peuvent générer automatiquement toutes les séances de la saison.</p>
+                        </div>
+                        <button type="button" onclick="openPlanningScheduleModal()" class="rounded-lg bg-teal-700 px-3 py-2 text-[10px] font-bold text-white">⚙️ Modifier la programmation</button>
+                    </div>
+                    <div id="planning-automation-summary" class="mt-3 rounded-lg border border-teal-100 bg-teal-50 p-2 text-[10px] text-teal-800"></div>
                     <div id="planning-summary" class="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"></div>
                 </div>
 
@@ -1219,6 +1240,53 @@
         </div>
     </div>
 
+    <div id="modal-planning-schedule" class="hidden fixed inset-0 z-[75] flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4">
+        <div class="flex max-h-[96vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 bg-teal-700 p-4 font-bold text-white">
+                <div><span class="block">Programmation automatique de la saison</span><span class="mt-0.5 block text-[9px] font-normal text-teal-100">Les séances ajoutées manuellement dans un microcycle seront conservées.</span></div>
+                <button type="button" onclick="closePlanningScheduleModal()" class="text-white">✕</button>
+            </div>
+            <form id="planning-schedule-form" onsubmit="savePlanningSchedule(event)" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+                <section class="grid gap-3 rounded-xl border border-teal-100 bg-teal-50 p-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <label class="text-[10px] font-bold text-gray-600">Début de saison<input id="planning-schedule-start" type="date" required class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal"></label>
+                    <label class="text-[10px] font-bold text-gray-600">Fin de saison<input id="planning-schedule-end" type="date" required class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal"></label>
+                    <label class="text-[10px] font-bold text-gray-600">Zone scolaire<select id="planning-school-zone" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal"><option value="A">Zone A — Mâcon / Dijon</option><option value="B">Zone B</option><option value="C">Zone C</option></select></label>
+                    <div class="space-y-2 rounded-lg border border-teal-100 bg-white p-2 text-[10px] text-gray-600">
+                        <label class="flex items-center gap-2"><input id="planning-use-school-holidays" type="checkbox" class="h-4 w-4 accent-teal-600">Appliquer les vacances officielles</label>
+                        <label class="flex items-center gap-2"><input id="planning-exclude-public-holidays" type="checkbox" class="h-4 w-4 accent-teal-600">Exclure les jours fériés</label>
+                    </div>
+                    <p id="planning-school-calendar-status" class="sm:col-span-2 lg:col-span-4 text-[9px] text-teal-700"></p>
+                </section>
+
+                <section class="rounded-xl border border-gray-200 p-3">
+                    <div class="flex items-center justify-between gap-2"><div><h3 class="font-bold text-gray-700">Horaires habituels</h3><p class="text-[9px] text-gray-400">Répétés chaque semaine hors vacances scolaires.</p></div><button type="button" onclick="addPlanningScheduleRuleRow('regular')" class="rounded-lg bg-teal-50 px-3 py-2 text-[10px] font-bold text-teal-700">＋ Horaire</button></div>
+                    <div id="planning-regular-rules" class="mt-3 space-y-2"></div>
+                </section>
+
+                <section class="rounded-xl border border-blue-200 bg-blue-50/40 p-3">
+                    <div class="flex items-center justify-between gap-2"><div><h3 class="font-bold text-blue-800">Horaires pendant les vacances</h3><p class="text-[9px] text-blue-600">Laissez vide s’il n’y a pas de séance régulière pendant les vacances.</p></div><button type="button" onclick="addPlanningScheduleRuleRow('holiday')" class="rounded-lg bg-white px-3 py-2 text-[10px] font-bold text-blue-700">＋ Horaire</button></div>
+                    <div id="planning-holiday-rules" class="mt-3 space-y-2"></div>
+                </section>
+
+                <section class="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                    <div class="flex items-center justify-between gap-2"><div><h3 class="font-bold text-amber-800">Stages et événements ponctuels</h3><p class="text-[9px] text-amber-700">Un stage peut couvrir plusieurs jours. Choisissez « jours ouvrés » pour ignorer le week-end.</p></div><button type="button" onclick="addPlanningEventRow()" class="rounded-lg bg-white px-3 py-2 text-[10px] font-bold text-amber-700">＋ Stage / événement</button></div>
+                    <div id="planning-event-rules" class="mt-3 space-y-2"></div>
+                </section>
+
+                <section class="rounded-xl border border-purple-200 bg-purple-50/50 p-3">
+                    <div class="flex items-center justify-between gap-2"><div><h3 class="font-bold text-purple-800">Périodes de vacances personnalisées</h3><p class="text-[9px] text-purple-700">Utile pour une fermeture du club ou une future saison non encore intégrée.</p></div><button type="button" onclick="addPlanningHolidayPeriodRow()" class="rounded-lg bg-white px-3 py-2 text-[10px] font-bold text-purple-700">＋ Période</button></div>
+                    <div id="planning-custom-holidays" class="mt-3 space-y-2"></div>
+                </section>
+
+                <div id="planning-schedule-preview" class="rounded-xl border border-teal-200 bg-teal-50 p-3 text-[10px] font-semibold text-teal-800"></div>
+                <div class="sticky bottom-0 flex gap-2 border-t border-gray-100 bg-white pt-3">
+                    <button type="button" onclick="closePlanningScheduleModal()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                    <button type="submit" class="flex-[2] rounded-lg bg-teal-700 py-2 font-bold text-white">Enregistrer et régénérer les séances</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ══════════════════════════════════════════ MODAL GYMNASTE ═══ -->
     <div
         id="modal-add"
@@ -1264,12 +1332,6 @@
                         id="gym-niveau"
                         class="w-full p-2 border border-gray-300 rounded-md bg-white"></select>
                 </div>
-                <div>
-                    <label class="block font-medium text-gray-700">N° Licence</label>
-                    <input
-                        type="text"
-                        id="gym-licence"
-                        class="w-full p-2 border border-gray-300 rounded-md"></div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block font-medium text-gray-700">Tél Responsable</label>
@@ -1552,7 +1614,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.20.0';
+        const APP_VERSION = '1.21.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1591,7 +1653,42 @@
         const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
         const GYM_MUSIC_DB_NAME = 'gymsuivi-media-v1';
         const GYM_MUSIC_STORE_NAME = 'gymnast-music';
+        const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
+        const MAX_GYM_LICENCE_SIZE_BYTES = 25 * 1024 * 1024;
+        const PLANNING_WEEKDAYS = [
+            {value: 1, label: 'Lundi'}, {value: 2, label: 'Mardi'},
+            {value: 3, label: 'Mercredi'}, {value: 4, label: 'Jeudi'},
+            {value: 5, label: 'Vendredi'}, {value: 6, label: 'Samedi'},
+            {value: 0, label: 'Dimanche'}
+        ];
+        const OFFICIAL_SCHOOL_HOLIDAYS = {
+            '2026-2027': {
+                common: [
+                    {name: 'Toussaint', start: '2026-10-17', endExclusive: '2026-11-02'},
+                    {name: 'Noël', start: '2026-12-19', endExclusive: '2027-01-04'},
+                    {name: "Pont de l'Ascension", start: '2027-05-06', endExclusive: '2027-05-10'},
+                    {name: "Vacances d'été", start: '2027-07-03', endExclusive: '2027-09-01'}
+                ],
+                A: [
+                    {name: "Vacances d'hiver", start: '2027-02-13', endExclusive: '2027-03-01'},
+                    {name: 'Vacances de printemps', start: '2027-04-10', endExclusive: '2027-04-26'}
+                ],
+                B: [
+                    {name: "Vacances d'hiver", start: '2027-02-20', endExclusive: '2027-03-08'},
+                    {name: 'Vacances de printemps', start: '2027-04-17', endExclusive: '2027-05-03'}
+                ],
+                C: [
+                    {name: "Vacances d'hiver", start: '2027-02-06', endExclusive: '2027-02-22'},
+                    {name: 'Vacances de printemps', start: '2027-04-03', endExclusive: '2027-04-19'}
+                ]
+            }
+        };
+        const FRANCE_PUBLIC_HOLIDAYS = new Set([
+            '2026-11-01', '2026-11-11', '2026-12-25',
+            '2027-01-01', '2027-03-29', '2027-05-01', '2027-05-06',
+            '2027-05-08', '2027-05-17', '2027-07-14'
+        ]);
         const TEAM_AGE_CATEGORY_OPTIONS = [
             {code: '7-9', label: '7–9 ans', min: 7, max: 9},
             {code: '10-11', label: '10–11 ans', min: 10, max: 11},
@@ -1774,6 +1871,34 @@
             return date ? date.toLocaleDateString('fr-FR') : 'Date non renseignée';
         }
 
+        function createDefaultPlanningScheduleConfig() {
+            return {
+                seasonStart: '2026-08-31',
+                seasonEnd: '2027-07-12',
+                schoolZone: 'A',
+                useOfficialSchoolHolidays: true,
+                excludePublicHolidays: true,
+                regularRules: [
+                    {id: 'REG-MON', weekday: 1, startTime: '18:15', endTime: '20:15', type: 'Entraînement', label: 'Entraînement du lundi'},
+                    {id: 'REG-WED', weekday: 3, startTime: '14:00', endTime: '16:30', type: 'Entraînement', label: 'Entraînement du mercredi'},
+                    {id: 'REG-THU', weekday: 4, startTime: '18:15', endTime: '20:15', type: 'Entraînement', label: 'Entraînement du jeudi'}
+                ],
+                holidayRules: [],
+                events: [
+                    {id: 'EVENT-2026-10-20', name: 'Stage Toussaint', type: 'Stage', startDate: '2026-10-20', endDate: '2026-10-20', startTime: '13:00', endTime: '18:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P02', notes: ''},
+                    {id: 'EVENT-2026-10-22', name: 'Stage Toussaint', type: 'Stage', startDate: '2026-10-22', endDate: '2026-10-23', startTime: '09:00', endTime: '17:00', dayMode: 'all', replaceRecurring: true, mesocycleId: 'P02', notes: ''},
+                    {id: 'EVENT-2026-10-26', name: 'Stage Toussaint', type: 'Stage', startDate: '2026-10-26', endDate: '2026-10-26', startTime: '09:00', endTime: '17:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P02', notes: ''},
+                    {id: 'EVENT-2026-10-29', name: 'Stage Toussaint', type: 'Stage', startDate: '2026-10-29', endDate: '2026-10-29', startTime: '09:00', endTime: '17:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P02', notes: ''},
+                    {id: 'EVENT-2027-01-23', name: 'Compétition 1', type: 'Compétition', startDate: '2027-01-23', endDate: '2027-01-24', startTime: '', endTime: '', dayMode: 'all', replaceRecurring: true, mesocycleId: 'P08', notes: ''},
+                    {id: 'EVENT-2027-02-15', name: 'Stage février', type: 'Stage', startDate: '2027-02-15', endDate: '2027-02-15', startTime: '09:00', endTime: '17:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P10', notes: ''},
+                    {id: 'EVENT-2027-02-16', name: 'Stage février', type: 'Stage', startDate: '2027-02-16', endDate: '2027-02-16', startTime: '09:00', endTime: '15:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P10', notes: ''},
+                    {id: 'EVENT-2027-02-22', name: 'Stage février', type: 'Stage', startDate: '2027-02-22', endDate: '2027-02-22', startTime: '09:00', endTime: '17:00', dayMode: 'start', replaceRecurring: true, mesocycleId: 'P10', notes: ''}
+                ],
+                customHolidayPeriods: [],
+                updatedAt: ''
+            };
+        }
+
         function createDefaultPlanningData() {
             const defaultMacrocycleId = 'MACRO-GAF-U13-2026-2027';
             const mesocycles = JSON.parse(JSON.stringify(DEFAULT_PLANNING_MESOCYCLES));
@@ -1788,7 +1913,8 @@
                 if (!groups.has(key)) groups.set(key, {mesocycleId, weekStart, sessions: []});
                 groups.get(key).sessions.push({
                     id: `SESSION-${date}-${String(index + 1).padStart(3, '0')}`,
-                    date, startTime, endTime, type, status: 'Planifié', notes: ''
+                    date, startTime, endTime, type, status: 'Planifié', notes: '',
+                    source: type === 'Entraînement' ? 'generated_regular' : 'event'
                 });
             });
             const microcycles = Array.from(groups.values()).map(group => {
@@ -1805,7 +1931,8 @@
                     apparatuses: 'Saut, Barres, Poutre, Sol',
                     status: 'Planifié',
                     sessions: group.sessions,
-                    notes: ''
+                    notes: '',
+                    generationManaged: true
                 };
             });
             [
@@ -1827,13 +1954,15 @@
                     apparatuses: '',
                     status: mesocycle.status || 'Planifié',
                     sessions: [],
-                    notes: mesocycleId === 'P06' ? 'Récupération et mobilité légère.' : 'Contenu à confirmer.'
+                    notes: mesocycleId === 'P06' ? 'Récupération et mobilité légère.' : 'Contenu à confirmer.',
+                    generationManaged: true
                 });
             });
             microcycles.sort((left, right) => left.startDate.localeCompare(right.startDate) || left.mesocycleId.localeCompare(right.mesocycleId));
             return {
-                templateVersion: 1,
+                templateVersion: 2,
                 source: 'Programmation saisonnière GAF Fédérale A 10–13 ans 2026–2027',
+                scheduleConfig: createDefaultPlanningScheduleConfig(),
                 macrocycles: [{
                     id: defaultMacrocycleId,
                     name: 'Saison GAF Fédérale A U13',
@@ -1862,8 +1991,78 @@
             return id || fallback;
         }
 
+        function normalizePlanningScheduleRule(value, fallbackId) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const weekday = Number(source.weekday);
+            return {
+                id: normalizePlanningId(source.id, fallbackId),
+                weekday: Number.isInteger(weekday) && weekday >= 0 && weekday <= 6 ? weekday : 1,
+                startTime: /^\d{2}:\d{2}$/.test(String(source.startTime || '')) ? String(source.startTime) : '',
+                endTime: /^\d{2}:\d{2}$/.test(String(source.endTime || '')) ? String(source.endTime) : '',
+                type: normalizePlanningText(source.type || 'Entraînement', 60),
+                label: normalizePlanningText(source.label || source.type || 'Entraînement', 120)
+            };
+        }
+
+        function normalizePlanningEventRule(value, fallbackId) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const startDate = /^\d{4}-\d{2}-\d{2}$/.test(String(source.startDate || '')) ? String(source.startDate) : '';
+            const endDate = /^\d{4}-\d{2}-\d{2}$/.test(String(source.endDate || '')) ? String(source.endDate) : startDate;
+            return {
+                id: normalizePlanningId(source.id, fallbackId),
+                name: normalizePlanningText(source.name || source.type || 'Événement', 120),
+                type: normalizePlanningText(source.type || 'Stage', 60),
+                startDate,
+                endDate: endDate && (!startDate || endDate >= startDate) ? endDate : startDate,
+                startTime: /^\d{2}:\d{2}$/.test(String(source.startTime || '')) ? String(source.startTime) : '',
+                endTime: /^\d{2}:\d{2}$/.test(String(source.endTime || '')) ? String(source.endTime) : '',
+                dayMode: ['all', 'weekdays', 'start'].includes(source.dayMode) ? source.dayMode : 'all',
+                replaceRecurring: source.replaceRecurring !== false,
+                mesocycleId: normalizePlanningText(source.mesocycleId, 100),
+                notes: normalizePlanningText(source.notes, 1000)
+            };
+        }
+
+        function normalizePlanningHolidayPeriod(value, fallbackId) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const startDate = /^\d{4}-\d{2}-\d{2}$/.test(String(source.startDate || source.start || '')) ? String(source.startDate || source.start) : '';
+            const endDate = /^\d{4}-\d{2}-\d{2}$/.test(String(source.endDate || '')) ? String(source.endDate) : startDate;
+            return {
+                id: normalizePlanningId(source.id, fallbackId),
+                name: normalizePlanningText(source.name || 'Fermeture personnalisée', 120),
+                startDate,
+                endDate: endDate && (!startDate || endDate >= startDate) ? endDate : startDate
+            };
+        }
+
+        function normalizePlanningScheduleConfig(value, macrocycle = {}) {
+            const defaults = createDefaultPlanningScheduleConfig();
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const normalizeRules = (list, prefix) => (Array.isArray(list) ? list : [])
+                .map((item, index) => normalizePlanningScheduleRule(item, `${prefix}-${index + 1}`))
+                .filter(item => item.startTime && item.endTime);
+            const regularSource = Array.isArray(source.regularRules) ? source.regularRules : defaults.regularRules;
+            const holidaySource = Array.isArray(source.holidayRules) ? source.holidayRules : defaults.holidayRules;
+            const eventSource = Array.isArray(source.events) ? source.events : defaults.events;
+            return {
+                seasonStart: /^\d{4}-\d{2}-\d{2}$/.test(String(source.seasonStart || '')) ? String(source.seasonStart) : (macrocycle.startDate || defaults.seasonStart),
+                seasonEnd: /^\d{4}-\d{2}-\d{2}$/.test(String(source.seasonEnd || '')) ? String(source.seasonEnd) : (macrocycle.endDate || defaults.seasonEnd),
+                schoolZone: ['A', 'B', 'C'].includes(source.schoolZone) ? source.schoolZone : defaults.schoolZone,
+                useOfficialSchoolHolidays: source.useOfficialSchoolHolidays !== false,
+                excludePublicHolidays: source.excludePublicHolidays !== false,
+                regularRules: normalizeRules(regularSource, 'REG'),
+                holidayRules: normalizeRules(holidaySource, 'VAC'),
+                events: eventSource.map((item, index) => normalizePlanningEventRule(item, `EVENT-${index + 1}`)).filter(item => item.startDate),
+                customHolidayPeriods: (Array.isArray(source.customHolidayPeriods) ? source.customHolidayPeriods : [])
+                    .map((item, index) => normalizePlanningHolidayPeriod(item, `HOLIDAY-${index + 1}`))
+                    .filter(item => item.startDate),
+                updatedAt: normalizePlanningText(source.updatedAt, 40)
+            };
+        }
+
         function normalizePlanningSession(value, fallbackId) {
             const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const inferredSource = String(source.id || '').startsWith('SESSION-20') ? 'legacy' : 'manual';
             return {
                 id: normalizePlanningId(source.id, fallbackId),
                 date: /^\d{4}-\d{2}-\d{2}$/.test(String(source.date || '')) ? String(source.date) : '',
@@ -1871,7 +2070,16 @@
                 endTime: /^\d{2}:\d{2}$/.test(String(source.endTime || '')) ? String(source.endTime) : '',
                 type: normalizePlanningText(source.type || 'Entraînement', 60),
                 status: normalizePlanningText(source.status || 'Planifié', 60),
-                notes: normalizePlanningText(source.notes, 1000)
+                notes: normalizePlanningText(source.notes, 1000),
+                source: ['generated_regular', 'generated_holiday', 'event', 'manual', 'legacy'].includes(source.source)
+                    ? source.source
+                    : inferredSource,
+                eventId: normalizePlanningText(source.eventId, 100),
+                mesocycleId: normalizePlanningText(source.mesocycleId, 100),
+                replacesGenerated: source.replacesGenerated === true,
+                generatedReferenceDate: /^\d{4}-\d{2}-\d{2}$/.test(String(source.generatedReferenceDate || '')) ? String(source.generatedReferenceDate) : '',
+                generatedReferenceType: normalizePlanningText(source.generatedReferenceType, 60),
+                generatedReferenceStartTime: /^\d{2}:\d{2}$/.test(String(source.generatedReferenceStartTime || '')) ? String(source.generatedReferenceStartTime) : ''
             };
         }
 
@@ -1882,7 +2090,7 @@
                 return target;
             }
             const planning = target.planning;
-            planning.templateVersion = Number(planning.templateVersion) || 1;
+            planning.templateVersion = Math.max(2, Number(planning.templateVersion) || 1);
             planning.source = normalizePlanningText(planning.source, 200);
             const normalizeList = (list, prefix, mapper) => {
                 const seen = new Set();
@@ -1942,9 +2150,12 @@
                         normalizePlanningSession(session, `SESSION-${id}-${sessionIndex + 1}`)
                     ),
                     notes: normalizePlanningText(item.notes, 3000),
-                    updatedAt: normalizePlanningText(item.updatedAt, 40)
+                    updatedAt: normalizePlanningText(item.updatedAt, 40),
+                    generationManaged: item.generationManaged === true ||
+                        (item.generationManaged === undefined && /^MICRO-P\d{2}-\d{4}-\d{2}-\d{2}$/.test(id))
                 };
             });
+            planning.scheduleConfig = normalizePlanningScheduleConfig(planning.scheduleConfig, planning.macrocycles[0] || {});
             target.planning = planning;
             return target;
         }
@@ -1991,6 +2202,216 @@
                 .flatMap(microcycle => Array.isArray(microcycle.sessions) ? microcycle.sessions : [])
                 .filter(session => (!startDate || session.date >= startDate) && (!endDate || session.date <= endDate))
                 .filter(session => !(deadlineOnly && macro.deadlineDate && session.date === macro.deadlineDate && session.type === 'Compétition'));
+            return summarizePlanningSessions(sessions);
+        }
+
+        function getPlanningScheduleSeasonKey(config) {
+            const startYear = String(config && config.seasonStart || '').slice(0, 4);
+            const endYear = String(config && config.seasonEnd || '').slice(0, 4);
+            return /^\d{4}$/.test(startYear) && /^\d{4}$/.test(endYear) ? `${startYear}-${endYear}` : '';
+        }
+
+        function getOfficialPlanningHolidayPeriods(config) {
+            const normalized = normalizePlanningScheduleConfig(config || {}, {});
+            if (!normalized.useOfficialSchoolHolidays) return [];
+            const calendar = OFFICIAL_SCHOOL_HOLIDAYS[getPlanningScheduleSeasonKey(normalized)];
+            if (!calendar) return [];
+            return [...(calendar.common || []), ...(calendar[normalized.schoolZone] || [])]
+                .map(item => ({...item, source: 'official'}));
+        }
+
+        function getPlanningHolidayPeriods(config) {
+            const normalized = normalizePlanningScheduleConfig(config || {}, {});
+            const custom = normalized.customHolidayPeriods.map(period => ({
+                name: period.name,
+                start: period.startDate,
+                endExclusive: addPlanningDays(period.endDate, 1),
+                source: 'custom'
+            }));
+            return [...getOfficialPlanningHolidayPeriods(normalized), ...custom]
+                .filter(period => period.start && period.endExclusive && period.endExclusive > period.start);
+        }
+
+        function isPlanningHolidayDate(date, config) {
+            const iso = typeof date === 'string' ? date : planningDateToIso(date);
+            return getPlanningHolidayPeriods(config).some(period => iso >= period.start && iso < period.endExclusive);
+        }
+
+        function planningDateRange(startDate, endDate, callback) {
+            let cursor = planningDateFromIso(startDate);
+            const end = planningDateFromIso(endDate);
+            let guard = 0;
+            while (cursor && end && cursor <= end && guard < 800) {
+                callback(new Date(cursor.getTime()));
+                cursor.setDate(cursor.getDate() + 1);
+                guard += 1;
+            }
+        }
+
+        function generatePlanningSessionsFromConfig(config) {
+            const normalized = normalizePlanningScheduleConfig(config || {}, {});
+            if (!normalized.seasonStart || !normalized.seasonEnd || normalized.seasonEnd < normalized.seasonStart) return [];
+            const sessions = [];
+            const replacedDates = new Set();
+            normalized.events.forEach((event, eventIndex) => {
+                const eventEnd = event.endDate || event.startDate;
+                planningDateRange(event.startDate, eventEnd, date => {
+                    const iso = planningDateToIso(date);
+                    if (iso < normalized.seasonStart || iso > normalized.seasonEnd) return;
+                    if (event.dayMode === 'start' && iso !== event.startDate) return;
+                    if (event.dayMode === 'weekdays' && (date.getDay() === 0 || date.getDay() === 6)) return;
+                    if (event.replaceRecurring) replacedDates.add(iso);
+                    sessions.push(normalizePlanningSession({
+                        id: `AUTO-EVENT-${event.id}-${iso}`,
+                        date: iso,
+                        startTime: event.startTime,
+                        endTime: event.endTime,
+                        type: event.type,
+                        status: 'Planifié',
+                        notes: [event.name, event.notes].filter(Boolean).join(' — '),
+                        source: 'event',
+                        eventId: event.id,
+                        mesocycleId: event.mesocycleId
+                    }, `AUTO-EVENT-${eventIndex + 1}-${iso}`));
+                });
+            });
+            planningDateRange(normalized.seasonStart, normalized.seasonEnd, date => {
+                const iso = planningDateToIso(date);
+                if (replacedDates.has(iso)) return;
+                if (normalized.excludePublicHolidays && FRANCE_PUBLIC_HOLIDAYS.has(iso)) return;
+                const holiday = isPlanningHolidayDate(iso, normalized);
+                const rules = holiday ? normalized.holidayRules : normalized.regularRules;
+                rules.filter(rule => rule.weekday === date.getDay()).forEach((rule, ruleIndex) => {
+                    sessions.push(normalizePlanningSession({
+                        id: `AUTO-${holiday ? 'VAC' : 'REG'}-${rule.id}-${iso}`,
+                        date: iso,
+                        startTime: rule.startTime,
+                        endTime: rule.endTime,
+                        type: rule.type,
+                        status: 'Planifié',
+                        notes: rule.label,
+                        source: holiday ? 'generated_holiday' : 'generated_regular'
+                    }, `AUTO-${holiday ? 'VAC' : 'REG'}-${ruleIndex + 1}-${iso}`));
+                });
+            });
+            return sessions.sort((left, right) => left.date.localeCompare(right.date) || left.startTime.localeCompare(right.startTime) || left.id.localeCompare(right.id));
+        }
+
+        function findPlanningMesocycleForDate(date, preferredId = '') {
+            const mesocycles = data.planning && Array.isArray(data.planning.mesocycles) ? data.planning.mesocycles : [];
+            const preferred = preferredId ? mesocycles.find(item => item.id === preferredId) : null;
+            if (preferred) return preferred;
+            return [...mesocycles]
+                .filter(item => (!item.startDate || date >= item.startDate) && (!item.endDate || date <= item.endDate))
+                .sort((left, right) => String(right.startDate || '').localeCompare(String(left.startDate || '')))[0] || null;
+        }
+
+        function rebuildPlanningMicrocyclesFromSchedule(config) {
+            normalizePlanningData(data);
+            const normalized = normalizePlanningScheduleConfig(config, data.planning.macrocycles[0] || {});
+            const previous = data.planning.microcycles || [];
+            const manualSessions = previous.flatMap(microcycle => (microcycle.sessions || [])
+                .filter(session => session.source === 'manual')
+                .map(session => ({...session, mesocycleId: session.mesocycleId || microcycle.mesocycleId || ''})));
+            const legacySessions = previous.flatMap(microcycle => (microcycle.sessions || [])
+                .filter(session => session.source === 'legacy')
+                .map(session => ({...session, mesocycleId: session.mesocycleId || microcycle.mesocycleId || ''})));
+            const generatedSessions = generatePlanningSessionsFromConfig(normalized);
+            const removedGeneratedIds = new Set();
+            const manualReplacementIds = new Set(manualSessions.map(session => session.id));
+            generatedSessions.forEach(session => {
+                if (manualReplacementIds.has(session.id)) removedGeneratedIds.add(session.id);
+            });
+            manualSessions.filter(session => session.replacesGenerated).forEach(manual => {
+                const match = generatedSessions.find(session =>
+                    !removedGeneratedIds.has(session.id) &&
+                    session.date === (manual.generatedReferenceDate || manual.date) &&
+                    session.type === (manual.generatedReferenceType || manual.type) &&
+                    (!manual.generatedReferenceStartTime || session.startTime === manual.generatedReferenceStartTime)
+                );
+                if (match) removedGeneratedIds.add(match.id);
+            });
+            legacySessions.forEach(legacy => {
+                const legacyIdDate = /^SESSION-(\d{4}-\d{2}-\d{2})/.exec(legacy.id || '');
+                const originalDate = legacyIdDate ? legacyIdDate[1] : legacy.date;
+                const match = generatedSessions.find(session =>
+                    !removedGeneratedIds.has(session.id) &&
+                    (session.date === legacy.date || session.date === originalDate) && session.type === legacy.type
+                );
+                if (!match) {
+                    manualSessions.push({...legacy, source: 'manual'});
+                    return;
+                }
+                removedGeneratedIds.add(match.id);
+                const unchanged = match.date === legacy.date && match.startTime === legacy.startTime && match.endTime === legacy.endTime;
+                if (!unchanged) manualSessions.push({
+                    ...legacy,
+                    source: 'manual',
+                    replacesGenerated: true,
+                    generatedReferenceDate: match.date,
+                    generatedReferenceType: match.type,
+                    generatedReferenceStartTime: match.startTime
+                });
+                else removedGeneratedIds.delete(match.id);
+            });
+            const sessions = [
+                ...generatedSessions.filter(session => !removedGeneratedIds.has(session.id)),
+                ...manualSessions
+            ];
+            const previousByKey = new Map();
+            previous.forEach(microcycle => {
+                const key = `${microcycle.mesocycleId || ''}|${getPlanningWeekStart(microcycle.startDate)}`;
+                if (!previousByKey.has(key)) previousByKey.set(key, microcycle);
+            });
+            const grouped = new Map();
+            const ensureGroup = (mesocycle, weekStart) => {
+                const mesocycleId = mesocycle ? mesocycle.id : '';
+                const key = `${mesocycleId}|${weekStart}`;
+                if (!grouped.has(key)) grouped.set(key, {key, mesocycle, weekStart, sessions: []});
+                return grouped.get(key);
+            };
+            data.planning.mesocycles.forEach(mesocycle => {
+                let weekStart = getPlanningWeekStart(mesocycle.startDate);
+                const lastWeek = getPlanningWeekStart(mesocycle.endDate);
+                let guard = 0;
+                while (weekStart && lastWeek && weekStart <= lastWeek && guard < 80) {
+                    if (addPlanningDays(weekStart, 6) >= normalized.seasonStart && weekStart <= normalized.seasonEnd)
+                        ensureGroup(mesocycle, weekStart);
+                    weekStart = addPlanningDays(weekStart, 7);
+                    guard += 1;
+                }
+            });
+            sessions.forEach(session => {
+                const mesocycle = findPlanningMesocycleForDate(session.date, session.mesocycleId);
+                const group = ensureGroup(mesocycle, getPlanningWeekStart(session.date));
+                group.sessions.push({...session, mesocycleId: mesocycle ? mesocycle.id : ''});
+            });
+            const usedPrevious = new Set();
+            const next = Array.from(grouped.values()).map(group => {
+                const template = previousByKey.get(group.key) || null;
+                if (template) usedPrevious.add(template.id);
+                const mesocycle = group.mesocycle || {};
+                const id = template ? template.id : `MICRO-${mesocycle.id || 'AUTO'}-${group.weekStart}`;
+                return {
+                    id,
+                    name: template ? template.name : `Semaine du ${formatPlanningDate(group.weekStart)}`,
+                    startDate: template ? template.startDate : group.weekStart,
+                    endDate: template ? template.endDate : addPlanningDays(group.weekStart, 6),
+                    mesocycleId: mesocycle.id || '',
+                    intensity: template ? template.intensity : (mesocycle.load || ''),
+                    objective: template ? template.objective : (mesocycle.objective || ''),
+                    apparatuses: template ? template.apparatuses : 'Saut, Barres, Poutre, Sol',
+                    status: template ? template.status : (mesocycle.status || 'Planifié'),
+                    sessions: group.sessions.sort((left, right) => left.date.localeCompare(right.date) || left.startTime.localeCompare(right.startTime)),
+                    notes: template ? template.notes : '',
+                    updatedAt: new Date().toISOString(),
+                    generationManaged: template ? template.generationManaged : true
+                };
+            });
+            previous.filter(item => !item.generationManaged && !usedPrevious.has(item.id)).forEach(item => next.push(item));
+            next.sort((left, right) => left.startDate.localeCompare(right.startDate) || left.mesocycleId.localeCompare(right.mesocycleId) || left.name.localeCompare(right.name, 'fr'));
+            data.planning.scheduleConfig = {...normalized, updatedAt: new Date().toISOString()};
+            data.planning.microcycles = next;
             return summarizePlanningSessions(sessions);
         }
         const CLIENT_ID = '759389909007-opo9tia2m75ab0v3rqfoh96n3hp54c9p.apps.googleusercontent.com';
@@ -2062,6 +2483,8 @@
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
+        let gymLicenceObjectUrl = null;
+        let gymLicenceRenderToken = 0;
         let pendingLevelDeletionId = null;
         let customSigleDrawingData = null;
         let sigleDrawingContext = null;
@@ -3695,6 +4118,215 @@
             return formatPlanningDate(startDate || endDate);
         }
 
+        function planningEditorUid(prefix) {
+            return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        }
+
+        function addPlanningScheduleRuleRow(kind, rule = {}) {
+            const container = document.getElementById(kind === 'holiday' ? 'planning-holiday-rules' : 'planning-regular-rules');
+            if (!container) return;
+            const normalized = normalizePlanningScheduleRule(rule, planningEditorUid(kind === 'holiday' ? 'VAC' : 'REG'));
+            const row = document.createElement('div');
+            row.className = 'planning-schedule-rule-row rounded-lg border border-gray-200 bg-white p-2';
+            row.dataset.ruleId = normalized.id;
+            row.innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-6">
+                <label class="text-[9px] font-bold text-gray-500">Jour<select data-rule-field="weekday" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal">${PLANNING_WEEKDAYS.map(day => `<option value="${day.value}"${day.value === normalized.weekday ? ' selected' : ''}>${day.label}</option>`).join('')}</select></label>
+                <label class="text-[9px] font-bold text-gray-500">Début<input data-rule-field="startTime" type="time" value="${escapeHtml(normalized.startTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Fin<input data-rule-field="endTime" type="time" value="${escapeHtml(normalized.endTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Type<input data-rule-field="type" type="text" maxlength="60" value="${escapeHtml(normalized.type)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Libellé<input data-rule-field="label" type="text" maxlength="120" value="${escapeHtml(normalized.label)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+            </div><button type="button" class="mt-2 text-[9px] font-bold text-red-600">🗑️ Supprimer cet horaire</button>`;
+            row.querySelector('button').onclick = () => { row.remove(); updatePlanningSchedulePreview(); };
+            row.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', updatePlanningSchedulePreview);
+                input.addEventListener('change', updatePlanningSchedulePreview);
+            });
+            container.appendChild(row);
+            updatePlanningSchedulePreview();
+        }
+
+        function addPlanningEventRow(eventRule = {}) {
+            const container = document.getElementById('planning-event-rules');
+            if (!container) return;
+            const event = normalizePlanningEventRule(eventRule, planningEditorUid('EVENT'));
+            const mesocycleOptions = [{id: '', code: '', name: 'Rattachement automatique selon la date'}]
+                .concat([...getPlanningCollection('mesocycle')].sort((a, b) => a.startDate.localeCompare(b.startDate)));
+            const row = document.createElement('div');
+            row.className = 'planning-event-row rounded-lg border border-amber-200 bg-white p-2';
+            row.dataset.eventId = event.id;
+            row.innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Nom<input data-event-field="name" type="text" maxlength="120" value="${escapeHtml(event.name)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Type<select data-event-field="type" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal"><option${event.type === 'Stage' ? ' selected' : ''}>Stage</option><option${event.type === 'Compétition' ? ' selected' : ''}>Compétition</option><option${event.type === 'Entraînement' ? ' selected' : ''}>Entraînement</option><option${!['Stage','Compétition','Entraînement'].includes(event.type) ? ' selected' : ''}>Autre</option></select></label>
+                <label class="text-[9px] font-bold text-gray-500">Jours<select data-event-field="dayMode" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal"><option value="all"${event.dayMode === 'all' ? ' selected' : ''}>Tous les jours</option><option value="weekdays"${event.dayMode === 'weekdays' ? ' selected' : ''}>Lun–ven</option><option value="start"${event.dayMode === 'start' ? ' selected' : ''}>Premier jour</option></select></label>
+                <label class="text-[9px] font-bold text-gray-500">Du<input data-event-field="startDate" type="date" value="${escapeHtml(event.startDate)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Au<input data-event-field="endDate" type="date" value="${escapeHtml(event.endDate)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Début<input data-event-field="startTime" type="time" value="${escapeHtml(event.startTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500">Fin<input data-event-field="endTime" type="time" value="${escapeHtml(event.endTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Mésocycle<select data-event-field="mesocycleId" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal">${mesocycleOptions.map(item => `<option value="${escapeHtml(item.id)}"${item.id === event.mesocycleId ? ' selected' : ''}>${escapeHtml(item.id ? `${item.code ? `${item.code} — ` : ''}${item.name}` : item.name)}</option>`).join('')}</select></label>
+                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Notes<input data-event-field="notes" type="text" maxlength="1000" value="${escapeHtml(event.notes)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+            </div><div class="mt-2 flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-[9px] font-semibold text-gray-600"><input data-event-field="replaceRecurring" type="checkbox"${event.replaceRecurring ? ' checked' : ''} class="h-4 w-4 accent-amber-600">Remplace l’horaire récurrent ces jours-là</label><button type="button" class="text-[9px] font-bold text-red-600">🗑️ Supprimer l’événement</button></div>`;
+            row.querySelector('button').onclick = () => { row.remove(); updatePlanningSchedulePreview(); };
+            row.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', updatePlanningSchedulePreview);
+                input.addEventListener('change', updatePlanningSchedulePreview);
+            });
+            container.appendChild(row);
+            updatePlanningSchedulePreview();
+        }
+
+        function addPlanningHolidayPeriodRow(period = {}) {
+            const container = document.getElementById('planning-custom-holidays');
+            if (!container) return;
+            const normalized = normalizePlanningHolidayPeriod(period, planningEditorUid('HOLIDAY'));
+            const row = document.createElement('div');
+            row.className = 'planning-holiday-row grid grid-cols-2 gap-2 rounded-lg border border-purple-200 bg-white p-2 sm:grid-cols-4';
+            row.dataset.holidayId = normalized.id;
+            row.innerHTML = `<label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Nom<input data-holiday-field="name" type="text" maxlength="120" value="${escapeHtml(normalized.name)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label><label class="text-[9px] font-bold text-gray-500">Du<input data-holiday-field="startDate" type="date" value="${escapeHtml(normalized.startDate)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label><label class="text-[9px] font-bold text-gray-500">Au<input data-holiday-field="endDate" type="date" value="${escapeHtml(normalized.endDate)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label><button type="button" class="text-left text-[9px] font-bold text-red-600 sm:col-span-4">🗑️ Supprimer la période</button>`;
+            row.querySelector('button').onclick = () => { row.remove(); updatePlanningSchedulePreview(); };
+            row.querySelectorAll('input').forEach(input => input.addEventListener('input', updatePlanningSchedulePreview));
+            container.appendChild(row);
+            updatePlanningSchedulePreview();
+        }
+
+        function collectPlanningScheduleRules(containerId, prefix) {
+            return Array.from(document.querySelectorAll(`#${containerId} .planning-schedule-rule-row`)).map((row, index) => {
+                const value = field => row.querySelector(`[data-rule-field="${field}"]`).value;
+                return normalizePlanningScheduleRule({
+                    id: row.dataset.ruleId || `${prefix}-${index + 1}`,
+                    weekday: Number(value('weekday')),
+                    startTime: value('startTime'), endTime: value('endTime'),
+                    type: value('type'), label: value('label')
+                }, `${prefix}-${index + 1}`);
+            }).filter(rule => rule.startTime && rule.endTime);
+        }
+
+        function collectPlanningEventRules() {
+            return Array.from(document.querySelectorAll('#planning-event-rules .planning-event-row')).map((row, index) => {
+                const input = field => row.querySelector(`[data-event-field="${field}"]`);
+                const value = field => input(field).value;
+                return normalizePlanningEventRule({
+                    id: row.dataset.eventId || `EVENT-${index + 1}`,
+                    name: value('name'), type: value('type'), dayMode: value('dayMode'),
+                    startDate: value('startDate'), endDate: value('endDate'),
+                    startTime: value('startTime'), endTime: value('endTime'),
+                    mesocycleId: value('mesocycleId'), notes: value('notes'),
+                    replaceRecurring: input('replaceRecurring').checked
+                }, `EVENT-${index + 1}`);
+            }).filter(event => event.startDate);
+        }
+
+        function collectPlanningHolidayPeriods() {
+            return Array.from(document.querySelectorAll('#planning-custom-holidays .planning-holiday-row')).map((row, index) => {
+                const value = field => row.querySelector(`[data-holiday-field="${field}"]`).value;
+                return normalizePlanningHolidayPeriod({
+                    id: row.dataset.holidayId || `HOLIDAY-${index + 1}`,
+                    name: value('name'), startDate: value('startDate'), endDate: value('endDate')
+                }, `HOLIDAY-${index + 1}`);
+            }).filter(period => period.startDate);
+        }
+
+        function readPlanningScheduleForm() {
+            return normalizePlanningScheduleConfig({
+                seasonStart: document.getElementById('planning-schedule-start').value,
+                seasonEnd: document.getElementById('planning-schedule-end').value,
+                schoolZone: document.getElementById('planning-school-zone').value,
+                useOfficialSchoolHolidays: document.getElementById('planning-use-school-holidays').checked,
+                excludePublicHolidays: document.getElementById('planning-exclude-public-holidays').checked,
+                regularRules: collectPlanningScheduleRules('planning-regular-rules', 'REG'),
+                holidayRules: collectPlanningScheduleRules('planning-holiday-rules', 'VAC'),
+                events: collectPlanningEventRules(),
+                customHolidayPeriods: collectPlanningHolidayPeriods()
+            }, data.planning.macrocycles[0] || {});
+        }
+
+        function updatePlanningSchoolCalendarStatus(config = null) {
+            const status = document.getElementById('planning-school-calendar-status');
+            if (!status) return;
+            const current = config || readPlanningScheduleForm();
+            if (!current.useOfficialSchoolHolidays) {
+                status.textContent = 'Vacances officielles désactivées : seuls les horaires habituels et les périodes personnalisées seront utilisés.';
+                return;
+            }
+            const key = getPlanningScheduleSeasonKey(current);
+            const periods = getOfficialPlanningHolidayPeriods(current);
+            status.textContent = periods.length
+                ? `Calendrier officiel ${key}, zone ${current.schoolZone} : ${periods.length} périodes prises en compte.`
+                : `Le calendrier officiel ${key || 'de cette saison'} n’est pas encore intégré. Ajoutez les périodes dans « Vacances personnalisées ».`;
+        }
+
+        function updatePlanningSchedulePreview() {
+            const preview = document.getElementById('planning-schedule-preview');
+            if (!preview || document.getElementById('modal-planning-schedule').classList.contains('hidden')) return;
+            try {
+                const config = readPlanningScheduleForm();
+                updatePlanningSchoolCalendarStatus(config);
+                if (!config.seasonStart || !config.seasonEnd || config.seasonEnd < config.seasonStart) {
+                    preview.textContent = 'Indiquez une période de saison valide pour calculer l’aperçu.';
+                    return;
+                }
+                const generated = generatePlanningSessionsFromConfig(config);
+                const volume = summarizePlanningSessions(generated);
+                preview.textContent = `Aperçu automatique : ${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)} · ${volume.training} entraînement${volume.training === 1 ? '' : 's'} · ${volume.stages} jour${volume.stages === 1 ? '' : 's'} de stage · ${volume.competitions} jour${volume.competitions === 1 ? '' : 's'} de compétition.`;
+            } catch (error) {
+                preview.textContent = `Aperçu indisponible : ${error.message}`;
+            }
+        }
+
+        function openPlanningScheduleModal() {
+            normalizePlanningData(data);
+            const config = data.planning.scheduleConfig;
+            document.getElementById('planning-schedule-start').value = config.seasonStart;
+            document.getElementById('planning-schedule-end').value = config.seasonEnd;
+            document.getElementById('planning-school-zone').value = config.schoolZone;
+            document.getElementById('planning-use-school-holidays').checked = config.useOfficialSchoolHolidays;
+            document.getElementById('planning-exclude-public-holidays').checked = config.excludePublicHolidays;
+            ['planning-regular-rules', 'planning-holiday-rules', 'planning-event-rules', 'planning-custom-holidays'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+            config.regularRules.forEach(rule => addPlanningScheduleRuleRow('regular', rule));
+            config.holidayRules.forEach(rule => addPlanningScheduleRuleRow('holiday', rule));
+            config.events.forEach(event => addPlanningEventRow(event));
+            config.customHolidayPeriods.forEach(period => addPlanningHolidayPeriodRow(period));
+            ['planning-schedule-start', 'planning-schedule-end', 'planning-school-zone', 'planning-use-school-holidays', 'planning-exclude-public-holidays'].forEach(id => {
+                const input = document.getElementById(id);
+                input.oninput = updatePlanningSchedulePreview;
+                input.onchange = updatePlanningSchedulePreview;
+            });
+            document.getElementById('modal-planning-schedule').classList.remove('hidden');
+            updatePlanningSchedulePreview();
+        }
+
+        function closePlanningScheduleModal() {
+            document.getElementById('modal-planning-schedule').classList.add('hidden');
+        }
+
+        function savePlanningSchedule(event) {
+            event.preventDefault();
+            const config = readPlanningScheduleForm();
+            if (!config.seasonStart || !config.seasonEnd || config.seasonEnd < config.seasonStart) {
+                alert('⚠️ La période de saison est invalide.');
+                return;
+            }
+            const invalidEvent = config.events.find(item => item.endDate && item.endDate < item.startDate);
+            if (invalidEvent) {
+                alert(`⚠️ Vérifiez les dates de l’événement « ${invalidEvent.name} ».`);
+                return;
+            }
+            if (!confirm('Régénérer les séances automatiques avec cette programmation ?\n\nLes séances ajoutées manuellement dans les microcycles seront conservées.')) return;
+            const volume = rebuildPlanningMicrocyclesFromSchedule(config);
+            const macro = data.planning.macrocycles[0];
+            if (macro) {
+                macro.startDate = config.seasonStart;
+                macro.endDate = config.seasonEnd;
+                macro.sessionsPerWeek = config.regularRules.length;
+                macro.updatedAt = new Date().toISOString();
+            }
+            saveAllData();
+            closePlanningScheduleModal();
+            renderPlanning();
+            alert(`✅ Programmation mise à jour : ${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} et ${formatPlanningHours(volume.hours)} calculées.`);
+        }
+
         function getPlanningStatusClasses(status) {
             const key = normalizePlanningText(status, 60).toLocaleLowerCase('fr');
             if (key.includes('termin')) return 'bg-green-100 text-green-700';
@@ -3763,6 +4395,10 @@
             const macro = getPlanningCollection('macrocycle')[0] || {};
             const volume = calculatePlanningVolume(macro);
             const deadline = calculatePlanningVolume(macro, true);
+            const config = data.planning.scheduleConfig;
+            const manualCount = data.planning.microcycles.flatMap(item => item.sessions || []).filter(session => session.source === 'manual').length;
+            const automation = document.getElementById('planning-automation-summary');
+            if (automation) automation.innerHTML = `<strong>Zone ${escapeHtml(config.schoolZone)}</strong> · ${config.regularRules.length} horaire${config.regularRules.length === 1 ? '' : 's'} habituel${config.regularRules.length === 1 ? '' : 's'} · ${config.holidayRules.length} horaire${config.holidayRules.length === 1 ? '' : 's'} de vacances · ${config.events.length} stage${config.events.length === 1 ? '' : 's'} / événement${config.events.length === 1 ? '' : 's'} · ${manualCount} séance${manualCount === 1 ? '' : 's'} manuelle${manualCount === 1 ? '' : 's'} conservée${manualCount === 1 ? '' : 's'}.`;
             container.innerHTML = `
                 <div class="rounded-lg bg-teal-50 p-2"><strong class="block text-base text-teal-700">${volume.sessions}</strong><span class="text-gray-500">séances / dates</span></div>
                 <div class="rounded-lg bg-blue-50 p-2"><strong class="block text-base text-blue-700">${escapeHtml(formatPlanningHours(volume.hours))}</strong><span class="text-gray-500">volume saison</span></div>
@@ -4051,6 +4687,17 @@
             const row = document.createElement('div');
             row.className = 'planning-session-row rounded-lg border border-purple-100 bg-white p-2';
             row.dataset.sessionId = session.id || '';
+            row.dataset.sessionSource = session.source || 'manual';
+            row.dataset.sessionEventId = session.eventId || '';
+            row.dataset.sessionMesocycleId = session.mesocycleId || '';
+            row.dataset.replacesGenerated = session.replacesGenerated ? 'true' : 'false';
+            row.dataset.generatedReferenceDate = session.generatedReferenceDate || '';
+            row.dataset.generatedReferenceType = session.generatedReferenceType || '';
+            row.dataset.generatedReferenceStartTime = session.generatedReferenceStartTime || '';
+            row.dataset.originalSession = JSON.stringify({
+                date: session.date || '', startTime: session.startTime || '', endTime: session.endTime || '',
+                type: session.type || 'Entraînement', status: session.status || 'Planifié', notes: session.notes || ''
+            });
             row.innerHTML = `
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Date<input data-session-field="date" type="date" value="${escapeHtml(session.date || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
@@ -4071,10 +4718,27 @@
                     const input = row.querySelector(`[data-session-field="${field}"]`);
                     return input ? input.value : '';
                 };
-                return normalizePlanningSession({
-                    id: row.dataset.sessionId || `SESSION-${microcycleId}-${Date.now().toString(36)}-${index + 1}`,
+                const current = {
                     date: read('date'), startTime: read('startTime'), endTime: read('endTime'),
                     type: read('type'), status: read('status'), notes: read('notes')
+                };
+                let original = {};
+                try { original = JSON.parse(row.dataset.originalSession || '{}'); } catch (_) {}
+                const changed = ['date', 'startTime', 'endTime', 'type', 'status', 'notes']
+                    .some(field => String(current[field] || '') !== String(original[field] || ''));
+                const originalSource = row.dataset.sessionSource || 'manual';
+                const replacesGenerated = row.dataset.replacesGenerated === 'true' ||
+                    (changed && ['generated_regular', 'generated_holiday', 'event', 'legacy'].includes(originalSource));
+                return normalizePlanningSession({
+                    id: row.dataset.sessionId || `SESSION-${microcycleId}-${Date.now().toString(36)}-${index + 1}`,
+                    ...current,
+                    source: changed ? 'manual' : (row.dataset.sessionSource || 'manual'),
+                    eventId: row.dataset.sessionEventId || '',
+                    mesocycleId: row.dataset.sessionMesocycleId || '',
+                    replacesGenerated,
+                    generatedReferenceDate: row.dataset.generatedReferenceDate || (replacesGenerated ? original.date : ''),
+                    generatedReferenceType: row.dataset.generatedReferenceType || (replacesGenerated ? original.type : ''),
+                    generatedReferenceStartTime: row.dataset.generatedReferenceStartTime || (replacesGenerated ? original.startTime : '')
                 }, `SESSION-${microcycleId}-${index + 1}`);
             });
         }
@@ -4306,9 +4970,6 @@
                 .getElementById('fiche-category')
                 .innerText = `Catégorie : ${calculateCategory(g.ddn)}`;
             document
-                .getElementById('info-licence')
-                .innerText = g.licence || 'Non renseignée';
-            document
                 .getElementById('info-ddn')
                 .innerText = g.ddn
                     ? new Date(g.ddn).toLocaleDateString('fr-FR')
@@ -4371,6 +5032,7 @@
             renderProgressionStatistics();
             initMouvementsTab();
             renderGymnastMusic();
+            renderGymnastLicence();
         }
 
         // ────────────────────────────────────────────────────────────── MUSIQUE
@@ -4384,11 +5046,13 @@
                     reject(new Error("Le stockage audio n'est pas pris en charge sur cet appareil."));
                     return;
                 }
-                const request = indexedDB.open(GYM_MUSIC_DB_NAME, 1);
+                const request = indexedDB.open(GYM_MUSIC_DB_NAME, 2);
                 request.onupgradeneeded = () => {
                     const db = request.result;
                     if (!db.objectStoreNames.contains(GYM_MUSIC_STORE_NAME))
                         db.createObjectStore(GYM_MUSIC_STORE_NAME, {keyPath: 'gymId'});
+                    if (!db.objectStoreNames.contains(GYM_LICENCE_STORE_NAME))
+                        db.createObjectStore(GYM_LICENCE_STORE_NAME, {keyPath: 'gymId'});
                 };
                 request.onsuccess = () => {
                     const db = request.result;
@@ -4547,6 +5211,141 @@
             } catch (error) {
                 console.error('[GymSuivi] Suppression de la musique impossible :', error);
                 alert(`❌ Impossible de supprimer la musique : ${error.message}`);
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────── LICENCE PDF
+        // GYMNASTE (STOCKAGE SÉPARÉ POUR PRÉSERVER LE STOCKAGE PRINCIPAL)
+        // ──────────────────────────────────────────────────────────────
+        async function getGymnastLicence(gymId) {
+            const db = await openGymMusicDatabase();
+            return new Promise((resolve, reject) => {
+                const request = db.transaction(GYM_LICENCE_STORE_NAME, 'readonly')
+                    .objectStore(GYM_LICENCE_STORE_NAME).get(gymId);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error || new Error('Lecture de la licence impossible.'));
+            });
+        }
+
+        async function storeGymnastLicence(gymId, file) {
+            const db = await openGymMusicDatabase();
+            const record = {
+                gymId,
+                name: file.name || 'Licence.pdf',
+                type: 'application/pdf',
+                size: file.size,
+                updatedAt: new Date().toISOString(),
+                blob: file.slice(0, file.size, 'application/pdf')
+            };
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(GYM_LICENCE_STORE_NAME, 'readwrite');
+                transaction.objectStore(GYM_LICENCE_STORE_NAME).put(record);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error('Enregistrement de la licence impossible.'));
+                transaction.onabort = () => reject(transaction.error || new Error('Enregistrement de la licence annulé.'));
+            });
+            if (navigator.storage && typeof navigator.storage.persist === 'function')
+                navigator.storage.persist().catch(() => {});
+        }
+
+        async function removeGymnastLicence(gymId) {
+            if (!gymId || !('indexedDB' in window)) return;
+            const db = await openGymMusicDatabase();
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(GYM_LICENCE_STORE_NAME, 'readwrite');
+                transaction.objectStore(GYM_LICENCE_STORE_NAME).delete(gymId);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error || new Error('Suppression de la licence impossible.'));
+                transaction.onabort = () => reject(transaction.error || new Error('Suppression de la licence annulée.'));
+            });
+        }
+
+        function clearGymLicenceObjectUrl() {
+            if (gymLicenceObjectUrl) {
+                URL.revokeObjectURL(gymLicenceObjectUrl);
+                gymLicenceObjectUrl = null;
+            }
+        }
+
+        async function renderGymnastLicence() {
+            const requestedGymId = currentGymId;
+            const token = ++gymLicenceRenderToken;
+            const name = document.getElementById('gym-licence-name');
+            const status = document.getElementById('gym-licence-status');
+            const openButton = document.getElementById('btn-open-gym-licence');
+            const downloadButton = document.getElementById('btn-download-gym-licence');
+            const deleteButton = document.getElementById('btn-delete-gym-licence');
+            const fileInput = document.getElementById('gym-licence-file');
+            if (!name || !status || !openButton || !downloadButton || !deleteButton) return;
+            [openButton, downloadButton, deleteButton].forEach(button => button.classList.add('hidden'));
+            openButton.removeAttribute('href');
+            downloadButton.removeAttribute('href');
+            name.textContent = 'Chargement de la licence…';
+            status.textContent = 'Recherche du document enregistré sur cet appareil.';
+            if (fileInput) fileInput.value = '';
+            clearGymLicenceObjectUrl();
+            try {
+                const record = await getGymnastLicence(requestedGymId);
+                if (token !== gymLicenceRenderToken || currentGymId !== requestedGymId) return;
+                if (!record || !record.blob) {
+                    name.textContent = 'Aucun PDF importé';
+                    status.textContent = 'Le document restera disponible hors connexion sur cet appareil.';
+                    return;
+                }
+                gymLicenceObjectUrl = URL.createObjectURL(record.blob);
+                openButton.href = gymLicenceObjectUrl;
+                downloadButton.href = gymLicenceObjectUrl;
+                downloadButton.download = record.name || 'Licence.pdf';
+                [openButton, downloadButton, deleteButton].forEach(button => button.classList.remove('hidden'));
+                name.textContent = record.name || 'Licence.pdf';
+                const sizeMb = Number(record.size || record.blob.size || 0) / (1024 * 1024);
+                status.textContent = `PDF enregistré sur cet appareil${sizeMb > 0 ? ` — ${sizeMb.toFixed(1)} Mo` : ''}.`;
+            } catch (error) {
+                if (token !== gymLicenceRenderToken || currentGymId !== requestedGymId) return;
+                console.error('[GymSuivi] Licence indisponible :', error);
+                name.textContent = 'Licence indisponible';
+                status.textContent = error.message || "Le stockage du document n'est pas accessible.";
+            }
+        }
+
+        async function saveGymnastLicence(event) {
+            const fileInput = event.target;
+            const file = fileInput.files && fileInput.files[0];
+            const gymId = currentGymId;
+            if (!file || !gymId) return;
+            if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || '')) {
+                fileInput.value = '';
+                alert('⚠️ Sélectionnez un document PDF.');
+                return;
+            }
+            if (file.size > MAX_GYM_LICENCE_SIZE_BYTES) {
+                fileInput.value = '';
+                alert('⚠️ Le PDF dépasse la limite de 25 Mo.');
+                return;
+            }
+            const status = document.getElementById('gym-licence-status');
+            status.textContent = 'Enregistrement de la licence…';
+            try {
+                await storeGymnastLicence(gymId, file);
+                if (currentGymId === gymId) await renderGymnastLicence();
+            } catch (error) {
+                console.error('[GymSuivi] Enregistrement de la licence impossible :', error);
+                alert(`❌ Impossible d'enregistrer la licence : ${error.message}`);
+                if (currentGymId === gymId) await renderGymnastLicence();
+            } finally {
+                fileInput.value = '';
+            }
+        }
+
+        async function deleteGymnastLicence() {
+            const gymId = currentGymId;
+            if (!gymId || !confirm('Supprimer le PDF de licence enregistré pour cette gymnaste ?')) return;
+            try {
+                await removeGymnastLicence(gymId);
+                if (currentGymId === gymId) await renderGymnastLicence();
+            } catch (error) {
+                console.error('[GymSuivi] Suppression de la licence impossible :', error);
+                alert(`❌ Impossible de supprimer la licence : ${error.message}`);
             }
         }
 
@@ -5051,9 +5850,30 @@
             }
         }
 
+        function openProgressionAddPanel() {
+            cancelProgressionEdit(false);
+            const form = document.getElementById('form-progression');
+            const openButton = document.getElementById('btn-open-progression-add');
+            if (form) form.classList.remove('hidden');
+            if (openButton) openButton.classList.add('hidden');
+            const input = document.getElementById('progression-element-name');
+            if (input) input.focus();
+        }
+
+        function closeProgressionAddPanel() {
+            const form = document.getElementById('form-progression');
+            const openButton = document.getElementById('btn-open-progression-add');
+            if (form) form.classList.add('hidden');
+            if (openButton) openButton.classList.remove('hidden');
+        }
+
         function startProgressionEdit(itemId) {
             const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) return;
+            const form = document.getElementById('form-progression');
+            const openButton = document.getElementById('btn-open-progression-add');
+            if (form) form.classList.remove('hidden');
+            if (openButton) openButton.classList.add('hidden');
             document.getElementById('edit-progression-id').value = item.id;
             document.getElementById('progression-element-name').value = item.name;
             setSelectedProgressionApparatuses(item.apparatuses !== undefined ? item.apparatuses : item.apparatus);
@@ -5063,13 +5883,14 @@
             document.getElementById('progression-element-name').focus();
         }
 
-        function cancelProgressionEdit() {
+        function cancelProgressionEdit(closePanel = true) {
             document.getElementById('edit-progression-id').value = '';
             document.getElementById('progression-element-name').value = '';
             setSelectedProgressionApparatuses([]);
             setSelectedProgressionFamilies([]);
             document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
             document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
+            if (closePanel) closeProgressionAddPanel();
         }
 
         function deleteProgressionItem(itemId) {
@@ -7181,9 +8002,6 @@
                 .getElementById('gym-niveau')
                 .value = g.niveauId;
             document
-                .getElementById('gym-licence')
-                .value = g.licence || '';
-            document
                 .getElementById('gym-tel')
                 .value = g.tel;
             document
@@ -7239,9 +8057,9 @@
                 niveauId: document
                     .getElementById('gym-niveau')
                     .value,
-                licence: document
-                    .getElementById('gym-licence')
-                    .value,
+                licence: targetId
+                    ? ((data.gymnastes.find(item => item.id === targetId) || {}).licence || '')
+                    : '',
                 tel: document
                     .getElementById('gym-tel')
                     .value,
@@ -7317,6 +8135,11 @@
                 // 3b. Suppression de sa musique locale sans bloquer le reste de la fiche
                 removeGymnastMusic(deletedGymId).catch(error =>
                     console.warn('[GymSuivi] Musique locale non supprimée :', error)
+                );
+
+                // 3c. Suppression du PDF de licence local
+                removeGymnastLicence(deletedGymId).catch(error =>
+                    console.warn('[GymSuivi] Licence locale non supprimée :', error)
                 );
 
                 // 4. Retrait de la gymnaste de toutes les équipes
@@ -8776,7 +9599,7 @@
                 </div>
                 
                 <div style="margin-bottom:20px; font-size:13px; line-height:1.6;">
-                    <p><strong>N° Licence :</strong> ${g.licence || 'Non renseignée'}</p>
+                    <p><strong>Licence :</strong> document PDF géré directement dans la fiche de l’application.</p>
                     <p><strong>Date de naissance :</strong> ${g.ddn
                     ? new Date(g.ddn).toLocaleDateString('fr-FR')
                     : 'Non renseignée'}</p>
