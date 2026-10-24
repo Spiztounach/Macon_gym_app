@@ -284,7 +284,10 @@
 
             <!-- ═══════════════════════════════════════ SCREEN SETTINGS ═══ -->
             <section id="screen-settings" data-ui-zone="settings" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
-                <h2 class="text-lg font-semibold text-gray-700">Réglages & Sauvegardes ☁️</h2>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-semibold text-gray-700">Réglages & Sauvegardes ☁️</h2>
+                    <span id="app-version-label" class="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] font-bold text-gray-500">Version</span>
+                </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
                     <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Affichage portrait / paysage</p>
@@ -1265,7 +1268,7 @@
                             <span id="planning-detail-type" class="ui-theme-zone-title text-[10px] font-black uppercase tracking-wider text-teal-700">Cycle</span>
                             <h2 id="planning-detail-title" class="mt-1 break-words text-xl font-black text-gray-800">Détail du cycle</h2>
                         </div>
-                        <button type="button" onclick="closePlanningDetail()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-600">← Planification</button>
+                        <button id="planning-detail-back" type="button" onclick="closePlanningDetail()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-600">← Planification</button>
                     </div>
                 </div>
                 <div id="planning-detail-content" class="space-y-3 rounded-xl border border-gray-200 bg-white p-4 text-xs shadow-sm"></div>
@@ -1699,7 +1702,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.22.1';
+        const APP_VERSION = '1.23.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -4114,6 +4117,7 @@
         let liveCompetitionSaveTimer = null;
         let currentPlanningTab = 'macro';
         let currentPlanningDetail = null;
+        let planningDetailHistory = [];
         let planningSessionEditorCounter = 0;
         let screenHistory = ['screen-levels'];
 
@@ -4164,11 +4168,26 @@
                 showScreen('screen-levels');
             } else {
                 showScreen('screen-settings');
+                renderAppVersion();
                 initColorsInSettings();
             }
         }
 
+        function renderAppVersion() {
+            const label = document.getElementById('app-version-label');
+            if (label) label.textContent = `Version ${APP_VERSION}`;
+        }
+
         function goBack() {
+            const planningDetailScreen = document.getElementById('screen-planning-detail');
+            if (planningDetailScreen && !planningDetailScreen.classList.contains('hidden')) {
+                if (planningDetailHistory.length) {
+                    closePlanningDetail();
+                    return;
+                }
+                currentPlanningDetail = null;
+                planningDetailHistory = [];
+            }
             if (screenHistory.length > 1) {
                 screenHistory.pop();
                 const prev = screenHistory[screenHistory.length - 1];
@@ -5024,9 +5043,26 @@
                 </div>`;
         }
 
-        function openPlanningDetail(type, id) {
+        function updatePlanningDetailBackButton() {
+            const button = document.getElementById('planning-detail-back');
+            if (!button) return;
+            const hasPreviousCard = planningDetailHistory.length > 0;
+            button.textContent = hasPreviousCard ? '← Carte précédente' : '← Planification';
+            button.setAttribute('aria-label', hasPreviousCard
+                ? 'Revenir à la carte de planification précédente'
+                : 'Revenir à la page principale de planification');
+        }
+
+        function openPlanningDetail(type, id, rememberCurrent = true) {
             const item = getPlanningEntity(type, id);
             if (!item) return;
+            const detailScreen = document.getElementById('screen-planning-detail');
+            const detailVisible = detailScreen && !detailScreen.classList.contains('hidden');
+            const sameDetail = currentPlanningDetail &&
+                currentPlanningDetail.type === type && currentPlanningDetail.id === id;
+            if (!detailVisible) planningDetailHistory = [];
+            else if (rememberCurrent && currentPlanningDetail && !sameDetail)
+                planningDetailHistory.push({...currentPlanningDetail});
             currentPlanningDetail = {type, id};
             document.getElementById('planning-detail-type').textContent = getPlanningTypeLabel(type);
             document.getElementById('planning-detail-title').textContent = item.name;
@@ -5037,14 +5073,23 @@
             });
             document.getElementById('planning-detail-edit').onclick = () => openPlanningEditor(type, id);
             document.getElementById('planning-detail-delete').onclick = () => deletePlanningEntity(type, id);
+            updatePlanningDetailBackButton();
             showScreen('screen-planning-detail');
             if (typeof window.scrollTo === 'function') window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
         function closePlanningDetail() {
+            while (planningDetailHistory.length) {
+                const previous = planningDetailHistory.pop();
+                if (!getPlanningEntity(previous.type, previous.id)) continue;
+                currentPlanningDetail = null;
+                openPlanningDetail(previous.type, previous.id, false);
+                return;
+            }
+            currentPlanningDetail = null;
+            planningDetailHistory = [];
             if (!document.getElementById('screen-planning-detail').classList.contains('hidden')) goBack();
             else showScreen('screen-planning');
-            currentPlanningDetail = null;
         }
 
         function planningEditorField(name, label, value, options = {}) {
@@ -10484,6 +10529,7 @@
         // ────────────────────────────────────────────────────────────── INITIALISATION
         // ──────────────────────────────────────────────────────────────
         renderLevels();
+        renderAppVersion();
         applyCustomColors();
         applyCustomAppIdentity();
         updateBirthdayNotificationUI();
