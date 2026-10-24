@@ -21,9 +21,72 @@
         <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.8/dist/jspdf.plugin.autotable.min.js"></script>
 
         <style>
+            :root {
+                --ui-font-family: 'Segoe UI', system-ui, sans-serif;
+                --ui-page-background: #f3f4f6;
+                --ui-surface-background: #ffffff;
+                --ui-input-background: #ffffff;
+                --ui-text-color: #1f2937;
+                --ui-muted-color: #6b7280;
+                --ui-primary-color: #0f766e;
+                --ui-primary-contrast: #ffffff;
+                --ui-success-color: #16a34a;
+                --ui-success-contrast: #ffffff;
+                --ui-danger-color: #dc2626;
+                --ui-danger-contrast: #ffffff;
+            }
             body {
-                font-family: 'Segoe UI', system-ui, sans-serif;
-                background-color: #f3f4f6;
+                font-family: var(--ui-font-family);
+                background-color: var(--ui-page-background);
+                color: var(--ui-text-color);
+                transition: background-color 180ms ease, color 180ms ease;
+            }
+            body.ui-theme-active .bg-white {
+                background-color: var(--ui-surface-background) !important;
+            }
+            body.ui-theme-active input:not([type="color"]),
+            body.ui-theme-active select,
+            body.ui-theme-active textarea {
+                background-color: var(--ui-input-background) !important;
+                color: var(--ui-text-color) !important;
+            }
+            body.ui-theme-active #app-main .text-gray-800,
+            body.ui-theme-active #app-main .text-gray-700 {
+                color: var(--ui-text-color) !important;
+            }
+            body.ui-theme-active #app-main .text-gray-600,
+            body.ui-theme-active #app-main .text-gray-500,
+            body.ui-theme-active #app-main .text-gray-400 {
+                color: var(--ui-muted-color) !important;
+            }
+            .ui-theme-zone {
+                --zone-accent: var(--ui-primary-color);
+                --zone-background: transparent;
+                background-color: var(--zone-background);
+                border-radius: 1rem;
+                transition: background-color 180ms ease;
+            }
+            .ui-theme-zone .ui-theme-zone-title {
+                color: var(--zone-accent) !important;
+            }
+            .ui-theme-zone .ui-theme-zone-action {
+                background-color: var(--zone-accent) !important;
+                color: var(--zone-contrast, #ffffff) !important;
+            }
+            .ui-theme-zone .ui-theme-zone-border {
+                border-color: var(--zone-accent) !important;
+            }
+            .ui-theme-primary-action {
+                background-color: var(--ui-primary-color) !important;
+                color: var(--ui-primary-contrast) !important;
+            }
+            .ui-theme-success-action {
+                background-color: var(--ui-success-color) !important;
+                color: var(--ui-success-contrast) !important;
+            }
+            .ui-theme-danger-action {
+                background-color: var(--ui-danger-color) !important;
+                color: var(--ui-danger-contrast) !important;
             }
             .tab-content {
                 display: none;
@@ -31,7 +94,7 @@
             .tab-content.active {
                 display: block;
             }
-            #screen-competition, #screen-planning {
+            #screen-competition, #screen-planning, #screen-planning-detail {
                 width: min(96vw, 1100px);
                 margin-left: 50%;
                 transform: translateX(-50%);
@@ -125,7 +188,7 @@
                     width: 100%;
                     max-width: 1200px;
                 }
-                #screen-competition, #screen-planning {
+                #screen-competition, #screen-planning, #screen-planning-detail {
                     width: 100%;
                     margin-left: 0;
                     transform: none;
@@ -220,7 +283,7 @@
         <main id="app-main" class="max-w-md mx-auto p-4">
 
             <!-- ═══════════════════════════════════════ SCREEN SETTINGS ═══ -->
-            <section id="screen-settings" class="hidden space-y-4">
+            <section id="screen-settings" data-ui-zone="settings" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
                 <h2 class="text-lg font-semibold text-gray-700">Réglages & Sauvegardes ☁️</h2>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
@@ -315,66 +378,59 @@
                 </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Personnalisation des Couleurs :</p>
-                    <div class="space-y-3">
-                        <div
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">Barre de nav / Thème :</label>
-                            <input
-                                type="color"
-                                id="color-header"
-                                onchange="updateCustomColor('header', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
-                        <div id="color-fed-a-row"
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label id="color-fed-a-label" class="text-xs font-medium text-gray-700">Fédéral A :</label>
-                            <input
-                                type="color"
-                                id="color-fed-a"
-                                onchange="updateCustomColor('fed-a', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
-                        <div id="color-fed-b-row"
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label id="color-fed-b-label" class="text-xs font-medium text-gray-700">Fédéral B :</label>
-                            <input
-                                type="color"
-                                id="color-fed-b"
-                                onchange="updateCustomColor('fed-b', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
-                        <div
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">📞 Bouton Appel :</label>
-                            <input
-                                type="color"
-                                id="color-btn-appel"
-                                onchange="updateCustomColor('btn-appel', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
-                        <div
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">💬 Bouton SMS :</label>
-                            <input
-                                type="color"
-                                id="color-btn-sms"
-                                onchange="updateCustomColor('btn-sms', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
-                        <div
-                            class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                            <label class="text-xs font-medium text-gray-700">✉️ Bouton Mail :</label>
-                            <input
-                                type="color"
-                                id="color-btn-mail"
-                                onchange="updateCustomColor('btn-mail', this.value)"
-                                class="w-8 h-7 rounded cursor-pointer">
-                        </div>
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-wider font-bold">Interface & expérience utilisateur</p>
+                        <p class="mt-1 text-[10px] leading-relaxed text-gray-500">Personnalisez le thème général, puis chaque catégorie et chaque onglet. Les réglages sont inclus dans la sauvegarde synchronisée.</p>
                     </div>
-                    <button
-                        onclick="resetColors()"
-                        class="w-full bg-gray-100 text-gray-600 text-xs font-semibold py-2 rounded border border-gray-200 hover:bg-gray-200 transition">Réinitialiser les couleurs</button>
+
+                    <section class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <h3 class="text-[10px] font-black uppercase tracking-wider text-gray-600">Thème général</h3>
+                        <label class="block text-xs font-medium text-gray-700">Police
+                            <select id="ui-font-family" onchange="updateUiThemeSetting('font', this.value)" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">
+                                <option value="system">Système — Segoe UI</option>
+                                <option value="arial">Arial</option>
+                                <option value="verdana">Verdana</option>
+                                <option value="trebuchet">Trebuchet MS</option>
+                                <option value="georgia">Georgia</option>
+                                <option value="courier">Courier New</option>
+                            </select>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Fond application<input id="ui-color-page-background" type="color" onchange="updateUiThemeSetting('pageBackground', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Fond des cartes<input id="ui-color-surface-background" type="color" onchange="updateUiThemeSetting('surfaceBackground', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Fond des champs<input id="ui-color-input-background" type="color" onchange="updateUiThemeSetting('inputBackground', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Texte principal<input id="ui-color-text" type="color" onchange="updateUiThemeSetting('textColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Texte secondaire<input id="ui-color-muted" type="color" onchange="updateUiThemeSetting('mutedColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Barre supérieure<input id="ui-color-header" type="color" onchange="updateUiThemeSetting('headerColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                        </div>
+                    </section>
+
+                    <section class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <h3 class="text-[10px] font-black uppercase tracking-wider text-gray-600">Couleurs des fonctions</h3>
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Action principale<input id="ui-color-primary" type="color" onchange="updateUiThemeSetting('primaryColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Validation<input id="ui-color-success" type="color" onchange="updateUiThemeSetting('successColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Suppression<input id="ui-color-danger" type="color" onchange="updateUiThemeSetting('dangerColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Bouton Appel<input id="ui-color-call" type="color" onchange="updateUiThemeSetting('callColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Bouton SMS<input id="ui-color-sms" type="color" onchange="updateUiThemeSetting('smsColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-600">Bouton Mail<input id="ui-color-mail" type="color" onchange="updateUiThemeSetting('mailColor', this.value)" class="mt-1 h-8 w-full cursor-pointer rounded"></label>
+                        </div>
+                    </section>
+
+                    <section class="space-y-3 rounded-xl border border-teal-200 bg-teal-50/50 p-3">
+                        <div>
+                            <h3 class="text-[10px] font-black uppercase tracking-wider text-teal-700">Catégories et onglets</h3>
+                            <p class="mt-1 text-[9px] text-teal-700">Choisissez une zone, puis définissez sa couleur d’accent et son fond.</p>
+                        </div>
+                        <select id="ui-theme-zone-select" onchange="loadUiThemeZoneControls()" class="w-full rounded-lg border border-teal-200 bg-white p-2 text-xs"></select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="rounded-lg border border-teal-100 bg-white p-2 text-[10px] font-semibold text-gray-600">Couleur d’accent<input id="ui-zone-accent" type="color" onchange="updateUiThemeZone('accent', this.value)" class="mt-1 h-9 w-full cursor-pointer rounded"></label>
+                            <label class="rounded-lg border border-teal-100 bg-white p-2 text-[10px] font-semibold text-gray-600">Couleur de fond<input id="ui-zone-background" type="color" onchange="updateUiThemeZone('background', this.value)" class="mt-1 h-9 w-full cursor-pointer rounded"></label>
+                        </div>
+                        <div id="ui-theme-zone-preview" class="rounded-xl border-2 p-3 text-center text-xs font-bold">Aperçu de la zone</div>
+                    </section>
+
+                    <button type="button" onclick="resetUiTheme()" class="w-full bg-gray-100 text-gray-600 text-xs font-semibold py-2 rounded border border-gray-200 hover:bg-gray-200 transition">Réinitialiser toute l’interface</button>
                 </div>
 
                 <button
@@ -383,7 +439,7 @@
             </section>
 
             <!-- ═══════════════════════════════════════ SCREEN LEVELS ═══ -->
-            <section id="screen-levels" class="space-y-4">
+            <section id="screen-levels" data-ui-zone="home" class="ui-theme-zone space-y-4 p-2 sm:p-3">
                 <div class="flex items-center justify-between gap-3">
                     <h2 class="text-lg font-semibold text-gray-700">Sélectionnez une catégorie :</h2>
                     <button
@@ -395,7 +451,7 @@
             </section>
 
             <!-- ═════════════════════════════════════ SCREEN GYMNASTES ═══ -->
-            <section id="screen-gymnastes" class="hidden space-y-4">
+            <section id="screen-gymnastes" data-ui-zone="category" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
                 <h2 id="gymnastes-title" class="text-lg font-semibold text-gray-700">Gymnastes</h2>
                 <div id="level-statistics-actions" class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
                     <div class="flex items-center justify-between gap-3">
@@ -453,7 +509,8 @@
             <!-- ════════════════════════════════════════ SCREEN FICHE ═══ -->
             <section
                 id="screen-fiche"
-                class="hidden bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                data-ui-zone="fiche"
+                class="ui-theme-zone hidden bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
                 <div
                     id="fiche-header"
                     class="text-white p-5 flex justify-between items-start transition-colors duration-300">
@@ -508,7 +565,8 @@
                     <!-- TAB : Infos -->
                     <div
                         id="content-infos"
-                        class="tab-content active space-y-3 text-gray-600 text-sm">
+                        data-ui-zone="tab-infos"
+                        class="ui-theme-zone tab-content active space-y-3 p-2 text-gray-600 text-sm">
                         <div class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2.5">
                             <div>
                                 <span class="block text-[10px] uppercase font-semibold text-blue-500">Licence — document PDF</span>
@@ -586,7 +644,7 @@
                     </div>
 
                     <!-- TAB : Saisie Notes -->
-                    <div id="content-saisie" class="tab-content space-y-3">
+                    <div id="content-saisie" data-ui-zone="tab-saisie" class="ui-theme-zone tab-content space-y-3 p-2">
                         <h3
                             id="title-form-score"
                             class="text-xs font-bold uppercase tracking-wider text-gray-400">Saisie des résultats de compétition / test</h3>
@@ -710,7 +768,7 @@
                     </div>
 
                     <!-- TAB : Statistiques -->
-                    <div id="content-suivi" class="tab-content space-y-4">
+                    <div id="content-suivi" data-ui-zone="tab-suivi" class="ui-theme-zone tab-content space-y-4 p-2">
                         <div id="progression-statistics-card" class="rounded-xl border border-purple-200 bg-purple-50 p-3 space-y-3">
                             <div class="flex items-center justify-between gap-3">
                                 <div>
@@ -786,7 +844,7 @@
                     </div>
 
                     <!-- TAB : Progression des éléments -->
-                    <div id="content-progression" class="tab-content space-y-4">
+                    <div id="content-progression" data-ui-zone="tab-progression" class="ui-theme-zone tab-content space-y-4 p-2">
                         <div class="rounded-xl border border-purple-100 bg-purple-50 p-3 space-y-3">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
@@ -805,7 +863,7 @@
                                 <input type="hidden" id="edit-progression-id">
                                 <input id="progression-element-name" type="text" maxlength="100" autocomplete="off" placeholder="Nom de l'élément" class="min-w-0 flex-1 rounded-lg border border-purple-200 bg-white p-2 text-xs" required>
                                 <div class="flex gap-2">
-                                    <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="hidden flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
+                                    <button id="btn-cancel-progression-edit" type="button" onclick="cancelProgressionEdit()" class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">Annuler</button>
                                     <button id="btn-save-progression" type="submit" class="flex-1 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">＋ Ajouter</button>
                                 </div>
                                 <fieldset id="progression-apparatus" class="rounded-lg border border-blue-200 bg-white p-2 sm:col-span-2 lg:col-span-3">
@@ -859,7 +917,7 @@
                     </div>
 
                     <!-- TAB : Mouvements -->
-                    <div id="content-mouvements" class="tab-content space-y-3">
+                    <div id="content-mouvements" data-ui-zone="tab-mouvements" class="ui-theme-zone tab-content space-y-3 p-2">
                         <div class="flex bg-gray-100 p-1 rounded-lg gap-1 text-xs">
                             <button
                                 id="btn-mvt-saut"
@@ -929,7 +987,7 @@
             </section>
 
             <!-- ══════════════════════════════════════ SCREEN COMPETITION ═══ -->
-            <section id="screen-competition" class="hidden space-y-4">
+            <section id="screen-competition" data-ui-zone="competition" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
                 <h2 class="text-lg font-bold text-gray-700">Compétitions & Équipes 🏆</h2>
                 <div class="grid grid-cols-2 gap-1 bg-gray-200 p-1 rounded-xl text-xs">
                     <button
@@ -944,7 +1002,7 @@
                         class="py-2 rounded-lg text-gray-500 font-bold">✍️ Saisie compétition</button>
                 </div>
 
-                <div id="competition-tab-match" class="space-y-4">
+                <div id="competition-tab-match" data-ui-zone="competition-match" class="ui-theme-zone space-y-4 p-2">
                 <p class="text-xs text-gray-500">Comparez les meilleures notes de chaque gymnaste, repérez les trois meilleures par agrès et préparez les ordres de passage.</p>
                 <div id="teams-grid" class="grid grid-cols-1 gap-3"></div>
                 <button
@@ -1015,7 +1073,7 @@
                 </div>
                 </div>
 
-                <div id="competition-tab-live" class="hidden space-y-4">
+                <div id="competition-tab-live" data-ui-zone="competition-live" class="ui-theme-zone hidden space-y-4 p-2">
                     <div class="bg-white rounded-xl border border-purple-200 shadow-sm p-4 space-y-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div>
@@ -1126,13 +1184,16 @@
             </section>
 
             <!-- ══════════════════════════════════════ SCREEN PLANIFICATION ═══ -->
-            <section id="screen-planning" class="hidden space-y-4">
+            <section id="screen-planning" data-ui-zone="planning" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-700">Planification GAF U13 🗓️</h2>
-                        <p class="text-xs text-gray-500">Organisation de la saison du général vers le détail.</p>
+                        <h2 id="planning-page-title" class="ui-theme-zone-title text-lg font-bold text-gray-700">Planification GAF U13 🗓️</h2>
+                        <p id="planning-page-description" class="text-xs text-gray-500">Organisation de la saison du général vers le détail.</p>
                     </div>
-                    <span id="planning-source-badge" class="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-bold text-teal-700">Modèle 2026–2027</span>
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        <button type="button" onclick="openPlanningMetadataEditor()" class="ui-theme-zone-action rounded-lg px-3 py-2 text-[10px] font-bold text-white">✏️ Titre et description</button>
+                        <span id="planning-source-badge" class="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-bold text-teal-700">Modèle 2026–2027</span>
+                    </div>
                 </div>
 
                 <div class="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
@@ -1153,7 +1214,7 @@
                     <button id="btn-planning-tab-micro" type="button" onclick="switchPlanningTab('micro')" class="rounded-lg py-2 font-bold text-gray-500">Microcycles</button>
                 </div>
 
-                <div id="planning-tab-macro" class="space-y-3">
+                <div id="planning-tab-macro" data-ui-zone="planning-macro" class="ui-theme-zone space-y-3 p-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <h3 class="text-sm font-bold text-gray-700">Vue saisonnière</h3>
@@ -1164,7 +1225,7 @@
                     <div id="planning-macro-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
                 </div>
 
-                <div id="planning-tab-meso" class="hidden space-y-3">
+                <div id="planning-tab-meso" data-ui-zone="planning-meso" class="ui-theme-zone hidden space-y-3 p-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <h3 class="text-sm font-bold text-gray-700">Blocs de travail</h3>
@@ -1175,7 +1236,7 @@
                     <div id="planning-meso-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
                 </div>
 
-                <div id="planning-tab-micro" class="hidden space-y-3">
+                <div id="planning-tab-micro" data-ui-zone="planning-micro" class="ui-theme-zone hidden space-y-3 p-2">
                     <div class="flex flex-wrap items-end justify-between gap-2">
                         <div>
                             <h3 class="text-sm font-bold text-gray-700">Semaines et séances</h3>
@@ -1193,6 +1254,24 @@
                     </div>
                     <p id="planning-micro-count" class="text-[10px] font-semibold text-gray-500"></p>
                     <div id="planning-micro-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════ PAGE DÉTAIL PLANIFICATION ═══ -->
+            <section id="screen-planning-detail" data-ui-zone="planning" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <span id="planning-detail-type" class="ui-theme-zone-title text-[10px] font-black uppercase tracking-wider text-teal-700">Cycle</span>
+                            <h2 id="planning-detail-title" class="mt-1 break-words text-xl font-black text-gray-800">Détail du cycle</h2>
+                        </div>
+                        <button type="button" onclick="closePlanningDetail()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-600">← Planification</button>
+                    </div>
+                </div>
+                <div id="planning-detail-content" class="space-y-3 rounded-xl border border-gray-200 bg-white p-4 text-xs shadow-sm"></div>
+                <div class="grid grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                    <button id="planning-detail-delete" type="button" class="ui-theme-danger-action rounded-lg py-2 font-semibold text-white">🗑️ Supprimer</button>
+                    <button id="planning-detail-edit" type="button" class="ui-theme-zone-action rounded-lg py-2 font-bold text-white">✏️ Modifier</button>
                 </div>
             </section>
 
@@ -1225,18 +1304,24 @@
         </div>
     </div>
 
-    <div id="modal-planning-detail" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-        <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
-            <div class="flex shrink-0 items-center justify-between gap-3 bg-slate-800 p-4 font-bold text-white">
-                <span id="planning-detail-title">Détail du cycle</span>
-                <button type="button" onclick="closePlanningDetail()" class="text-white">✕</button>
+    <div id="modal-planning-metadata" class="hidden fixed inset-0 z-[72] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-lg overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex items-center justify-between gap-3 bg-teal-700 p-4 font-bold text-white">
+                <span>Modifier la page Planification</span>
+                <button type="button" onclick="closePlanningMetadataEditor()" class="text-white">✕</button>
             </div>
-            <div id="planning-detail-content" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"></div>
-            <div class="grid shrink-0 grid-cols-3 gap-2 border-t border-gray-100 p-4">
-                <button type="button" onclick="closePlanningDetail()" class="rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Fermer</button>
-                <button id="planning-detail-delete" type="button" class="rounded-lg border border-red-200 bg-red-50 py-2 font-semibold text-red-700">Supprimer</button>
-                <button id="planning-detail-edit" type="button" class="rounded-lg bg-teal-700 py-2 font-bold text-white">Modifier</button>
-            </div>
+            <form id="planning-metadata-form" onsubmit="savePlanningMetadata(event)" class="space-y-3 p-4">
+                <label class="block text-[10px] font-bold text-gray-600">Titre
+                    <input id="planning-metadata-title" type="text" maxlength="100" required class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal">
+                </label>
+                <label class="block text-[10px] font-bold text-gray-600">Description
+                    <textarea id="planning-metadata-description" rows="4" maxlength="500" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal"></textarea>
+                </label>
+                <div class="flex gap-2 border-t border-gray-100 pt-3">
+                    <button type="button" onclick="closePlanningMetadataEditor()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                    <button type="submit" class="ui-theme-primary-action flex-1 rounded-lg py-2 font-bold text-white">Enregistrer</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1614,7 +1699,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.21.0';
+        const APP_VERSION = '1.22.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1662,6 +1747,128 @@
             {value: 5, label: 'Vendredi'}, {value: 6, label: 'Samedi'},
             {value: 0, label: 'Dimanche'}
         ];
+        const PLANNING_MESOCYCLE_PHASES = [
+            {code: 'PP', label: 'Préparation physique'},
+            {code: 'PPS', label: 'Préparation physique spécifique'},
+            {code: 'PPC', label: 'Préparation pré-compétition'},
+            {code: 'PC', label: 'Préparation compétition'},
+            {code: 'TR', label: 'Transition — après compétition'}
+        ];
+        const UI_THEME_FONT_OPTIONS = {
+            system: "'Segoe UI', system-ui, sans-serif",
+            arial: "Arial, sans-serif",
+            verdana: "Verdana, sans-serif",
+            trebuchet: "'Trebuchet MS', sans-serif",
+            georgia: "Georgia, serif",
+            courier: "'Courier New', monospace"
+        };
+        const DEFAULT_UI_THEME = {
+            version: 1,
+            font: 'system',
+            pageBackground: '#f3f4f6',
+            surfaceBackground: '#ffffff',
+            inputBackground: '#ffffff',
+            textColor: '#1f2937',
+            mutedColor: '#6b7280',
+            headerColor: '#0f766e',
+            primaryColor: '#0f766e',
+            successColor: '#16a34a',
+            dangerColor: '#dc2626',
+            callColor: '#22c55e',
+            smsColor: '#3b82f6',
+            mailColor: '#a855f7',
+            zones: {
+                home: {accent: '#0f766e', background: '#f3f4f6'},
+                category: {accent: '#0f766e', background: '#f3f4f6'},
+                fiche: {accent: '#0f766e', background: '#ffffff'},
+                competition: {accent: '#7e22ce', background: '#faf5ff'},
+                'competition-match': {accent: '#7e22ce', background: '#faf5ff'},
+                'competition-live': {accent: '#7e22ce', background: '#faf5ff'},
+                planning: {accent: '#0f766e', background: '#f0fdfa'},
+                'planning-macro': {accent: '#0f766e', background: '#f0fdfa'},
+                'planning-meso': {accent: '#1d4ed8', background: '#eff6ff'},
+                'planning-micro': {accent: '#7e22ce', background: '#faf5ff'},
+                settings: {accent: '#475569', background: '#f8fafc'},
+                'tab-infos': {accent: '#2563eb', background: '#ffffff'},
+                'tab-saisie': {accent: '#7e22ce', background: '#ffffff'},
+                'tab-suivi': {accent: '#7e22ce', background: '#faf5ff'},
+                'tab-progression': {accent: '#7e22ce', background: '#faf5ff'},
+                'tab-mouvements': {accent: '#db2777', background: '#fdf2f8'}
+            },
+            categories: {}
+        };
+
+        function cloneDefaultUiTheme() {
+            return JSON.parse(JSON.stringify(DEFAULT_UI_THEME));
+        }
+
+        function normalizeUiThemeColor(value, fallback) {
+            const color = String(value || '').trim();
+            return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : fallback;
+        }
+
+        function getUiThemeContrastColor(value) {
+            const color = normalizeUiThemeColor(value, '#000000').slice(1);
+            const channels = [0, 2, 4].map(index => parseInt(color.slice(index, index + 2), 16) / 255)
+                .map(channel => channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4));
+            const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+            return luminance > 0.179 ? '#111827' : '#ffffff';
+        }
+
+        function normalizeUiTheme(target) {
+            if (!target || typeof target !== 'object' || Array.isArray(target)) return target;
+            const defaults = cloneDefaultUiTheme();
+            const source = target.uiTheme && typeof target.uiTheme === 'object' && !Array.isArray(target.uiTheme)
+                ? target.uiTheme : {};
+            const theme = {...defaults};
+            theme.version = 1;
+            theme.font = Object.prototype.hasOwnProperty.call(UI_THEME_FONT_OPTIONS, source.font) ? source.font : defaults.font;
+            ['pageBackground', 'surfaceBackground', 'inputBackground', 'textColor', 'mutedColor',
+                'headerColor', 'primaryColor', 'successColor', 'dangerColor', 'callColor', 'smsColor', 'mailColor']
+                .forEach(key => { theme[key] = normalizeUiThemeColor(source[key], defaults[key]); });
+            const sourceZones = source.zones && typeof source.zones === 'object' && !Array.isArray(source.zones) ? source.zones : {};
+            theme.zones = {};
+            Object.entries(defaults.zones).forEach(([key, fallback]) => {
+                const zone = sourceZones[key] && typeof sourceZones[key] === 'object' ? sourceZones[key] : {};
+                theme.zones[key] = {
+                    accent: normalizeUiThemeColor(zone.accent, fallback.accent),
+                    background: normalizeUiThemeColor(zone.background, fallback.background)
+                };
+            });
+            const sourceCategories = source.categories && typeof source.categories === 'object' && !Array.isArray(source.categories)
+                ? source.categories : {};
+            theme.categories = {};
+            Object.entries(sourceCategories).forEach(([id, category]) => {
+                if (!/^[A-Za-z0-9_-]{1,100}$/.test(id) || !category || typeof category !== 'object' || Array.isArray(category)) return;
+                theme.categories[id] = {
+                    accent: normalizeUiThemeColor(category.accent, defaults.zones.category.accent),
+                    background: normalizeUiThemeColor(category.background, defaults.zones.category.background)
+                };
+            });
+            target.uiTheme = theme;
+            return target;
+        }
+
+        function inferPlanningMesocyclePhase(item) {
+            const text = `${item && item.code || ''} ${item && item.name || ''} ${item && item.objective || ''}`
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+            if (/transition|recuperation|post[- ]?competition/.test(text)) return 'TR';
+            if (/precompetition|pre-competition|controle complet|simulation/.test(text)) return 'PPC';
+            if (/competition 1|periode competitive|finale/.test(text)) return 'PC';
+            if (/diagnostic|preparation generale|base physique/.test(text)) return 'PP';
+            return 'PPS';
+        }
+
+        function normalizePlanningMesocyclePhase(value, item = {}) {
+            const code = String(value || '').trim().toUpperCase();
+            return PLANNING_MESOCYCLE_PHASES.some(phase => phase.code === code)
+                ? code : inferPlanningMesocyclePhase(item);
+        }
+
+        function getPlanningMesocyclePhaseLabel(value) {
+            const phase = PLANNING_MESOCYCLE_PHASES.find(item => item.code === value);
+            return phase ? `${phase.code} — ${phase.label}` : 'PPS — Préparation physique spécifique';
+        }
         const OFFICIAL_SCHOOL_HOLIDAYS = {
             '2026-2027': {
                 common: [
@@ -1902,7 +2109,10 @@
         function createDefaultPlanningData() {
             const defaultMacrocycleId = 'MACRO-GAF-U13-2026-2027';
             const mesocycles = JSON.parse(JSON.stringify(DEFAULT_PLANNING_MESOCYCLES));
-            mesocycles.forEach(mesocycle => { mesocycle.macrocycleId = defaultMacrocycleId; });
+            mesocycles.forEach(mesocycle => {
+                mesocycle.macrocycleId = defaultMacrocycleId;
+                mesocycle.phase = normalizePlanningMesocyclePhase(mesocycle.phase, mesocycle);
+            });
             const mesocyclesById = new Map(mesocycles.map(item => [item.id, item]));
             const groups = new Map();
             DEFAULT_PLANNING_SESSION_ROWS.trim().split('\n').forEach((line, index) => {
@@ -1960,7 +2170,9 @@
             });
             microcycles.sort((left, right) => left.startDate.localeCompare(right.startDate) || left.mesocycleId.localeCompare(right.mesocycleId));
             return {
-                templateVersion: 2,
+                templateVersion: 3,
+                title: 'Planification GAF U13 🗓️',
+                description: 'Organisation de la saison du général vers le détail.',
                 source: 'Programmation saisonnière GAF Fédérale A 10–13 ans 2026–2027',
                 scheduleConfig: createDefaultPlanningScheduleConfig(),
                 macrocycles: [{
@@ -2090,7 +2302,9 @@
                 return target;
             }
             const planning = target.planning;
-            planning.templateVersion = Math.max(2, Number(planning.templateVersion) || 1);
+            planning.templateVersion = Math.max(3, Number(planning.templateVersion) || 1);
+            planning.title = normalizePlanningText(planning.title || 'Planification GAF U13 🗓️', 100);
+            planning.description = normalizePlanningText(planning.description || 'Organisation de la saison du général vers le détail.', 500);
             planning.source = normalizePlanningText(planning.source, 200);
             const normalizeList = (list, prefix, mapper) => {
                 const seen = new Set();
@@ -2124,6 +2338,7 @@
                 macrocycleId: validMacroIds.has(String(item.macrocycleId || '')) ? String(item.macrocycleId) : '',
                 code: normalizePlanningText(item.code, 20),
                 name: normalizePlanningText(item.name || 'Mésocycle', 120),
+                phase: normalizePlanningMesocyclePhase(item.phase, item),
                 startDate: normalizePlanningText(item.startDate, 10),
                 endDate: normalizePlanningText(item.endDate, 10),
                 load: normalizePlanningText(item.load, 100),
@@ -2467,6 +2682,7 @@
             defaultSigleScoring: {},
             deletedDefaultSigles: [],
             planning: createDefaultPlanningData(),
+            uiTheme: cloneDefaultUiTheme(),
             appName: "GymSuivi",
             appLogo: "",
             birthdayNotificationsEnabled: false
@@ -2474,6 +2690,7 @@
         normalizeLevelCollection(data);
         normalizeProgressionData(data);
         normalizePlanningData(data);
+        normalizeUiTheme(data);
         const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
         let editingCustomSigleIndex = null;
@@ -2849,6 +3066,7 @@
                 normalizeLevelCollection(data);
                 normalizeProgressionData(data);
                 normalizePlanningData(data);
+                normalizeUiTheme(data);
                 }
             catch (e) {
                 console.error('[GymSuivi] Erreur lecture localStorage :', e);
@@ -2859,6 +3077,7 @@
             normalizeLevelCollection(data);
             normalizeProgressionData(data);
             normalizePlanningData(data);
+            normalizeUiTheme(data);
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller)
                 syncBirthdayStateWithServiceWorker(false).catch(() => {});
@@ -2974,9 +3193,11 @@
                         normalizeLevelCollection(data);
                         normalizeProgressionData(data);
                         normalizePlanningData(data);
+                        normalizeUiTheme(data);
                         saveAllData();
                         renderLevels();
                         applyCustomAppIdentity();
+                        applyCustomColors();
                         updateBirthdayNotificationUI();
                         ensureBirthdayCheckInterval();
                         alert("🟢 Données restaurées avec succès !");
@@ -3112,7 +3333,7 @@
                 : err.gymMessage || `Synchronisation impossible${code ? ` (erreur ${code})` : ''}. Réessaie avec Internet.`;
             updateDriveStatusUI(!!googleAccessToken, `⚠️ ${detail} Données non synchronisées.`);
             // Ne pas journaliser la réponse OAuth ou le contenu des fiches.
-            console.warn('[GymSuivi] Synchronisation interrompue', code || err.name || 'Drive');
+            console.warn('[GymSuivi] Synchronisation interrompue', code || err.name || 'Drive', err && err.message ? err.message : '');
         }
 
         function driveDataError(message) {
@@ -3142,7 +3363,7 @@
                 throw driveDataError('Sauvegarde invalide (référentiel de progression) : aucune donnée remplacée.');
             if (!result.planning || typeof result.planning !== 'object' || Array.isArray(result.planning))
                 throw driveDataError('Sauvegarde invalide (planification) : aucune donnée remplacée.');
-            return normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result)));
+            return normalizeUiTheme(normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result))));
         }
 
         function hasDriveContent(snapshot) {
@@ -3154,6 +3375,7 @@
                     statuses && typeof statuses === 'object' && Object.keys(statuses).length > 0
                 ) ||
                 JSON.stringify(snapshot.planning) !== JSON.stringify(INITIAL_GYM_DATA.planning) ||
+                JSON.stringify(snapshot.uiTheme) !== JSON.stringify(INITIAL_GYM_DATA.uiTheme) ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
         }
@@ -3251,6 +3473,7 @@
             }
             if (!document.getElementById('screen-planning').classList.contains('hidden')) renderPlanning();
             applyCustomAppIdentity();
+            applyCustomColors();
             updateBirthdayNotificationUI();
             ensureBirthdayCheckInterval();
             syncBirthdayStateWithServiceWorker(false).catch(() => {});
@@ -3403,99 +3626,263 @@
         window.addEventListener('online', refreshDriveWhenIdle);
         document.addEventListener('visibilitychange', refreshDriveWhenIdle);
 
-        // ────────────────────────────────────────────────────────────── COULEURS
+        // ────────────────────────────────────────────────────────────── THÈME UI / UX
         // ──────────────────────────────────────────────────────────────
-        const defaultColors = {
-            header: '#0f766e',
-            'fed-a': '#ffffff',
-            'fed-b': '#ffffff',
-            'btn-appel': '#22c55e',
-            'btn-sms': '#3b82f6',
-            'btn-mail': '#a855f7'
-        };
-
-        let savedColors = {};
+        let legacyColors = {};
         try {
             const parsedColors = JSON.parse(localStorage.getItem('gym_colors_v3') || '{}');
-            if (parsedColors && typeof parsedColors === 'object' && !Array.isArray(parsedColors)) {
-                savedColors = parsedColors;
-            }
+            if (parsedColors && typeof parsedColors === 'object' && !Array.isArray(parsedColors)) legacyColors = parsedColors;
         } catch (err) {
-            console.warn('[GymSuivi] Couleurs locales invalides, valeurs par défaut restaurées.', err);
+            console.warn('[GymSuivi] Anciennes couleurs locales invalides, valeurs par défaut restaurées.', err);
             localStorage.removeItem('gym_colors_v3');
         }
 
-        let userColors = {
-            ...defaultColors,
-            ...savedColors
-        };
+        normalizeUiTheme(data);
+        if (Object.keys(legacyColors).length && JSON.stringify(data.uiTheme) === JSON.stringify(DEFAULT_UI_THEME)) {
+            data.uiTheme.headerColor = normalizeUiThemeColor(legacyColors.header, data.uiTheme.headerColor);
+            data.uiTheme.callColor = normalizeUiThemeColor(legacyColors['btn-appel'], data.uiTheme.callColor);
+            data.uiTheme.smsColor = normalizeUiThemeColor(legacyColors['btn-sms'], data.uiTheme.smsColor);
+            data.uiTheme.mailColor = normalizeUiThemeColor(legacyColors['btn-mail'], data.uiTheme.mailColor);
+            if (legacyColors['fed-a']) data.uiTheme.categories['NIV-A'] = {
+                ...data.uiTheme.zones.category,
+                background: normalizeUiThemeColor(legacyColors['fed-a'], data.uiTheme.zones.category.background)
+            };
+            if (legacyColors['fed-b']) data.uiTheme.categories['NIV-B'] = {
+                ...data.uiTheme.zones.category,
+                background: normalizeUiThemeColor(legacyColors['fed-b'], data.uiTheme.zones.category.background)
+            };
+        }
+
+        let userColors = {};
+
+        function syncLegacyColorView() {
+            normalizeUiTheme(data);
+            userColors = {
+                header: data.uiTheme.headerColor,
+                'fed-a': getUiThemeZone('category:NIV-A').background,
+                'fed-b': getUiThemeZone('category:NIV-B').background,
+                'btn-appel': data.uiTheme.callColor,
+                'btn-sms': data.uiTheme.smsColor,
+                'btn-mail': data.uiTheme.mailColor
+            };
+        }
+
+        function getUiThemeZone(zoneKey) {
+            normalizeUiTheme(data);
+            if (String(zoneKey || '').startsWith('category:')) {
+                const id = String(zoneKey).slice('category:'.length);
+                return data.uiTheme.categories[id] || data.uiTheme.zones.category;
+            }
+            return data.uiTheme.zones[zoneKey] || data.uiTheme.zones.home;
+        }
+
+        function getUiThemeZoneKeyForLevel(levelId) {
+            if (levelId === COMPETITION_LEVEL_ID) return 'competition';
+            if (levelId === PLANNING_LEVEL_ID) return 'planning';
+            return `category:${levelId}`;
+        }
+
+        function renderUiThemeZoneOptions() {
+            const select = document.getElementById('ui-theme-zone-select');
+            if (!select) return;
+            const previous = select.value;
+            const options = [
+                {value: 'home', label: 'Accueil — catégories'},
+                ...getGymLevels().map(level => ({value: `category:${level.id}`, label: `Catégorie — ${level.name}`})),
+                {value: 'competition', label: 'Catégorie — Compétition'},
+                {value: 'competition-match', label: 'Onglet compétition — Équipes et matchs'},
+                {value: 'competition-live', label: 'Onglet compétition — Saisie en direct'},
+                {value: 'planning', label: 'Catégorie — Planification'},
+                {value: 'planning-macro', label: 'Onglet planification — Macrocycle'},
+                {value: 'planning-meso', label: 'Onglet planification — Mésocycles'},
+                {value: 'planning-micro', label: 'Onglet planification — Microcycles'},
+                {value: 'fiche', label: 'Fiche gymnaste — cadre général'},
+                {value: 'tab-infos', label: 'Onglet — Fiche personnelle'},
+                {value: 'tab-saisie', label: 'Onglet — Saisie des notes'},
+                {value: 'tab-suivi', label: 'Onglet — Statistiques'},
+                {value: 'tab-progression', label: 'Onglet — Progression'},
+                {value: 'tab-mouvements', label: 'Onglet — Mouvements'},
+                {value: 'settings', label: 'Page — Paramètres'}
+            ];
+            select.innerHTML = '';
+            options.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.textContent = item.label;
+                select.appendChild(option);
+            });
+            select.value = options.some(item => item.value === previous) ? previous : options[0].value;
+        }
+
+        function loadUiThemeZoneControls() {
+            const select = document.getElementById('ui-theme-zone-select');
+            const accentInput = document.getElementById('ui-zone-accent');
+            const backgroundInput = document.getElementById('ui-zone-background');
+            const preview = document.getElementById('ui-theme-zone-preview');
+            if (!select || !accentInput || !backgroundInput || !preview) return;
+            const zone = getUiThemeZone(select.value);
+            accentInput.value = zone.accent;
+            backgroundInput.value = zone.background;
+            preview.style.backgroundColor = zone.background;
+            preview.style.borderColor = zone.accent;
+            preview.style.color = zone.accent;
+        }
 
         function initColorsInSettings() {
-            const levelA = getLevelById('NIV-A');
-            const levelB = getLevelById('NIV-B');
-            const rowA = document.getElementById('color-fed-a-row');
-            const rowB = document.getElementById('color-fed-b-row');
-            if (rowA) rowA.classList.toggle('hidden', !levelA);
-            if (rowB) rowB.classList.toggle('hidden', !levelB);
-            const labelA = document.getElementById('color-fed-a-label');
-            const labelB = document.getElementById('color-fed-b-label');
-            if (labelA && levelA) labelA.textContent = `${levelA.name} :`;
-            if (labelB && levelB) labelB.textContent = `${levelB.name} :`;
-            document
-                .getElementById('color-header')
-                .value = userColors.header;
-            document
-                .getElementById('color-fed-a')
-                .value = userColors['fed-a'] || '#ffffff';
-            document
-                .getElementById('color-fed-b')
-                .value = userColors['fed-b'] || '#ffffff';
-            document
-                .getElementById('color-btn-appel')
-                .value = userColors['btn-appel'];
-            document
-                .getElementById('color-btn-sms')
-                .value = userColors['btn-sms'];
-            document
-                .getElementById('color-btn-mail')
-                .value = userColors['btn-mail'];
+            normalizeUiTheme(data);
+            const theme = data.uiTheme;
+            const values = {
+                'ui-font-family': theme.font,
+                'ui-color-page-background': theme.pageBackground,
+                'ui-color-surface-background': theme.surfaceBackground,
+                'ui-color-input-background': theme.inputBackground,
+                'ui-color-text': theme.textColor,
+                'ui-color-muted': theme.mutedColor,
+                'ui-color-header': theme.headerColor,
+                'ui-color-primary': theme.primaryColor,
+                'ui-color-success': theme.successColor,
+                'ui-color-danger': theme.dangerColor,
+                'ui-color-call': theme.callColor,
+                'ui-color-sms': theme.smsColor,
+                'ui-color-mail': theme.mailColor
+            };
+            Object.entries(values).forEach(([id, value]) => {
+                const input = document.getElementById(id);
+                if (input) input.value = value;
+            });
+            renderUiThemeZoneOptions();
+            loadUiThemeZoneControls();
+        }
+
+        function updateUiThemeSetting(key, value) {
+            normalizeUiTheme(data);
+            if (key === 'font') data.uiTheme.font = Object.prototype.hasOwnProperty.call(UI_THEME_FONT_OPTIONS, value) ? value : 'system';
+            else if (Object.prototype.hasOwnProperty.call(data.uiTheme, key))
+                data.uiTheme[key] = normalizeUiThemeColor(value, DEFAULT_UI_THEME[key]);
+            normalizeUiTheme(data);
+            applyCustomColors();
+            renderLevels();
+            saveAllData();
+        }
+
+        function updateUiThemeZone(part, value) {
+            const select = document.getElementById('ui-theme-zone-select');
+            if (!select || !['accent', 'background'].includes(part)) return;
+            normalizeUiTheme(data);
+            const key = select.value;
+            if (key.startsWith('category:')) {
+                const id = key.slice('category:'.length);
+                data.uiTheme.categories[id] = {...getUiThemeZone(key), [part]: normalizeUiThemeColor(value, getUiThemeZone(key)[part])};
+            } else if (data.uiTheme.zones[key]) {
+                data.uiTheme.zones[key] = {...data.uiTheme.zones[key], [part]: normalizeUiThemeColor(value, data.uiTheme.zones[key][part])};
+            }
+            applyCustomColors();
+            renderLevels();
+            loadUiThemeZoneControls();
+            saveAllData();
+        }
+
+        function resetUiTheme() {
+            if (!confirm('Réinitialiser la police, les couleurs et les fonds de toute l’application ?')) return;
+            data.uiTheme = cloneDefaultUiTheme();
+            localStorage.removeItem('gym_colors_v3');
+            applyCustomColors();
+            renderLevels();
+            initColorsInSettings();
+            saveAllData();
         }
 
         function updateCustomColor(zone, value) {
-            userColors[zone] = value;
-            localStorage.setItem('gym_colors_v3', JSON.stringify(userColors));
-            applyCustomColors();
-            renderLevels();
+            const mapping = {header: 'headerColor', 'btn-appel': 'callColor', 'btn-sms': 'smsColor', 'btn-mail': 'mailColor'};
+            if (mapping[zone]) return updateUiThemeSetting(mapping[zone], value);
+            if (zone === 'fed-a' || zone === 'fed-b') {
+                const id = zone === 'fed-a' ? 'NIV-A' : 'NIV-B';
+                data.uiTheme.categories[id] = {...getUiThemeZone(`category:${id}`), background: normalizeUiThemeColor(value, '#ffffff')};
+                applyCustomColors();
+                renderLevels();
+                saveAllData();
+            }
         }
 
         function resetColors() {
-            userColors = {
-                ...defaultColors
-            };
-            localStorage.setItem('gym_colors_v3', JSON.stringify(userColors));
-            initColorsInSettings();
-            applyCustomColors();
-            renderLevels();
+            resetUiTheme();
         }
 
         function applyCustomColors() {
-            document
-                .getElementById('app-header')
-                .style
-                .backgroundColor = userColors.header;
+            normalizeUiTheme(data);
+            syncLegacyColorView();
+            const theme = data.uiTheme;
+            const root = document.documentElement;
+            const variables = {
+                '--ui-font-family': UI_THEME_FONT_OPTIONS[theme.font],
+                '--ui-page-background': theme.pageBackground,
+                '--ui-surface-background': theme.surfaceBackground,
+                '--ui-input-background': theme.inputBackground,
+                '--ui-text-color': theme.textColor,
+                '--ui-muted-color': theme.mutedColor,
+                '--ui-primary-color': theme.primaryColor,
+                '--ui-primary-contrast': getUiThemeContrastColor(theme.primaryColor),
+                '--ui-success-color': theme.successColor,
+                '--ui-success-contrast': getUiThemeContrastColor(theme.successColor),
+                '--ui-danger-color': theme.dangerColor,
+                '--ui-danger-contrast': getUiThemeContrastColor(theme.dangerColor)
+            };
+            if (root && root.style && typeof root.style.setProperty === 'function')
+                Object.entries(variables).forEach(([name, value]) => root.style.setProperty(name, value));
+            if (document.body && document.body.classList) document.body.classList.add('ui-theme-active');
+            const metaTheme = typeof document.querySelector === 'function'
+                ? document.querySelector('meta[name="theme-color"]') : null;
+            if (metaTheme) metaTheme.setAttribute('content', theme.headerColor);
+            const header = document.getElementById('app-header');
+            if (header && header.style) header.style.backgroundColor = theme.headerColor;
             const ficheHdr = document.getElementById('fiche-header');
-            if (ficheHdr) 
-                ficheHdr.style.backgroundColor = userColors.header;
+            if (ficheHdr && ficheHdr.style) ficheHdr.style.backgroundColor = theme.headerColor;
+            document.querySelectorAll('[data-ui-zone]').forEach(element => {
+                if (!element || !element.style || typeof element.style.setProperty !== 'function') return;
+                let key = element.dataset.uiZone;
+                if (key === 'category') key = currentLevelId ? `category:${currentLevelId}` : 'category';
+                const zone = getUiThemeZone(key);
+                element.style.setProperty('--zone-accent', zone.accent);
+                element.style.setProperty('--zone-contrast', getUiThemeContrastColor(zone.accent));
+                element.style.setProperty('--zone-background', zone.background);
+            });
             const linkCall = document.getElementById('link-call');
             const linkSms = document.getElementById('link-sms');
             const linkEmail = document.getElementById('link-email');
-            if (linkCall) 
-                linkCall.style.backgroundColor = userColors['btn-appel'];
-            if (linkSms) 
-                linkSms.style.backgroundColor = userColors['btn-sms'];
-            if (linkEmail) 
-                linkEmail.style.backgroundColor = userColors['btn-mail'];
+            if (linkCall && linkCall.style) {
+                linkCall.style.backgroundColor = theme.callColor;
+                linkCall.style.color = getUiThemeContrastColor(theme.callColor);
             }
+            if (linkSms && linkSms.style) {
+                linkSms.style.backgroundColor = theme.smsColor;
+                linkSms.style.color = getUiThemeContrastColor(theme.smsColor);
+            }
+            if (linkEmail && linkEmail.style) {
+                linkEmail.style.backgroundColor = theme.mailColor;
+                linkEmail.style.color = getUiThemeContrastColor(theme.mailColor);
+            }
+            document.querySelectorAll('button, a').forEach(element => {
+                if (!element || !element.style) return;
+                const classes = String(element.className || '');
+                if (classes.includes('ui-theme-zone-action')) return;
+                if (/bg-red-(500|600|700|800)/.test(classes) && classes.includes('text-white')) {
+                    element.style.backgroundColor = theme.dangerColor;
+                    element.style.color = getUiThemeContrastColor(theme.dangerColor);
+                }
+                else if (/bg-(green|emerald)-(500|600|700|800)/.test(classes) && classes.includes('text-white')) {
+                    element.style.backgroundColor = theme.successColor;
+                    element.style.color = getUiThemeContrastColor(theme.successColor);
+                }
+                else if (/bg-(teal|blue|purple|pink|amber)-(600|700|800)/.test(classes) && classes.includes('text-white')) {
+                    const zoneElement = typeof element.closest === 'function' ? element.closest('[data-ui-zone]') : null;
+                    let zoneKey = zoneElement && zoneElement.dataset ? zoneElement.dataset.uiZone : '';
+                    if (zoneKey === 'category') zoneKey = currentLevelId ? `category:${currentLevelId}` : 'category';
+                    const background = zoneKey ? getUiThemeZone(zoneKey).accent : theme.primaryColor;
+                    element.style.backgroundColor = background;
+                    element.style.color = getUiThemeContrastColor(background);
+                }
+            });
+        }
         
         // ────────────────────────────────────────────────────────────── CATÉGORIES —
         // Âge sportif FFGym : âge atteint pendant l'année de fin de saison.
@@ -3717,10 +4104,11 @@
         let currentLiveApparatus = 'saut';
         let liveCompetitionSaveTimer = null;
         let currentPlanningTab = 'macro';
+        let currentPlanningDetail = null;
         let planningSessionEditorCounter = 0;
         let screenHistory = ['screen-levels'];
 
-        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-settings'];
+        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-planning-detail', 'screen-settings'];
 
         function showScreen(screenId) {
             ALL_SCREENS.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -3759,6 +4147,7 @@
                     .classList
                     .toggle('hidden', screenId !== 'screen-gymnastes');
             }
+            applyCustomColors();
         }
 
         function toggleSettingsScreen() {
@@ -3784,6 +4173,8 @@
                     switchCompetitionTab(currentCompetitionTab);
                 }
                 if (prev === 'screen-planning') renderPlanning();
+                if (prev === 'screen-planning-detail' && currentPlanningDetail)
+                    openPlanningDetail(currentPlanningDetail.type, currentPlanningDetail.id);
                 }
             }
 
@@ -3846,6 +4237,8 @@
                 assigned.forEach(gymnast => { gymnast.niveauId = target.id; });
             }
             data.levels = data.levels.filter(item => item.id !== levelId);
+            if (typeof normalizeUiTheme === 'function') normalizeUiTheme(data);
+            if (data.uiTheme && data.uiTheme.categories) delete data.uiTheme.categories[levelId];
             if (currentLevelId === levelId) currentLevelId = moveToLevelId || null;
             saveAllData();
             return assigned.length;
@@ -4019,26 +4412,24 @@
                             ? 'Macrocycle · Mésocycles · Microcycles'
                             : `${count} gymnaste(s)`;
 
-                    let styleStr = '';
-                    if (lvl.id === 'NIV-A' && userColors['fed-a']) 
-                        styleStr = `background-color:${userColors['fed-a']};`;
-                    if (lvl.id === 'NIV-B' && userColors['fed-b']) 
-                        styleStr = `background-color:${userColors['fed-b']};`;
-                    
+                    const levelTheme = getUiThemeZone(getUiThemeZoneKeyForLevel(lvl.id));
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-left hover:border-gray-300 transition';
-                    button.style.cssText = styleStr;
+                    button.className = 'p-5 rounded-xl shadow-sm border flex justify-between items-center text-left transition hover:shadow-md';
+                    button.style.backgroundColor = levelTheme.background;
+                    button.style.borderColor = levelTheme.accent;
                     const text = document.createElement('div');
                     const name = document.createElement('span');
                     name.className = 'block font-bold text-gray-800 text-base';
                     name.textContent = lvl.name;
+                    name.style.color = levelTheme.accent;
                     const badgeElement = document.createElement('span');
                     badgeElement.className = 'text-xs text-gray-600';
                     badgeElement.textContent = badge;
                     const arrow = document.createElement('span');
                     arrow.className = 'text-gray-600 text-lg';
                     arrow.textContent = '▶';
+                    arrow.style.color = levelTheme.accent;
                     text.append(name, badgeElement);
                     button.append(text, arrow);
                     button.onclick = () => openLevel(lvl.id, lvl.name);
@@ -4097,6 +4488,41 @@
 
         function getPlanningTypeLabel(type) {
             return type === 'macrocycle' ? 'Macrocycle' : type === 'mesocycle' ? 'Mésocycle' : 'Microcycle';
+        }
+
+        function renderPlanningMetadata() {
+            normalizePlanningData(data);
+            const title = document.getElementById('planning-page-title');
+            const description = document.getElementById('planning-page-description');
+            if (title) title.textContent = data.planning.title;
+            if (description) description.textContent = data.planning.description || 'Aucune description.';
+        }
+
+        function openPlanningMetadataEditor() {
+            normalizePlanningData(data);
+            document.getElementById('planning-metadata-title').value = data.planning.title;
+            document.getElementById('planning-metadata-description').value = data.planning.description;
+            document.getElementById('modal-planning-metadata').classList.remove('hidden');
+            document.getElementById('planning-metadata-title').focus();
+        }
+
+        function closePlanningMetadataEditor() {
+            document.getElementById('modal-planning-metadata').classList.add('hidden');
+        }
+
+        function savePlanningMetadata(event) {
+            event.preventDefault();
+            const title = normalizePlanningText(document.getElementById('planning-metadata-title').value, 100);
+            const description = normalizePlanningText(document.getElementById('planning-metadata-description').value, 500);
+            if (!title) {
+                alert('Indiquez un titre pour la page Planification.');
+                return;
+            }
+            data.planning.title = title;
+            data.planning.description = description;
+            saveAllData();
+            closePlanningMetadataEditor();
+            renderPlanningMetadata();
         }
 
         function createPlanningEntityId(type) {
@@ -4162,7 +4588,7 @@
                 <label class="text-[9px] font-bold text-gray-500">Au<input data-event-field="endDate" type="date" value="${escapeHtml(event.endDate)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
                 <label class="text-[9px] font-bold text-gray-500">Début<input data-event-field="startTime" type="time" value="${escapeHtml(event.startTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
                 <label class="text-[9px] font-bold text-gray-500">Fin<input data-event-field="endTime" type="time" value="${escapeHtml(event.endTime)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
-                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Mésocycle<select data-event-field="mesocycleId" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal">${mesocycleOptions.map(item => `<option value="${escapeHtml(item.id)}"${item.id === event.mesocycleId ? ' selected' : ''}>${escapeHtml(item.id ? `${item.code ? `${item.code} — ` : ''}${item.name}` : item.name)}</option>`).join('')}</select></label>
+                <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Mésocycle<select data-event-field="mesocycleId" class="mt-1 w-full rounded border border-gray-200 bg-white p-2 text-[10px] font-normal">${mesocycleOptions.map(item => `<option value="${escapeHtml(item.id)}"${item.id === event.mesocycleId ? ' selected' : ''}>${escapeHtml(item.id ? `${item.phase || 'PPS'} · ${item.code ? `${item.code} — ` : ''}${item.name}` : item.name)}</option>`).join('')}</select></label>
                 <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Notes<input data-event-field="notes" type="text" maxlength="1000" value="${escapeHtml(event.notes)}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
             </div><div class="mt-2 flex flex-wrap items-center justify-between gap-2"><label class="flex items-center gap-2 text-[9px] font-semibold text-gray-600"><input data-event-field="replaceRecurring" type="checkbox"${event.replaceRecurring ? ' checked' : ''} class="h-4 w-4 accent-amber-600">Remplace l’horaire récurrent ces jours-là</label><button type="button" class="text-[9px] font-bold text-red-600">🗑️ Supprimer l’événement</button></div>`;
             row.querySelector('button').onclick = () => { row.remove(); updatePlanningSchedulePreview(); };
@@ -4361,13 +4787,13 @@
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
             } else if (type === 'mesocycle') {
                 const volume = getPlanningMesocycleVolume(item);
-                badge = escapeHtml(item.code || 'MÉSO');
+                badge = escapeHtml(`${item.phase || 'PPS'}${item.code ? ` · ${item.code}` : ''}`);
                 description = escapeHtml(item.objective || 'Objectif à renseigner');
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
             } else {
                 const volume = getPlanningMicrocycleVolume(item);
                 const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
-                badge = escapeHtml(mesocycle ? mesocycle.code : 'Sans mésocycle');
+                badge = escapeHtml(mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code || mesocycle.name}` : 'Sans mésocycle');
                 description = escapeHtml(item.objective || item.apparatuses || 'Contenu à renseigner');
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
             }
@@ -4441,7 +4867,7 @@
                 .forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.id;
-                    option.textContent = `${item.code ? `${item.code} — ` : ''}${item.name}`;
+                    option.textContent = `${item.phase || 'PPS'} · ${item.code ? `${item.code} — ` : ''}${item.name}`;
                     select.appendChild(option);
                 });
             select.value = Array.from(select.options).some(option => option.value === selected) ? selected : 'all';
@@ -4459,7 +4885,8 @@
                 .filter(item => {
                     if (!search) return true;
                     const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
-                    const haystack = [item.name, item.objective, item.apparatuses, item.notes, mesocycle && mesocycle.code, mesocycle && mesocycle.name]
+                    const haystack = [item.name, item.objective, item.apparatuses, item.notes, mesocycle && mesocycle.code,
+                        mesocycle && mesocycle.phase, mesocycle && getPlanningMesocyclePhaseLabel(mesocycle.phase), mesocycle && mesocycle.name]
                         .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
                     return haystack.includes(search);
                 })
@@ -4476,6 +4903,7 @@
 
         function renderPlanning() {
             normalizePlanningData(data);
+            renderPlanningMetadata();
             renderPlanningSummary();
             renderPlanningMacrocycles();
             renderPlanningMesocycles();
@@ -4494,6 +4922,9 @@
                     button.classList.toggle('text-teal-700', name === currentPlanningTab);
                     button.classList.toggle('shadow-sm', name === currentPlanningTab);
                     button.classList.toggle('text-gray-500', name !== currentPlanningTab);
+                    button.style.color = name === currentPlanningTab
+                        ? getUiThemeZone(`planning-${name}`).accent
+                        : data.uiTheme.mutedColor;
                 }
             });
             renderPlanning();
@@ -4517,7 +4948,7 @@
             if (!children.length) return `<div class="rounded-xl border border-dashed border-gray-200 p-3 text-center text-[10px] text-gray-400">Aucun ${type === 'mesocycle' ? 'mésocycle' : 'microcycle'} rattaché.</div>`;
             return `<div class="space-y-2"><p class="text-[9px] font-bold uppercase tracking-wider text-gray-400">${escapeHtml(title)}</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-2">${children
                 .slice().sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'))
-                .map(child => `<button type="button" data-planning-child-type="${type}" data-planning-child-id="${escapeHtml(child.id)}" class="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-teal-300"><span class="block text-[9px] font-bold text-teal-700">${escapeHtml(type === 'mesocycle' ? child.code || 'MÉSO' : formatPlanningPeriod(child.startDate, child.endDate))}</span><strong class="mt-1 block text-xs text-gray-700">${escapeHtml(child.name)}</strong></button>`).join('')}</div></div>`;
+                .map(child => `<button type="button" data-planning-child-type="${type}" data-planning-child-id="${escapeHtml(child.id)}" class="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-teal-300"><span class="block text-[9px] font-bold text-teal-700">${escapeHtml(type === 'mesocycle' ? `${child.phase || 'PPS'}${child.code ? ` · ${child.code}` : ''}` : formatPlanningPeriod(child.startDate, child.endDate))}</span><strong class="mt-1 block text-xs text-gray-700">${escapeHtml(child.name)}</strong></button>`).join('')}</div></div>`;
         }
 
         function buildPlanningDetailHtml(type, item) {
@@ -4548,6 +4979,7 @@
                 return `${status}${planningVolumeCards(volume)}
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         ${planningDetailRow('Code', item.code)}
+                        ${planningDetailRow('Type de mésocycle', getPlanningMesocyclePhaseLabel(item.phase))}
                         ${planningDetailRow('Macrocycle', macrocycle ? macrocycle.name : 'Non rattaché')}
                         ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
                         ${planningDetailRow('Charge cible', item.load)}
@@ -4571,7 +5003,7 @@
                 </tr>`).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-400">Aucune séance programmée.</td></tr>';
             return `${status}${planningVolumeCards(volume)}
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
+                    ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
                     ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
                     ${planningDetailRow('Intensité / charge', item.intensity)}
                     ${planningDetailRow('Agrès prioritaires', item.apparatuses)}
@@ -4586,22 +5018,24 @@
         function openPlanningDetail(type, id) {
             const item = getPlanningEntity(type, id);
             if (!item) return;
-            document.getElementById('planning-detail-title').textContent = `${getPlanningTypeLabel(type)} — ${item.name}`;
+            currentPlanningDetail = {type, id};
+            document.getElementById('planning-detail-type').textContent = getPlanningTypeLabel(type);
+            document.getElementById('planning-detail-title').textContent = item.name;
             const content = document.getElementById('planning-detail-content');
             content.innerHTML = buildPlanningDetailHtml(type, item);
             content.querySelectorAll('[data-planning-child-id]').forEach(button => {
                 button.onclick = () => openPlanningDetail(button.dataset.planningChildType, button.dataset.planningChildId);
             });
-            document.getElementById('planning-detail-edit').onclick = () => {
-                closePlanningDetail();
-                openPlanningEditor(type, id);
-            };
+            document.getElementById('planning-detail-edit').onclick = () => openPlanningEditor(type, id);
             document.getElementById('planning-detail-delete').onclick = () => deletePlanningEntity(type, id);
-            document.getElementById('modal-planning-detail').classList.remove('hidden');
+            showScreen('screen-planning-detail');
+            if (typeof window.scrollTo === 'function') window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
         function closePlanningDetail() {
-            document.getElementById('modal-planning-detail').classList.add('hidden');
+            if (!document.getElementById('screen-planning-detail').classList.contains('hidden')) goBack();
+            else showScreen('screen-planning');
+            currentPlanningDetail = null;
         }
 
         function planningEditorField(name, label, value, options = {}) {
@@ -4645,9 +5079,14 @@
                     value: macrocycle.id,
                     label: `${macrocycle.season ? `${macrocycle.season} — ` : ''}${macrocycle.name}`
                 })));
+                const phaseOptions = PLANNING_MESOCYCLE_PHASES.map(phase => ({
+                    value: phase.code,
+                    label: `${phase.code} — ${phase.label}`
+                }));
                 fields.innerHTML = [
                     planningEditorField('code', 'Code', item.code, {required: true}),
                     planningEditorField('name', 'Nom', item.name, {required: true}),
+                    planningEditorField('phase', 'Type de mésocycle', normalizePlanningMesocyclePhase(item.phase, item), {type: 'select', options: phaseOptions, full: true, required: true}),
                     planningEditorField('macrocycleId', 'Macrocycle lié', item.macrocycleId, {type: 'select', options: macrocycleOptions, full: true}),
                     planningEditorField('startDate', 'Début', item.startDate, {type: 'date'}),
                     planningEditorField('endDate', 'Fin', item.endDate, {type: 'date'}),
@@ -4660,7 +5099,7 @@
             } else {
                 const mesocycleOptions = [{value: '', label: 'Non rattaché'}].concat(getPlanningCollection('mesocycle').map(mesocycle => ({
                     value: mesocycle.id,
-                    label: `${mesocycle.code ? `${mesocycle.code} — ` : ''}${mesocycle.name}`
+                    label: `${mesocycle.phase || 'PPS'} · ${mesocycle.code ? `${mesocycle.code} — ` : ''}${mesocycle.name}`
                 })));
                 fields.innerHTML = [
                     planningEditorField('name', 'Nom', item.name, {required: true}),
@@ -4784,6 +5223,7 @@
                 next = {...common,
                     macrocycleId: normalizePlanningText(form.get('macrocycleId'), 100),
                     code: normalizePlanningText(form.get('code'), 20),
+                    phase: normalizePlanningMesocyclePhase(form.get('phase'), common),
                     load: normalizePlanningText(form.get('load'), 100),
                     objective: normalizePlanningText(form.get('objective'), 2000),
                     expected: normalizePlanningText(form.get('expected'), 2000)
@@ -4805,6 +5245,8 @@
             saveAllData();
             closePlanningEditor();
             renderPlanning();
+            if (!document.getElementById('screen-planning-detail').classList.contains('hidden') && currentPlanningDetail)
+                openPlanningDetail(currentPlanningDetail.type, currentPlanningDetail.id);
         }
 
         function deletePlanningEntity(type, id) {
@@ -5354,7 +5796,7 @@
                 .querySelectorAll('#screen-fiche button[id^="tab-"]')
                 .forEach(b => {
                     b.style.borderColor = 'transparent';
-                    b.style.color = '#6b7280';
+                    b.style.color = data.uiTheme.mutedColor;
                     b.style.fontWeight = 'normal';
                 });
             document
@@ -5366,8 +5808,9 @@
                 .add('active');
             const activeBtn = document.getElementById(`tab-${tabName}`);
             if (activeBtn) {
-                activeBtn.style.borderColor = userColors.header;
-                activeBtn.style.color = userColors.header;
+                const tabTheme = getUiThemeZone(`tab-${tabName}`);
+                activeBtn.style.borderColor = tabTheme.accent;
+                activeBtn.style.color = tabTheme.accent;
                 activeBtn.style.fontWeight = 'bold';
             }
             if (tabName === 'progression') renderProgressionTable();
@@ -5889,7 +6332,7 @@
             setSelectedProgressionApparatuses([]);
             setSelectedProgressionFamilies([]);
             document.getElementById('btn-save-progression').textContent = '＋ Ajouter';
-            document.getElementById('btn-cancel-progression-edit').classList.add('hidden');
+            document.getElementById('btn-cancel-progression-edit').classList.remove('hidden');
             if (closePanel) closeProgressionAddPanel();
         }
 
@@ -8776,6 +9219,8 @@
             const liveButton = document.getElementById('btn-competition-tab-live');
             matchButton.className = `py-2 rounded-lg font-bold ${!isLive ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`;
             liveButton.className = `py-2 rounded-lg font-bold ${isLive ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`;
+            matchButton.style.color = !isLive ? getUiThemeZone('competition-match').accent : data.uiTheme.mutedColor;
+            liveButton.style.color = isLive ? getUiThemeZone('competition-live').accent : data.uiTheme.mutedColor;
 
             if (isLive)
                 renderLiveCompetitionControls();
