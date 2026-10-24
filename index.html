@@ -1699,7 +1699,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.22.0';
+        const APP_VERSION = '1.22.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -3668,7 +3668,8 @@
         }
 
         function getUiThemeZone(zoneKey) {
-            normalizeUiTheme(data);
+            if (!data.uiTheme || !data.uiTheme.zones || !data.uiTheme.categories)
+                normalizeUiTheme(data);
             if (String(zoneKey || '').startsWith('category:')) {
                 const id = String(zoneKey).slice('category:'.length);
                 return data.uiTheme.categories[id] || data.uiTheme.zones.category;
@@ -3772,7 +3773,11 @@
             const key = select.value;
             if (key.startsWith('category:')) {
                 const id = key.slice('category:'.length);
-                data.uiTheme.categories[id] = {...getUiThemeZone(key), [part]: normalizeUiThemeColor(value, getUiThemeZone(key)[part])};
+                const currentZone = {...getUiThemeZone(key)};
+                data.uiTheme.categories[id] = {
+                    ...currentZone,
+                    [part]: normalizeUiThemeColor(value, currentZone[part])
+                };
             } else if (data.uiTheme.zones[key]) {
                 data.uiTheme.zones[key] = {...data.uiTheme.zones[key], [part]: normalizeUiThemeColor(value, data.uiTheme.zones[key][part])};
             }
@@ -3797,7 +3802,11 @@
             if (mapping[zone]) return updateUiThemeSetting(mapping[zone], value);
             if (zone === 'fed-a' || zone === 'fed-b') {
                 const id = zone === 'fed-a' ? 'NIV-A' : 'NIV-B';
-                data.uiTheme.categories[id] = {...getUiThemeZone(`category:${id}`), background: normalizeUiThemeColor(value, '#ffffff')};
+                const currentZone = {...getUiThemeZone(`category:${id}`)};
+                data.uiTheme.categories[id] = {
+                    ...currentZone,
+                    background: normalizeUiThemeColor(value, currentZone.background)
+                };
                 applyCustomColors();
                 renderLevels();
                 saveAllData();
