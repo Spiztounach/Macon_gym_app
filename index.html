@@ -345,7 +345,7 @@
                         <p>Une copie de sécurité est conservée avant le remplacement. Les autres sauvegardes Drive ne sont pas supprimées.</p>
                     </div>
                     <button id="btn-drive-local-backup" onclick="exportDriveLocalBackup()" class="hidden w-full border rounded p-2 text-xs">📦 Exporter la copie locale avant synchronisation</button>
-                    <p class="text-[10px] text-gray-500">Utilise le même compte Google sur chaque appareil. Les musiques restent propres à l'appareil.</p>
+                    <p id="drive-auto-login-note" class="text-[10px] text-gray-500">Après la première connexion, l’application conserve la session. À son expiration, le prochain appui dans l’application renouvelle l’accès sans bouton supplémentaire tant que la session Google reste active. Les musiques restent propres à l'appareil.</p>
                     <div
                         id="sync-indicator"
                         class="hidden text-xs text-green-600 italic text-center">🔄 Synchronisation en cours...</div>
@@ -1211,10 +1211,11 @@
                     <div id="planning-summary" class="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]"></div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-1 rounded-xl bg-gray-200 p-1 text-[10px] sm:text-xs">
+                <div class="grid grid-cols-2 gap-1 rounded-xl bg-gray-200 p-1 text-[10px] sm:grid-cols-4 sm:text-xs">
                     <button id="btn-planning-tab-macro" type="button" onclick="switchPlanningTab('macro')" class="rounded-lg bg-white py-2 font-bold text-teal-700 shadow-sm">Macrocycle</button>
                     <button id="btn-planning-tab-meso" type="button" onclick="switchPlanningTab('meso')" class="rounded-lg py-2 font-bold text-gray-500">Mésocycles</button>
                     <button id="btn-planning-tab-micro" type="button" onclick="switchPlanningTab('micro')" class="rounded-lg py-2 font-bold text-gray-500">Microcycles</button>
+                    <button id="btn-planning-tab-session" type="button" onclick="switchPlanningTab('session')" class="rounded-lg py-2 font-bold text-gray-500">Séances</button>
                 </div>
 
                 <div id="planning-tab-macro" data-ui-zone="planning-macro" class="ui-theme-zone space-y-3 p-2">
@@ -1257,6 +1258,26 @@
                     </div>
                     <p id="planning-micro-count" class="text-[10px] font-semibold text-gray-500"></p>
                     <div id="planning-micro-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
+                </div>
+
+                <div id="planning-tab-session" data-ui-zone="planning-session" class="ui-theme-zone hidden space-y-3 p-2">
+                    <div class="flex flex-wrap items-end justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">Séances</h3>
+                            <p class="text-[10px] text-gray-400">Dates, horaires, type, statut et contenu de chaque entraînement.</p>
+                        </div>
+                        <button type="button" onclick="openPlanningEditor('session')" class="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white">＋ Ajouter</button>
+                    </div>
+                    <div class="grid gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-2">
+                        <label class="text-[10px] font-bold text-gray-600">Microcycle
+                            <select id="planning-session-filter" onchange="renderPlanningSessions()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal"></select>
+                        </label>
+                        <label class="text-[10px] font-bold text-gray-600">Rechercher
+                            <input id="planning-session-search" type="search" oninput="renderPlanningSessions()" placeholder="Date, type, statut, note…" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal">
+                        </label>
+                    </div>
+                    <p id="planning-session-count" class="text-[10px] font-semibold text-gray-500"></p>
+                    <div id="planning-session-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
                 </div>
             </section>
 
@@ -1702,7 +1723,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.23.0';
+        const APP_VERSION = '1.24.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1791,6 +1812,7 @@
                 'planning-macro': {accent: '#0f766e', background: '#f0fdfa'},
                 'planning-meso': {accent: '#1d4ed8', background: '#eff6ff'},
                 'planning-micro': {accent: '#7e22ce', background: '#faf5ff'},
+                'planning-session': {accent: '#d97706', background: '#fffbeb'},
                 settings: {accent: '#475569', background: '#f8fafc'},
                 'tab-infos': {accent: '#2563eb', background: '#ffffff'},
                 'tab-saisie': {accent: '#7e22ce', background: '#ffffff'},
@@ -2646,12 +2668,20 @@
         const DRIVE_BASELINE_KEY = 'gym_drive_baseline_v3';
         const DRIVE_BACKUP_KEY = 'gym_before_drive_sync_v3';
         const DRIVE_TOKEN_EXPIRY_KEY = 'drive_access_token_expires_v3';
+        const DRIVE_AUTO_LOGIN_KEY = 'drive_auto_login_v3';
+        const DRIVE_SILENT_AUTH_COOLDOWN_MS = 60 * 1000;
+        const DRIVE_TOKEN_RENEWAL_MARGIN_MS = 5 * 60 * 1000;
         let driveSyncTask = null;
         let driveSyncQueued = false;
         let driveConflictCandidates = [];
         let driveSeenCandidates = [];
         let driveResolution = null;
         let driveAuthRestored = false;
+        let driveAuthRequestMode = null;
+        let driveSilentAuthPending = false;
+        let driveLastSilentAuthAttemptAt = 0;
+        let driveReconnectArmed = false;
+        let driveTokenRenewTimer = null;
         let orientationActionPending = false;
         let landscapeFullscreenActive = false;
 
@@ -3232,6 +3262,74 @@
             });
         }
 
+        function scheduleGoogleTokenRenewal(expiresAt) {
+            if (driveTokenRenewTimer) clearTimeout(driveTokenRenewTimer);
+            driveTokenRenewTimer = null;
+            const expiry = Number(expiresAt);
+            if (!Number.isFinite(expiry) || expiry <= Date.now()) return;
+            const delay = Math.max(1000, expiry - Date.now() - DRIVE_TOKEN_RENEWAL_MARGIN_MS);
+            driveTokenRenewTimer = setTimeout(() => {
+                driveTokenRenewTimer = null;
+                armGoogleReconnectOnNextInteraction(true);
+            }, Math.min(delay, 2147483647));
+            if (driveTokenRenewTimer && typeof driveTokenRenewTimer.unref === 'function')
+                driveTokenRenewTimer.unref();
+        }
+
+        function requestGoogleAccessToken(interactive = false) {
+            if (!tokenClient || !gapiInited || !gisInited || driveSilentAuthPending || syncInProgress)
+                return false;
+            const remembered = localStorage.getItem(DRIVE_AUTO_LOGIN_KEY) === 'true';
+            driveAuthRequestMode = interactive ? 'interactive' : 'silent';
+            driveSilentAuthPending = !interactive;
+            if (!interactive) driveLastSilentAuthAttemptAt = Date.now();
+            try {
+                tokenClient.requestAccessToken({prompt: interactive && !remembered ? 'select_account' : ''});
+                return true;
+            } catch (error) {
+                driveAuthRequestMode = null;
+                driveSilentAuthPending = false;
+                console.warn('[GymSuivi] Renouvellement Google indisponible', error && error.name ? error.name : 'OAuth');
+                return false;
+            }
+        }
+
+        function disarmGoogleReconnectGesture() {
+            if (!driveReconnectArmed) return;
+            driveReconnectArmed = false;
+            if (typeof document.removeEventListener === 'function') {
+                document.removeEventListener('pointerdown', handleRememberedGoogleReconnectGesture, true);
+                document.removeEventListener('keydown', handleRememberedGoogleReconnectGesture, true);
+            }
+        }
+
+        function handleRememberedGoogleReconnectGesture(event) {
+            if (event && event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return false;
+            if (event && event.target && typeof event.target.closest === 'function' &&
+                event.target.closest('#btn-login, #btn-logout')) return false;
+            const hadToken = Boolean(googleAccessToken);
+            disarmGoogleReconnectGesture();
+            const requested = requestGoogleAccessToken(false);
+            if (requested) updateDriveStatusUI(hadToken, hadToken
+                ? '🔄 Connecté — renouvellement automatique de la session Google…'
+                : '🔄 Reconnexion automatique à Google…');
+            return requested;
+        }
+
+        function armGoogleReconnectOnNextInteraction(force = false) {
+            if ((googleAccessToken && !force) || navigator.onLine === false || document.visibilityState === 'hidden') return false;
+            if (localStorage.getItem(DRIVE_AUTO_LOGIN_KEY) !== 'true') return false;
+            if (!force && Date.now() - driveLastSilentAuthAttemptAt < DRIVE_SILENT_AUTH_COOLDOWN_MS) return false;
+            if (driveReconnectArmed) return true;
+            driveReconnectArmed = true;
+            document.addEventListener('pointerdown', handleRememberedGoogleReconnectGesture, {capture: true, passive: true});
+            document.addEventListener('keydown', handleRememberedGoogleReconnectGesture, {capture: true, passive: true});
+            updateDriveStatusUI(Boolean(googleAccessToken), googleAccessToken
+                ? 'Connecté — la session Google sera renouvelée au prochain appui.'
+                : 'Session Google mémorisée — reconnexion au prochain appui dans l’application.');
+            return true;
+        }
+
         function gisLoaded() {
             if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
                 updateDriveStatusUI(false, 'Connexion Google indisponible. Recharge la page avec Internet.');
@@ -3241,8 +3339,13 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async resp => {
+                    const requestMode = driveAuthRequestMode;
+                    driveAuthRequestMode = null;
+                    driveSilentAuthPending = false;
                     if (resp.error || !resp.access_token) {
-                        updateDriveStatusUI(false, 'Connexion Google refusée ou interrompue. Réessaie.');
+                        updateDriveStatusUI(Boolean(googleAccessToken), requestMode === 'silent'
+                            ? (googleAccessToken ? 'Connecté — renouvellement automatique différé.' : 'Session Google à renouveler — appuie sur Connexion Google.')
+                            : 'Connexion Google refusée ou interrompue. Réessaie.');
                         return;
                     }
                     if (resp.scope && !resp.scope.split(' ').includes(SCOPES)) {
@@ -3250,13 +3353,24 @@
                         return;
                     }
                     googleAccessToken = resp.access_token;
+                    const expiresAt = Date.now() + (Number(resp.expires_in) || 3600) * 1000;
                     localStorage.setItem('drive_access_token_v3', googleAccessToken);
-                    localStorage.setItem(DRIVE_TOKEN_EXPIRY_KEY, String(Date.now() + (Number(resp.expires_in) || 3600) * 1000));
+                    localStorage.setItem(DRIVE_TOKEN_EXPIRY_KEY, String(expiresAt));
+                    localStorage.setItem(DRIVE_AUTO_LOGIN_KEY, 'true');
+                    disarmGoogleReconnectGesture();
                     gapi.client.setToken({access_token: googleAccessToken});
-                    updateDriveStatusUI(true, 'Connecté — vérification de la sauvegarde…');
+                    scheduleGoogleTokenRenewal(expiresAt);
+                    updateDriveStatusUI(true, 'Connecté — session Google conservée, vérification de la sauvegarde…');
                     await syncWithDrive();
                 },
-                error_callback: () => updateDriveStatusUI(false, 'Fenêtre Google fermée ou bloquée. Appuie sur Connexion Google pour réessayer.')
+                error_callback: () => {
+                    const requestMode = driveAuthRequestMode;
+                    driveAuthRequestMode = null;
+                    driveSilentAuthPending = false;
+                    updateDriveStatusUI(Boolean(googleAccessToken), requestMode === 'silent'
+                        ? (googleAccessToken ? 'Connecté — renouvellement automatique différé.' : 'Session Google à renouveler — appuie sur Connexion Google.')
+                        : 'Fenêtre Google fermée ou bloquée. Appuie sur Connexion Google pour réessayer.');
+                }
             });
             gisInited = true;
             checkAuthStates();
@@ -3267,13 +3381,23 @@
             driveAuthRestored = true;
             const stored = localStorage.getItem('drive_access_token_v3');
             const expiresAt = Number(localStorage.getItem(DRIVE_TOKEN_EXPIRY_KEY));
-            // Pas de popup automatique : Google exige une action utilisateur pour renouveler l'accès.
             if (stored && expiresAt > Date.now() + 60000) {
                 googleAccessToken = stored;
+                localStorage.setItem(DRIVE_AUTO_LOGIN_KEY, 'true');
                 gapi.client.setToken({access_token: stored});
+                scheduleGoogleTokenRenewal(expiresAt);
                 syncWithDrive();
             } else {
-                updateDriveStatusUI(false, stored ? 'Accès Google à renouveler — reconnecte-toi pour synchroniser.' : undefined);
+                googleAccessToken = null;
+                if (stored) {
+                    localStorage.removeItem('drive_access_token_v3');
+                    localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
+                    localStorage.setItem(DRIVE_AUTO_LOGIN_KEY, 'true');
+                }
+                if (!armGoogleReconnectOnNextInteraction())
+                    updateDriveStatusUI(false, stored || localStorage.getItem(DRIVE_AUTO_LOGIN_KEY) === 'true'
+                        ? 'Session Google à renouveler — appuie sur Connexion Google si elle ne revient pas automatiquement.'
+                        : undefined);
             }
         }
 
@@ -3298,19 +3422,27 @@
                 alert('La connexion Google se prépare ou une synchronisation est en cours. Réessaie dans un instant.');
                 return;
             }
-            tokenClient.requestAccessToken({prompt: googleAccessToken ? '' : 'select_account'});
+            disarmGoogleReconnectGesture();
+            requestGoogleAccessToken(true);
         }
 
         function handleSignoutClick() {
             if (syncInProgress) return;
             if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken(null);
             googleAccessToken = null;
+            driveAuthRequestMode = null;
+            driveSilentAuthPending = false;
+            driveLastSilentAuthAttemptAt = 0;
+            disarmGoogleReconnectGesture();
+            if (driveTokenRenewTimer) clearTimeout(driveTokenRenewTimer);
+            driveTokenRenewTimer = null;
             driveFileId = null;
             driveResolution = null;
             driveConflictCandidates = [];
             document.getElementById('drive-conflict').classList.add('hidden');
             localStorage.removeItem('drive_access_token_v3');
             localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
+            localStorage.removeItem(DRIVE_AUTO_LOGIN_KEY);
             updateDriveStatusUI(false);
         }
 
@@ -3328,7 +3460,11 @@
             if (code === 401) {
                 googleAccessToken = null;
                 if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken(null);
+                localStorage.removeItem('drive_access_token_v3');
                 localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
+                if (driveTokenRenewTimer) clearTimeout(driveTokenRenewTimer);
+                driveTokenRenewTimer = null;
+                setTimeout(() => armGoogleReconnectOnNextInteraction(true), 0);
             }
             const detail = code === 401 ? 'Accès Google expiré : reconnecte-toi.'
                 : code === 403 ? 'Accès Drive refusé : vérifie l’autorisation Google et que Drive API est activée.'
@@ -3619,7 +3755,11 @@
         }
 
         function refreshDriveWhenIdle() {
-            if (!googleAccessToken || document.visibilityState === 'hidden') return;
+            if (document.visibilityState === 'hidden') return;
+            if (!googleAccessToken) {
+                armGoogleReconnectOnNextInteraction();
+                return;
+            }
             const safeScreen = ['screen-levels', 'screen-settings', 'screen-gymnastes'].some(id =>
                 !document.getElementById(id).classList.contains('hidden'));
             const modalOpen = Array.from(document.querySelectorAll('[id^="modal-"]')).some(el => !el.classList.contains('hidden'));
@@ -3700,6 +3840,7 @@
                 {value: 'planning-macro', label: 'Onglet planification — Macrocycle'},
                 {value: 'planning-meso', label: 'Onglet planification — Mésocycles'},
                 {value: 'planning-micro', label: 'Onglet planification — Microcycles'},
+                {value: 'planning-session', label: 'Onglet planification — Séances'},
                 {value: 'fiche', label: 'Fiche gymnaste — cadre général'},
                 {value: 'tab-infos', label: 'Onglet — Fiche personnelle'},
                 {value: 'tab-saisie', label: 'Onglet — Saisie des notes'},
@@ -4502,11 +4643,42 @@
 
         // ────────────────────────────────────────────────────────────── PLANIFICATION
         // ──────────────────────────────────────────────────────────────
+        function makePlanningSessionKey(microcycleId, sessionId) {
+            return `${String(microcycleId || '')}::${String(sessionId || '')}`;
+        }
+
+        function getPlanningSessionEntities() {
+            normalizePlanningData(data);
+            return data.planning.microcycles.flatMap(microcycle =>
+                (microcycle.sessions || []).map(session => ({
+                    ...session,
+                    id: makePlanningSessionKey(microcycle.id, session.id),
+                    planningSessionId: session.id,
+                    microcycleId: microcycle.id,
+                    name: `${session.type || 'Séance'} — ${session.date ? formatPlanningDate(session.date) : 'date à renseigner'}`,
+                    startDate: session.date,
+                    endDate: session.date
+                }))
+            );
+        }
+
+        function findPlanningSessionLocation(sessionKey) {
+            normalizePlanningData(data);
+            for (const microcycle of data.planning.microcycles) {
+                const index = (microcycle.sessions || []).findIndex(session =>
+                    makePlanningSessionKey(microcycle.id, session.id) === sessionKey
+                );
+                if (index >= 0) return {microcycle, index, session: microcycle.sessions[index]};
+            }
+            return null;
+        }
+
         function getPlanningCollection(type) {
             normalizePlanningData(data);
             if (type === 'macrocycle') return data.planning.macrocycles;
             if (type === 'mesocycle') return data.planning.mesocycles;
             if (type === 'microcycle') return data.planning.microcycles;
+            if (type === 'session') return getPlanningSessionEntities();
             return [];
         }
 
@@ -4515,7 +4687,10 @@
         }
 
         function getPlanningTypeLabel(type) {
-            return type === 'macrocycle' ? 'Macrocycle' : type === 'mesocycle' ? 'Mésocycle' : 'Microcycle';
+            return type === 'macrocycle' ? 'Macrocycle'
+                : type === 'mesocycle' ? 'Mésocycle'
+                : type === 'microcycle' ? 'Microcycle'
+                : 'Séance';
         }
 
         function renderPlanningMetadata() {
@@ -4554,7 +4729,7 @@
         }
 
         function createPlanningEntityId(type) {
-            const prefix = type === 'macrocycle' ? 'MACRO' : type === 'mesocycle' ? 'MESO' : 'MICRO';
+            const prefix = type === 'macrocycle' ? 'MACRO' : type === 'mesocycle' ? 'MESO' : type === 'microcycle' ? 'MICRO' : 'SESSION';
             let id;
             do {
                 id = `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -4818,12 +4993,17 @@
                 badge = escapeHtml(`${item.phase || 'PPS'}${item.code ? ` · ${item.code}` : ''}`);
                 description = escapeHtml(item.objective || 'Objectif à renseigner');
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
-            } else {
+            } else if (type === 'microcycle') {
                 const volume = getPlanningMicrocycleVolume(item);
                 const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
                 badge = escapeHtml(mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code || mesocycle.name}` : 'Sans mésocycle');
                 description = escapeHtml(item.objective || item.apparatuses || 'Contenu à renseigner');
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
+            } else {
+                const microcycle = getPlanningEntity('microcycle', item.microcycleId);
+                badge = escapeHtml(microcycle ? microcycle.name : 'Sans microcycle');
+                description = escapeHtml(item.notes || `${item.type || 'Séance'} · ${item.status || 'Planifié'}`);
+                metrics = `${item.startTime && item.endTime ? `${item.startTime}–${item.endTime} · ` : ''}${formatPlanningHours(calculatePlanningSessionHours(item))}`;
             }
             button.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
@@ -4929,6 +5109,50 @@
             items.forEach(item => container.appendChild(createPlanningCard('microcycle', item)));
         }
 
+        function renderPlanningSessionFilter() {
+            const select = document.getElementById('planning-session-filter');
+            if (!select) return;
+            const selected = select.value || 'all';
+            select.innerHTML = '<option value="all">Tous les microcycles</option>';
+            [...getPlanningCollection('microcycle')]
+                .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'))
+                .forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${formatPlanningPeriod(item.startDate, item.endDate)} — ${item.name}`;
+                    select.appendChild(option);
+                });
+            select.value = Array.from(select.options).some(option => option.value === selected) ? selected : 'all';
+        }
+
+        function renderPlanningSessions() {
+            const container = document.getElementById('planning-session-list');
+            if (!container) return;
+            const filter = document.getElementById('planning-session-filter');
+            const searchInput = document.getElementById('planning-session-search');
+            const selectedMicrocycle = filter ? filter.value : 'all';
+            const search = String(searchInput ? searchInput.value : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr').trim();
+            const items = getPlanningCollection('session')
+                .filter(item => selectedMicrocycle === 'all' || item.microcycleId === selectedMicrocycle)
+                .filter(item => {
+                    if (!search) return true;
+                    const microcycle = getPlanningEntity('microcycle', item.microcycleId);
+                    const haystack = [item.date, formatPlanningDate(item.date), item.startTime, item.endTime,
+                        item.type, item.status, item.notes, microcycle && microcycle.name]
+                        .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+                    return haystack.includes(search);
+                })
+                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime) || a.type.localeCompare(b.type, 'fr'));
+            container.innerHTML = '';
+            const count = document.getElementById('planning-session-count');
+            if (count) count.textContent = `${items.length} séance${items.length === 1 ? '' : 's'} affichée${items.length === 1 ? '' : 's'}`;
+            if (!items.length) {
+                container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucune séance ne correspond aux filtres.</p>';
+                return;
+            }
+            items.forEach(item => container.appendChild(createPlanningCard('session', item)));
+        }
+
         function renderPlanning() {
             normalizePlanningData(data);
             renderPlanningMetadata();
@@ -4937,11 +5161,13 @@
             renderPlanningMesocycles();
             renderPlanningMicrocycleFilter();
             renderPlanningMicrocycles();
+            renderPlanningSessionFilter();
+            renderPlanningSessions();
         }
 
         function switchPlanningTab(tab) {
-            currentPlanningTab = ['macro', 'meso', 'micro'].includes(tab) ? tab : 'macro';
-            ['macro', 'meso', 'micro'].forEach(name => {
+            currentPlanningTab = ['macro', 'meso', 'micro', 'session'].includes(tab) ? tab : 'macro';
+            ['macro', 'meso', 'micro', 'session'].forEach(name => {
                 const panel = document.getElementById(`planning-tab-${name}`);
                 const button = document.getElementById(`btn-planning-tab-${name}`);
                 if (panel) panel.classList.toggle('hidden', name !== currentPlanningTab);
@@ -4973,10 +5199,18 @@
 
         function planningChildCardsHtml(type, items, title) {
             const children = Array.isArray(items) ? items : [];
-            if (!children.length) return `<div class="rounded-xl border border-dashed border-gray-200 p-3 text-center text-[10px] text-gray-400">Aucun ${type === 'mesocycle' ? 'mésocycle' : 'microcycle'} rattaché.</div>`;
+            const emptyLabel = type === 'mesocycle' ? 'mésocycle' : type === 'microcycle' ? 'microcycle' : 'séance';
+            if (!children.length) return `<div class="rounded-xl border border-dashed border-gray-200 p-3 text-center text-[10px] text-gray-400">Aucun ${emptyLabel} rattaché.</div>`;
             return `<div class="space-y-2"><p class="text-[9px] font-bold uppercase tracking-wider text-gray-400">${escapeHtml(title)}</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-2">${children
                 .slice().sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'))
-                .map(child => `<button type="button" data-planning-child-type="${type}" data-planning-child-id="${escapeHtml(child.id)}" class="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-teal-300"><span class="block text-[9px] font-bold text-teal-700">${escapeHtml(type === 'mesocycle' ? `${child.phase || 'PPS'}${child.code ? ` · ${child.code}` : ''}` : formatPlanningPeriod(child.startDate, child.endDate))}</span><strong class="mt-1 block text-xs text-gray-700">${escapeHtml(child.name)}</strong></button>`).join('')}</div></div>`;
+                .map(child => {
+                    const badge = type === 'mesocycle'
+                        ? `${child.phase || 'PPS'}${child.code ? ` · ${child.code}` : ''}`
+                        : type === 'session'
+                            ? `${formatPlanningDate(child.date)} · ${child.startTime && child.endTime ? `${child.startTime}–${child.endTime}` : 'horaire libre'}`
+                            : formatPlanningPeriod(child.startDate, child.endDate);
+                    return `<button type="button" data-planning-child-type="${type}" data-planning-child-id="${escapeHtml(child.id)}" class="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-teal-300"><span class="block text-[9px] font-bold text-teal-700">${escapeHtml(badge)}</span><strong class="mt-1 block text-xs text-gray-700">${escapeHtml(child.name)}</strong></button>`;
+                }).join('')}</div></div>`;
         }
 
         function buildPlanningDetailHtml(type, item) {
@@ -5018,28 +5252,40 @@
                     </div>
                     ${planningChildCardsHtml('microcycle', getPlanningCollection('microcycle').filter(microcycle => microcycle.mesocycleId === item.id), 'Microcycles de ce mésocycle')}`;
             }
-            const volume = getPlanningMicrocycleVolume(item);
-            const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
-            const sessions = (item.sessions || []).slice().sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
-            const sessionRows = sessions.length ? sessions.map(session => `
-                <tr class="border-t border-gray-100">
-                    <td class="p-2 text-left">${escapeHtml(formatPlanningDate(session.date))}</td>
-                    <td class="p-2">${escapeHtml(session.startTime && session.endTime ? `${session.startTime}–${session.endTime}` : 'Horaire libre')}</td>
-                    <td class="p-2">${escapeHtml(session.type)}</td>
-                    <td class="p-2">${escapeHtml(formatPlanningHours(calculatePlanningSessionHours(session)))}</td>
-                    <td class="p-2 text-left">${escapeHtml(session.notes || '')}</td>
-                </tr>`).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-400">Aucune séance programmée.</td></tr>';
-            return `${status}${planningVolumeCards(volume)}
+            if (type === 'microcycle') {
+                const volume = getPlanningMicrocycleVolume(item);
+                const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
+                const sessions = getPlanningCollection('session').filter(session => session.microcycleId === item.id);
+                return `${status}${planningVolumeCards(volume)}
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
+                        ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
+                        ${planningDetailRow('Intensité / charge', item.intensity)}
+                        ${planningDetailRow('Agrès prioritaires', item.apparatuses)}
+                        ${planningDetailRow('Objectif', item.objective, true)}
+                        ${planningDetailRow('Notes', item.notes, true)}
+                    </div>
+                    <div class="flex justify-end"><button type="button" onclick="openPlanningEditor('session')" class="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white">＋ Ajouter une séance</button></div>
+                    ${planningChildCardsHtml('session', sessions, 'Séances de ce microcycle')}`;
+            }
+            const microcycle = getPlanningEntity('microcycle', item.microcycleId);
+            const mesocycle = microcycle ? getPlanningEntity('mesocycle', microcycle.mesocycleId) : null;
+            const sourceLabel = item.source === 'manual' ? 'Manuelle'
+                : item.source === 'event' ? 'Événement automatique'
+                : item.source === 'generated_holiday' ? 'Horaire de vacances'
+                : item.source === 'generated_regular' ? 'Horaire habituel'
+                : 'Importée';
+            return `${status}
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    ${planningDetailRow('Microcycle', microcycle ? microcycle.name : 'Non rattaché')}
                     ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
-                    ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
-                    ${planningDetailRow('Intensité / charge', item.intensity)}
-                    ${planningDetailRow('Agrès prioritaires', item.apparatuses)}
-                    ${planningDetailRow('Objectif', item.objective, true)}
-                    ${planningDetailRow('Notes', item.notes, true)}
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-gray-200">
-                    <table class="w-full min-w-[620px] text-center text-[10px]"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-2 text-left">Date</th><th class="p-2">Horaire</th><th class="p-2">Type</th><th class="p-2">Durée</th><th class="p-2 text-left">Notes</th></tr></thead><tbody>${sessionRows}</tbody></table>
+                    ${planningDetailRow('Date', formatPlanningDate(item.date))}
+                    ${planningDetailRow('Horaire', item.startTime && item.endTime ? `${item.startTime}–${item.endTime}` : 'Horaire libre')}
+                    ${planningDetailRow('Type', item.type)}
+                    ${planningDetailRow('Durée', formatPlanningHours(calculatePlanningSessionHours(item)))}
+                    ${planningDetailRow('Origine', sourceLabel)}
+                    ${planningDetailRow('Statut', item.status)}
+                    ${planningDetailRow('Notes / contenu', item.notes, true)}
                 </div>`;
         }
 
@@ -5113,7 +5359,7 @@
             const fields = document.getElementById('planning-editor-fields');
             document.getElementById('planning-editor-type').value = type;
             document.getElementById('planning-editor-id').value = existing ? existing.id : '';
-            document.getElementById('planning-editor-title').textContent = `${existing ? 'Modifier' : 'Ajouter'} un ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}`;
+            document.getElementById('planning-editor-title').textContent = `${existing ? 'Modifier' : 'Ajouter'} ${type === 'session' ? 'une' : 'un'} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}`;
             if (type === 'macrocycle') {
                 fields.innerHTML = [
                     planningEditorField('name', 'Nom', item.name, {required: true}),
@@ -5150,7 +5396,7 @@
                     planningEditorField('expected', 'Résultat attendu', item.expected, {type: 'textarea', full: true}),
                     planningEditorField('notes', 'Notes', item.notes, {type: 'textarea', full: true})
                 ].join('');
-            } else {
+            } else if (type === 'microcycle') {
                 const mesocycleOptions = [{value: '', label: 'Non rattaché'}].concat(getPlanningCollection('mesocycle').map(mesocycle => ({
                     value: mesocycle.id,
                     label: `${mesocycle.phase || 'PPS'} · ${mesocycle.code ? `${mesocycle.code} — ` : ''}${mesocycle.name}`
@@ -5169,6 +5415,29 @@
                 ].join('');
                 planningSessionEditorCounter = 0;
                 (Array.isArray(item.sessions) ? item.sessions : []).forEach(session => addPlanningSessionEditorRow(session));
+            } else {
+                const microcycles = [...getPlanningCollection('microcycle')]
+                    .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'));
+                if (!microcycles.length) {
+                    alert('Créez d’abord un microcycle pour y rattacher la séance.');
+                    return;
+                }
+                const currentMicrocycleId = currentPlanningDetail && currentPlanningDetail.type === 'microcycle'
+                    ? currentPlanningDetail.id : '';
+                const defaultMicrocycleId = item.microcycleId || currentMicrocycleId || microcycles[0].id;
+                const microcycleOptions = microcycles.map(microcycle => ({
+                    value: microcycle.id,
+                    label: `${formatPlanningPeriod(microcycle.startDate, microcycle.endDate)} — ${microcycle.name}`
+                }));
+                fields.innerHTML = [
+                    planningEditorField('microcycleId', 'Microcycle lié', defaultMicrocycleId, {type: 'select', options: microcycleOptions, full: true, required: true}),
+                    planningEditorField('date', 'Date', item.date, {type: 'date', required: true}),
+                    planningEditorField('type', 'Type de séance', item.type || 'Entraînement', {required: true}),
+                    planningEditorField('startTime', 'Heure de début', item.startTime, {type: 'time'}),
+                    planningEditorField('endTime', 'Heure de fin', item.endTime, {type: 'time'}),
+                    planningEditorField('status', 'Statut', item.status || 'Planifié'),
+                    planningEditorField('notes', 'Notes / contenu prévu', item.notes, {type: 'textarea', full: true, rows: 5})
+                ].join('');
             }
             document.getElementById('modal-planning-editor').classList.remove('hidden');
         }
@@ -5245,6 +5514,73 @@
             const type = document.getElementById('planning-editor-type').value;
             const existingId = document.getElementById('planning-editor-id').value;
             const form = new FormData(event.currentTarget);
+            if (type === 'session') {
+                const existingLocation = existingId ? findPlanningSessionLocation(existingId) : (normalizePlanningData(data), null);
+                const targetMicrocycleId = normalizePlanningText(form.get('microcycleId'), 100);
+                const targetMicrocycle = data.planning.microcycles.find(item => item.id === targetMicrocycleId) || null;
+                const date = normalizePlanningText(form.get('date'), 10);
+                const sessionType = normalizePlanningText(form.get('type') || 'Entraînement', 60);
+                const startTime = normalizePlanningText(form.get('startTime'), 5);
+                const endTime = normalizePlanningText(form.get('endTime'), 5);
+                if (!targetMicrocycle) {
+                    alert('Sélectionnez un microcycle pour cette séance.');
+                    return;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    alert('Indiquez une date valide pour la séance.');
+                    return;
+                }
+                if ((startTime && !endTime) || (!startTime && endTime)) {
+                    alert('Indiquez les deux heures, ou laissez les deux champs vides.');
+                    return;
+                }
+                const original = existingLocation ? existingLocation.session : {};
+                const sessionId = original.id || `SESSION-${targetMicrocycle.id}-${Date.now().toString(36).toUpperCase()}`;
+                const changed = !existingLocation || existingLocation.microcycle.id !== targetMicrocycle.id ||
+                    ['date', 'startTime', 'endTime', 'type', 'status', 'notes'].some(field => {
+                        const nextValues = {
+                            date, startTime, endTime, type: sessionType,
+                            status: normalizePlanningText(form.get('status') || 'Planifié', 60),
+                            notes: normalizePlanningText(form.get('notes'), 1000)
+                        };
+                        return String(nextValues[field] || '') !== String(original[field] || '');
+                    });
+                const generatedSources = ['generated_regular', 'generated_holiday', 'event', 'legacy'];
+                const replacesGenerated = original.replacesGenerated === true ||
+                    (changed && generatedSources.includes(original.source));
+                const next = normalizePlanningSession({
+                    ...original,
+                    id: sessionId,
+                    date,
+                    startTime,
+                    endTime,
+                    type: sessionType,
+                    status: normalizePlanningText(form.get('status') || 'Planifié', 60),
+                    notes: normalizePlanningText(form.get('notes'), 1000),
+                    source: changed ? 'manual' : (original.source || 'manual'),
+                    mesocycleId: targetMicrocycle.mesocycleId || '',
+                    replacesGenerated,
+                    generatedReferenceDate: original.generatedReferenceDate || (replacesGenerated ? original.date : ''),
+                    generatedReferenceType: original.generatedReferenceType || (replacesGenerated ? original.type : ''),
+                    generatedReferenceStartTime: original.generatedReferenceStartTime || (replacesGenerated ? original.startTime : '')
+                }, sessionId);
+                if (existingLocation)
+                    existingLocation.microcycle.sessions.splice(existingLocation.index, 1);
+                targetMicrocycle.sessions.push(next);
+                targetMicrocycle.sessions.sort((left, right) => left.date.localeCompare(right.date) || left.startTime.localeCompare(right.startTime));
+                targetMicrocycle.updatedAt = new Date().toISOString();
+                const nextKey = makePlanningSessionKey(targetMicrocycle.id, next.id);
+                saveAllData();
+                closePlanningEditor();
+                renderPlanning();
+                if (!document.getElementById('screen-planning-detail').classList.contains('hidden')) {
+                    if (!existingId && currentPlanningDetail && currentPlanningDetail.type === 'microcycle')
+                        planningDetailHistory.push({...currentPlanningDetail});
+                    currentPlanningDetail = {type: 'session', id: nextKey};
+                    openPlanningDetail('session', nextKey, false);
+                }
+                return;
+            }
             const id = existingId || createPlanningEntityId(type);
             const common = {
                 id,
@@ -5307,6 +5643,17 @@
             const item = getPlanningEntity(type, id);
             if (!item) return;
             let warning = `Supprimer définitivement « ${item.name} » ?`;
+            if (type === 'session') {
+                if (!confirm(warning)) return;
+                const location = findPlanningSessionLocation(id);
+                if (!location) return;
+                location.microcycle.sessions.splice(location.index, 1);
+                location.microcycle.updatedAt = new Date().toISOString();
+                saveAllData();
+                closePlanningDetail();
+                renderPlanning();
+                return;
+            }
             if (type === 'macrocycle') {
                 const linked = getPlanningCollection('mesocycle').filter(mesocycle => mesocycle.macrocycleId === id).length;
                 if (linked) warning += `\n\n${linked} mésocycle${linked === 1 ? '' : 's'} sera${linked === 1 ? '' : 'ont'} conservé${linked === 1 ? '' : 's'}, mais sans macrocycle associé.`;
@@ -5314,6 +5661,10 @@
             if (type === 'mesocycle') {
                 const linked = getPlanningCollection('microcycle').filter(microcycle => microcycle.mesocycleId === id).length;
                 if (linked) warning += `\n\n${linked} microcycle${linked === 1 ? '' : 's'} sera${linked === 1 ? '' : 'ont'} conservé${linked === 1 ? '' : 's'}, mais sans mésocycle associé.`;
+            }
+            if (type === 'microcycle') {
+                const linked = Array.isArray(item.sessions) ? item.sessions.length : 0;
+                if (linked) warning += `\n\n${linked} séance${linked === 1 ? '' : 's'} rattachée${linked === 1 ? '' : 's'} sera${linked === 1 ? '' : 'ont'} également supprimée${linked === 1 ? '' : 's'}.`;
             }
             if (!confirm(warning)) return;
             if (type === 'macrocycle') getPlanningCollection('mesocycle').forEach(mesocycle => {
@@ -10518,7 +10869,7 @@
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
                 "s."
             )) {
-                ['gym_master_data_v3', 'gym_colors_v3', 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_BASELINE_KEY]
+                ['gym_master_data_v3', 'gym_colors_v3', 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY]
                     .forEach(key => localStorage.removeItem(key));
                 window
                     .location
