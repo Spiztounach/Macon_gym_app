@@ -94,10 +94,26 @@
             .tab-content.active {
                 display: block;
             }
-            #screen-competition, #screen-planning, #screen-planning-detail {
+            #screen-competition, #screen-planning, #screen-planning-detail, #screen-attendance {
                 width: min(96vw, 1100px);
                 margin-left: 50%;
                 transform: translateX(-50%);
+            }
+            .planning-workload-scroll {
+                width: 100%;
+                overflow-x: auto;
+                overscroll-behavior-inline: contain;
+            }
+            .planning-workload-canvas {
+                position: relative;
+                min-width: 560px;
+                height: 300px;
+            }
+            .planning-workload-canvas canvas {
+                position: absolute;
+                inset: 0;
+                width: 100% !important;
+                height: 100% !important;
             }
             #app-header {
                 flex-wrap: wrap;
@@ -188,7 +204,7 @@
                     width: 100%;
                     max-width: 1200px;
                 }
-                #screen-competition, #screen-planning, #screen-planning-detail {
+                #screen-competition, #screen-planning, #screen-planning-detail, #screen-attendance {
                     width: 100%;
                     margin-left: 0;
                     transform: none;
@@ -643,6 +659,22 @@
                                     onclick="deleteGymnastMusic()"
                                     class="hidden bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
                             </div>
+                        </div>
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="block text-[10px] uppercase font-semibold text-emerald-600">Présences aux séances</span>
+                                    <p id="attendance-profile-summary" class="mt-0.5 text-xs font-bold text-gray-700">Aucune présence renseignée</p>
+                                </div>
+                                <span id="attendance-profile-rate" class="rounded-full bg-white px-2 py-1 text-xs font-black text-emerald-700">—</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+                                <div class="rounded-lg bg-white p-2"><strong id="attendance-present-sessions" class="block text-base text-emerald-700">0</strong><span class="text-[9px] text-gray-500">séances présentes</span></div>
+                                <div class="rounded-lg bg-white p-2"><strong id="attendance-present-hours" class="block text-base text-emerald-700">0 h</strong><span class="text-[9px] text-gray-500">heures présentes</span></div>
+                                <div class="rounded-lg bg-white p-2"><strong id="attendance-absent-sessions" class="block text-base text-red-600">0</strong><span class="text-[9px] text-gray-500">séances absentes</span></div>
+                                <div class="rounded-lg bg-white p-2"><strong id="attendance-absent-hours" class="block text-base text-red-600">0 h</strong><span class="text-[9px] text-gray-500">heures absentes</span></div>
+                            </div>
+                            <div id="attendance-profile-history" class="space-y-1 text-[10px] text-gray-500"></div>
                         </div>
                     </div>
 
@@ -1276,6 +1308,40 @@
                             <input id="planning-session-search" type="search" oninput="renderPlanningSessions()" placeholder="Date, type, statut, note…" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal">
                         </label>
                     </div>
+                    <div class="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                        <div class="flex flex-wrap items-end justify-between gap-2">
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-700">Répartition du travail</h4>
+                                <p class="mt-1 text-[9px] text-gray-400">Une séance cochée sur plusieurs axes est comptée dans chacun.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="text-[9px] font-bold text-gray-500">Période
+                                    <select id="planning-workload-period" onchange="renderPlanningWorkloadCharts()" class="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-normal">
+                                        <option value="week">Par semaine</option>
+                                        <option value="month">Par mois</option>
+                                    </select>
+                                </label>
+                                <label class="text-[9px] font-bold text-gray-500">Mesure
+                                    <select id="planning-workload-metric" onchange="renderPlanningWorkloadCharts()" class="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-normal">
+                                        <option value="sessions">Nombre de séances</option>
+                                        <option value="hours">Heures associées</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
+                            <div class="min-w-0 rounded-lg border border-gray-100 p-2">
+                                <p class="mb-2 text-[10px] font-bold text-amber-700">Par agrès</p>
+                                <div class="planning-workload-scroll"><div id="planning-apparatus-chart-shell" class="planning-workload-canvas"><canvas id="planning-apparatus-workload-chart"></canvas></div></div>
+                                <p id="planning-apparatus-chart-empty" class="hidden py-8 text-center text-[10px] text-gray-400">Cochez les agrès dans les séances pour alimenter ce graphique.</p>
+                            </div>
+                            <div class="min-w-0 rounded-lg border border-gray-100 p-2">
+                                <p class="mb-2 text-[10px] font-bold text-purple-700">Par profil technique</p>
+                                <div class="planning-workload-scroll"><div id="planning-profile-chart-shell" class="planning-workload-canvas"><canvas id="planning-profile-workload-chart"></canvas></div></div>
+                                <p id="planning-profile-chart-empty" class="hidden py-8 text-center text-[10px] text-gray-400">Cochez les profils techniques dans les séances pour alimenter ce graphique.</p>
+                            </div>
+                        </div>
+                    </div>
                     <p id="planning-session-count" class="text-[10px] font-semibold text-gray-500"></p>
                     <div id="planning-session-list" class="grid grid-cols-1 gap-3 lg:grid-cols-2"></div>
                 </div>
@@ -1297,6 +1363,44 @@
                     <button id="planning-detail-delete" type="button" class="ui-theme-danger-action rounded-lg py-2 font-semibold text-white">🗑️ Supprimer</button>
                     <button id="planning-detail-edit" type="button" class="ui-theme-zone-action rounded-lg py-2 font-bold text-white">✏️ Modifier</button>
                 </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════ FEUILLE D'APPEL ═══ -->
+            <section id="screen-attendance" data-ui-zone="attendance" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 class="ui-theme-zone-title text-lg font-bold text-emerald-800">Feuille d’appel 📋</h2>
+                        <p class="text-xs text-gray-500">Présences et absences reliées aux séances de la planification.</p>
+                    </div>
+                    <span id="attendance-save-status" class="hidden rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700"></span>
+                </div>
+
+                <div class="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm sm:grid-cols-2">
+                    <label class="text-[10px] font-bold text-gray-600">Catégorie de gymnastes
+                        <select id="attendance-level-select" onchange="changeAttendanceSelection()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal"></select>
+                    </label>
+                    <label class="text-[10px] font-bold text-gray-600">Séance planifiée
+                        <select id="attendance-session-select" onchange="changeAttendanceSelection()" class="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 p-2 text-xs font-normal"></select>
+                    </label>
+                </div>
+
+                <div id="attendance-session-summary" class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800"></div>
+
+                <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">Gymnastes</h3>
+                            <p id="attendance-count" class="text-[10px] text-gray-400">0 gymnaste</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="setAllAttendance('present')" class="rounded-lg bg-emerald-600 px-3 py-2 text-[10px] font-bold text-white">✓ Toutes présentes</button>
+                            <button type="button" onclick="setAllAttendance('')" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-600">Effacer</button>
+                        </div>
+                    </div>
+                    <div id="attendance-list" class="mt-3 space-y-2"></div>
+                </div>
+
+                <button id="attendance-save-button" type="button" onclick="saveAttendanceSheet()" class="ui-theme-zone-action w-full rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white shadow">💾 Enregistrer la feuille d’appel</button>
             </section>
 
 
@@ -1723,11 +1827,14 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.24.0';
+        const APP_VERSION = '1.25.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
         const PLANNING_LEVEL_NAME = '🗓️ Planification';
+        const ATTENDANCE_LEVEL_ID = 'ATTENDANCE-ZONE';
+        const ATTENDANCE_LEVEL_NAME = "📋 Feuille d'appel";
+        const PROTECTED_LEVEL_IDS = [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID, ATTENDANCE_LEVEL_ID];
         const PROGRESSION_STATUSES = ['not_performed', 'studied', 'in_progress', 'acquired'];
         const PROGRESSION_STATUS_DEFINITIONS = {
             not_performed: {label: 'Non réalisé', percent: 0},
@@ -1813,6 +1920,7 @@
                 'planning-meso': {accent: '#1d4ed8', background: '#eff6ff'},
                 'planning-micro': {accent: '#7e22ce', background: '#faf5ff'},
                 'planning-session': {accent: '#d97706', background: '#fffbeb'},
+                attendance: {accent: '#047857', background: '#ecfdf5'},
                 settings: {accent: '#475569', background: '#f8fafc'},
                 'tab-infos': {accent: '#2563eb', background: '#ffffff'},
                 'tab-saisie': {accent: '#7e22ce', background: '#ffffff'},
@@ -2297,6 +2405,16 @@
             };
         }
 
+        function normalizePlanningWorkTags(value, definitions) {
+            const valid = new Set((Array.isArray(definitions) ? definitions : []).map(item => item.key));
+            const source = Array.isArray(value)
+                ? value
+                : value === undefined || value === null || value === ''
+                    ? []
+                    : String(value).split(',');
+            return [...new Set(source.map(item => String(item || '').trim()).filter(item => valid.has(item)))];
+        }
+
         function normalizePlanningSession(value, fallbackId) {
             const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
             const inferredSource = String(source.id || '').startsWith('SESSION-20') ? 'legacy' : 'manual';
@@ -2308,6 +2426,8 @@
                 type: normalizePlanningText(source.type || 'Entraînement', 60),
                 status: normalizePlanningText(source.status || 'Planifié', 60),
                 notes: normalizePlanningText(source.notes, 1000),
+                apparatuses: normalizePlanningWorkTags(source.apparatuses, PROGRESSION_APPARATUS),
+                technicalProfiles: normalizePlanningWorkTags(source.technicalProfiles, PROGRESSION_FAMILIES),
                 source: ['generated_regular', 'generated_holiday', 'event', 'manual', 'legacy'].includes(source.source)
                     ? source.source
                     : inferredSource,
@@ -2397,6 +2517,49 @@
             });
             planning.scheduleConfig = normalizePlanningScheduleConfig(planning.scheduleConfig, planning.macrocycles[0] || {});
             target.planning = planning;
+            return target;
+        }
+
+        function normalizeAttendanceData(target) {
+            if (!target || typeof target !== 'object' || Array.isArray(target)) return target;
+            const source = Array.isArray(target.attendanceSheets) ? target.attendanceSheets : [];
+            const seen = new Set();
+            target.attendanceSheets = source
+                .filter(item => item && typeof item === 'object' && !Array.isArray(item))
+                .map((item, index) => {
+                    const rawId = String(item.id || `ATTENDANCE-${index + 1}`).trim().slice(0, 160) || `ATTENDANCE-${index + 1}`;
+                    let id = rawId;
+                    let suffix = 2;
+                    while (seen.has(id)) id = `${rawId}-${suffix++}`;
+                    seen.add(id);
+                    const entries = {};
+                    const rawEntries = item.entries && typeof item.entries === 'object' && !Array.isArray(item.entries)
+                        ? item.entries : {};
+                    Object.entries(rawEntries).forEach(([gymId, status]) => {
+                        const normalizedId = String(gymId || '').trim().slice(0, 160);
+                        if (normalizedId && ['present', 'absent'].includes(status)) entries[normalizedId] = status;
+                    });
+                    const planningSessionKey = normalizePlanningText(item.planningSessionKey, 240);
+                    const planningSessionId = normalizePlanningText(
+                        item.planningSessionId || (planningSessionKey.includes('::') ? planningSessionKey.split('::').slice(1).join('::') : ''),
+                        160
+                    );
+                    const duration = Number(item.durationHours);
+                    return {
+                        id,
+                        planningSessionId,
+                        planningSessionKey,
+                        microcycleId: normalizePlanningText(item.microcycleId, 160),
+                        levelId: normalizePlanningText(item.levelId, 160),
+                        date: /^\d{4}-\d{2}-\d{2}$/.test(String(item.date || '')) ? String(item.date) : '',
+                        startTime: /^\d{2}:\d{2}$/.test(String(item.startTime || '')) ? String(item.startTime) : '',
+                        endTime: /^\d{2}:\d{2}$/.test(String(item.endTime || '')) ? String(item.endTime) : '',
+                        type: normalizePlanningText(item.type || 'Entraînement', 60),
+                        durationHours: Number.isFinite(duration) ? Math.max(0, Math.min(24, Math.round(duration * 100) / 100)) : 0,
+                        entries,
+                        updatedAt: normalizePlanningText(item.updatedAt, 40)
+                    };
+                });
             return target;
         }
 
@@ -2701,6 +2864,9 @@
                 }, {
                     id: "PLAN-ZONE",
                     name: "🗓️ Planification"
+                }, {
+                    id: "ATTENDANCE-ZONE",
+                    name: "📋 Feuille d'appel"
                 }
             ],
             gymnastes: [],
@@ -2715,6 +2881,7 @@
             defaultSigleScoring: {},
             deletedDefaultSigles: [],
             planning: createDefaultPlanningData(),
+            attendanceSheets: [],
             uiTheme: cloneDefaultUiTheme(),
             appName: "GymSuivi",
             appLogo: "",
@@ -2723,6 +2890,7 @@
         normalizeLevelCollection(data);
         normalizeProgressionData(data);
         normalizePlanningData(data);
+        normalizeAttendanceData(data);
         normalizeUiTheme(data);
         const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
@@ -2755,7 +2923,7 @@
                 if (!level || typeof level !== 'object' || Array.isArray(level)) return;
                 const id = String(level.id || '').trim();
                 const name = normalizeLevelName(level.name);
-                if (!id || [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(id) || !name || seenIds.has(id)) return;
+                if (!id || PROTECTED_LEVEL_IDS.includes(id) || !name || seenIds.has(id)) return;
                 seenIds.add(id);
                 normalized.push({...level, id, name});
             });
@@ -2764,6 +2932,7 @@
             }
             normalized.push({id: COMPETITION_LEVEL_ID, name: COMPETITION_LEVEL_NAME});
             normalized.push({id: PLANNING_LEVEL_ID, name: PLANNING_LEVEL_NAME});
+            normalized.push({id: ATTENDANCE_LEVEL_ID, name: ATTENDANCE_LEVEL_NAME});
             target.levels = normalized;
             return target;
         }
@@ -3099,6 +3268,7 @@
                 normalizeLevelCollection(data);
                 normalizeProgressionData(data);
                 normalizePlanningData(data);
+                normalizeAttendanceData(data);
                 normalizeUiTheme(data);
                 }
             catch (e) {
@@ -3110,6 +3280,7 @@
             normalizeLevelCollection(data);
             normalizeProgressionData(data);
             normalizePlanningData(data);
+            normalizeAttendanceData(data);
             normalizeUiTheme(data);
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller)
@@ -3226,6 +3397,7 @@
                         normalizeLevelCollection(data);
                         normalizeProgressionData(data);
                         normalizePlanningData(data);
+                        normalizeAttendanceData(data);
                         normalizeUiTheme(data);
                         saveAllData();
                         renderLevels();
@@ -3485,10 +3657,10 @@
                 throw driveDataError('Sauvegarde Drive invalide : aucune donnée remplacée.');
             }
             const result = {...JSON.parse(JSON.stringify(INITIAL_GYM_DATA)), ...value};
-            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles'].forEach(key => {
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles', 'attendanceSheets'].forEach(key => {
                 if (!Array.isArray(result[key])) throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
             });
-            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders'].forEach(key => {
+            ['levels', 'gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'attendanceSheets'].forEach(key => {
                 if (result[key].some(item => !item || typeof item !== 'object' || Array.isArray(item)))
                     throw driveDataError(`Sauvegarde invalide (${key}) : aucune donnée remplacée.`);
             });
@@ -3502,11 +3674,11 @@
                 throw driveDataError('Sauvegarde invalide (référentiel de progression) : aucune donnée remplacée.');
             if (!result.planning || typeof result.planning !== 'object' || Array.isArray(result.planning))
                 throw driveDataError('Sauvegarde invalide (planification) : aucune donnée remplacée.');
-            return normalizeUiTheme(normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result))));
+            return normalizeUiTheme(normalizeAttendanceData(normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result)))));
         }
 
         function hasDriveContent(snapshot) {
-            return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles']
+            return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles', 'attendanceSheets']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
                 Object.keys(snapshot.defaultSigleScoring || {}).length > 0 ||
                 (Array.isArray(snapshot.progressionElements) && snapshot.progressionElements.length > 0) ||
@@ -3611,6 +3783,8 @@
                 switchCompetitionTab(currentCompetitionTab);
             }
             if (!document.getElementById('screen-planning').classList.contains('hidden')) renderPlanning();
+            if (!document.getElementById('screen-attendance').classList.contains('hidden')) renderAttendanceScreen();
+            if (!document.getElementById('screen-fiche').classList.contains('hidden')) renderGymnastAttendanceSummary();
             applyCustomAppIdentity();
             applyCustomColors();
             updateBirthdayNotificationUI();
@@ -3823,6 +3997,7 @@
         function getUiThemeZoneKeyForLevel(levelId) {
             if (levelId === COMPETITION_LEVEL_ID) return 'competition';
             if (levelId === PLANNING_LEVEL_ID) return 'planning';
+            if (levelId === ATTENDANCE_LEVEL_ID) return 'attendance';
             return `category:${levelId}`;
         }
 
@@ -3841,6 +4016,7 @@
                 {value: 'planning-meso', label: 'Onglet planification — Mésocycles'},
                 {value: 'planning-micro', label: 'Onglet planification — Microcycles'},
                 {value: 'planning-session', label: 'Onglet planification — Séances'},
+                {value: 'attendance', label: "Catégorie — Feuille d'appel"},
                 {value: 'fiche', label: 'Fiche gymnaste — cadre général'},
                 {value: 'tab-infos', label: 'Onglet — Fiche personnelle'},
                 {value: 'tab-saisie', label: 'Onglet — Saisie des notes'},
@@ -4260,9 +4436,15 @@
         let currentPlanningDetail = null;
         let planningDetailHistory = [];
         let planningSessionEditorCounter = 0;
+        let planningApparatusWorkloadChart = null;
+        let planningProfileWorkloadChart = null;
+        let currentAttendanceLevelId = '';
+        let currentAttendanceSessionKey = '';
+        let attendanceDraftEntries = {};
+        let attendanceDraftDirty = false;
         let screenHistory = ['screen-levels'];
 
-        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-planning-detail', 'screen-settings'];
+        const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-planning-detail', 'screen-attendance', 'screen-settings'];
 
         function showScreen(screenId) {
             ALL_SCREENS.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -4350,7 +4532,7 @@
         // ────────────────────────────────────────────────────────────── RENDU DES
         // NIVEAUX ──────────────────────────────────────────────────────────────
         function getGymLevels() {
-            return data.levels.filter(level => ![COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(level.id));
+            return data.levels.filter(level => !PROTECTED_LEVEL_IDS.includes(level.id));
         }
 
         function getLevelById(levelId) {
@@ -4377,7 +4559,7 @@
             if (!normalizedName) throw new Error('Indiquez un nom de catégorie.');
             if (levelNameExists(normalizedName)) throw new Error('Une catégorie porte déjà ce nom.');
             const level = {id: createLevelId(), name: normalizedName};
-            const protectedIndex = data.levels.findIndex(item => [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(item.id));
+            const protectedIndex = data.levels.findIndex(item => PROTECTED_LEVEL_IDS.includes(item.id));
             data.levels.splice(protectedIndex < 0 ? data.levels.length : protectedIndex, 0, level);
             saveAllData();
             return level;
@@ -4385,7 +4567,7 @@
 
         function renameGymLevel(levelId, name) {
             const level = getLevelById(levelId);
-            if (!level || [COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(level.id)) throw new Error('Cette catégorie est protégée.');
+            if (!level || PROTECTED_LEVEL_IDS.includes(level.id)) throw new Error('Cette catégorie est protégée.');
             const normalizedName = normalizeLevelName(name);
             if (!normalizedName) throw new Error('Le nom de la catégorie ne peut pas être vide.');
             if (levelNameExists(normalizedName, levelId)) throw new Error('Une catégorie porte déjà ce nom.');
@@ -4579,6 +4761,8 @@
                         ? '🌟 Gestion Multi-Équipes'
                         : lvl.id === PLANNING_LEVEL_ID
                             ? 'Macrocycle · Mésocycles · Microcycles'
+                            : lvl.id === ATTENDANCE_LEVEL_ID
+                                ? 'Présences · Absences · Heures'
                             : `${count} gymnaste(s)`;
 
                     const levelTheme = getUiThemeZone(getUiThemeZoneKeyForLevel(lvl.id));
@@ -4609,7 +4793,7 @@
             if (niveauSel) {
                 niveauSel.innerHTML = data
                     .levels
-                    .filter(l => ![COMPETITION_LEVEL_ID, PLANNING_LEVEL_ID].includes(l.id))
+                    .filter(l => !PROTECTED_LEVEL_IDS.includes(l.id))
                     .map(l => `<option value="${l.id}">${l.name}</option>`)
                     .join('');
             }
@@ -4625,6 +4809,11 @@
             if (id === PLANNING_LEVEL_ID) {
                 switchPlanningTab(currentPlanningTab);
                 showScreen('screen-planning');
+                return;
+            }
+            if (id === ATTENDANCE_LEVEL_ID) {
+                renderAttendanceScreen();
+                showScreen('screen-attendance');
                 return;
             }
             currentLevelId = id;
@@ -4983,6 +5172,7 @@
             let badge = '';
             let description = '';
             let metrics = '';
+            let workTags = '';
             if (type === 'macrocycle') {
                 const volume = calculatePlanningVolume(item);
                 badge = escapeHtml(item.season || 'Saison');
@@ -5004,6 +5194,11 @@
                 badge = escapeHtml(microcycle ? microcycle.name : 'Sans microcycle');
                 description = escapeHtml(item.notes || `${item.type || 'Séance'} · ${item.status || 'Planifié'}`);
                 metrics = `${item.startTime && item.endTime ? `${item.startTime}–${item.endTime} · ` : ''}${formatPlanningHours(calculatePlanningSessionHours(item))}`;
+                const apparatusLabels = normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS)
+                    .map(key => (PROGRESSION_APPARATUS.find(entry => entry.key === key) || {}).label).filter(Boolean);
+                const profileLabels = normalizePlanningWorkTags(item.technicalProfiles, PROGRESSION_FAMILIES)
+                    .map(key => (PROGRESSION_FAMILIES.find(entry => entry.key === key) || {}).label).filter(Boolean);
+                workTags = `<div class="mt-2 flex flex-wrap gap-1">${apparatusLabels.map(label => `<span class="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">${escapeHtml(label)}</span>`).join('')}${profileLabels.map(label => `<span class="rounded-full bg-purple-50 px-2 py-1 text-[9px] font-bold text-purple-700">${escapeHtml(label)}</span>`).join('')}</div>`;
             }
             button.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
@@ -5015,6 +5210,7 @@
                 </div>
                 <p class="mt-2 text-[10px] font-semibold text-gray-500">${escapeHtml(formatPlanningPeriod(item.startDate, item.endDate))}</p>
                 <p class="mt-2 line-clamp-2 text-[10px] leading-relaxed text-gray-500">${description}</p>
+                ${workTags}
                 <div class="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
                     <span class="text-[10px] font-bold text-gray-600">${escapeHtml(metrics)}</span>
                     <span class="text-[10px] font-bold text-teal-700">Ouvrir la carte →</span>
@@ -5138,7 +5334,9 @@
                     if (!search) return true;
                     const microcycle = getPlanningEntity('microcycle', item.microcycleId);
                     const haystack = [item.date, formatPlanningDate(item.date), item.startTime, item.endTime,
-                        item.type, item.status, item.notes, microcycle && microcycle.name]
+                        item.type, item.status, item.notes, microcycle && microcycle.name,
+                        ...normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS).map(key => (PROGRESSION_APPARATUS.find(entry => entry.key === key) || {}).label),
+                        ...normalizePlanningWorkTags(item.technicalProfiles, PROGRESSION_FAMILIES).map(key => (PROGRESSION_FAMILIES.find(entry => entry.key === key) || {}).label)]
                         .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
                     return haystack.includes(search);
                 })
@@ -5148,9 +5346,137 @@
             if (count) count.textContent = `${items.length} séance${items.length === 1 ? '' : 's'} affichée${items.length === 1 ? '' : 's'}`;
             if (!items.length) {
                 container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucune séance ne correspond aux filtres.</p>';
+                renderPlanningWorkloadCharts();
                 return;
             }
             items.forEach(item => container.appendChild(createPlanningCard('session', item)));
+            renderPlanningWorkloadCharts();
+        }
+
+        function getPlanningWorkloadBucket(dateValue, period = 'week') {
+            const date = /^\d{4}-\d{2}-\d{2}$/.test(String(dateValue || '')) ? String(dateValue) : '';
+            if (!date) return null;
+            if (period === 'month') {
+                const key = date.slice(0, 7);
+                const [year, month] = key.split('-').map(Number);
+                return {
+                    key,
+                    label: new Date(year, month - 1, 1).toLocaleDateString('fr-FR', {month: 'short', year: 'numeric'})
+                };
+            }
+            const key = getPlanningWeekStart(date);
+            return key ? {key, label: `Sem. du ${formatPlanningDate(key)}`} : null;
+        }
+
+        function buildPlanningWorkloadData(sessions, period, metric, definitions, fieldName) {
+            const safeDefinitions = Array.isArray(definitions) ? definitions : [];
+            const buckets = new Map();
+            let taggedSessions = 0;
+            (Array.isArray(sessions) ? sessions : []).forEach(session => {
+                const tags = normalizePlanningWorkTags(session && session[fieldName], safeDefinitions);
+                const bucket = getPlanningWorkloadBucket(session && session.date, period);
+                if (!bucket || !tags.length) return;
+                if (!buckets.has(bucket.key)) {
+                    buckets.set(bucket.key, {
+                        label: bucket.label,
+                        values: Object.fromEntries(safeDefinitions.map(item => [item.key, 0]))
+                    });
+                }
+                taggedSessions += 1;
+                const value = metric === 'hours' ? calculatePlanningSessionHours(session) : 1;
+                tags.forEach(tag => {
+                    buckets.get(bucket.key).values[tag] = Math.round((buckets.get(bucket.key).values[tag] + value) * 100) / 100;
+                });
+            });
+            const ordered = [...buckets.entries()].sort(([left], [right]) => left.localeCompare(right));
+            return {
+                labels: ordered.map(([, bucket]) => bucket.label),
+                datasets: safeDefinitions.map(definition => ({
+                    key: definition.key,
+                    label: definition.label,
+                    values: ordered.map(([, bucket]) => bucket.values[definition.key] || 0)
+                })),
+                taggedSessions
+            };
+        }
+
+        function destroyPlanningWorkloadChart(chartName) {
+            const chart = chartName === 'apparatus' ? planningApparatusWorkloadChart : planningProfileWorkloadChart;
+            if (chart && typeof chart.destroy === 'function') chart.destroy();
+            if (chartName === 'apparatus') planningApparatusWorkloadChart = null;
+            else planningProfileWorkloadChart = null;
+        }
+
+        function renderPlanningWorkloadChart(kind, workload, metric) {
+            const isApparatus = kind === 'apparatus';
+            const canvas = document.getElementById(isApparatus ? 'planning-apparatus-workload-chart' : 'planning-profile-workload-chart');
+            const shell = document.getElementById(isApparatus ? 'planning-apparatus-chart-shell' : 'planning-profile-chart-shell');
+            const empty = document.getElementById(isApparatus ? 'planning-apparatus-chart-empty' : 'planning-profile-chart-empty');
+            destroyPlanningWorkloadChart(kind);
+            if (!canvas || !shell || !empty) return;
+            const hasValues = workload && workload.taggedSessions > 0 && workload.labels.length > 0;
+            shell.classList.toggle('hidden', !hasValues);
+            empty.classList.toggle('hidden', hasValues);
+            if (!hasValues) return;
+            if (typeof Chart === 'undefined') {
+                shell.classList.add('hidden');
+                empty.classList.remove('hidden');
+                empty.textContent = 'Le module graphique est indisponible. Les séances restent enregistrées.';
+                return;
+            }
+            empty.textContent = isApparatus
+                ? 'Cochez les agrès dans les séances pour alimenter ce graphique.'
+                : 'Cochez les profils techniques dans les séances pour alimenter ce graphique.';
+            shell.style.width = `${Math.max(560, workload.labels.length * 86)}px`;
+            const palette = isApparatus
+                ? ['#dc2626', '#2563eb', '#d97706', '#16a34a']
+                : ['#7c3aed', '#db2777', '#0891b2', '#4f46e5', '#65a30d', '#ea580c', '#0d9488', '#9333ea'];
+            const instance = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: workload.labels,
+                    datasets: workload.datasets.map((dataset, index) => ({
+                        label: dataset.label,
+                        data: dataset.values,
+                        borderColor: palette[index % palette.length],
+                        backgroundColor: palette[index % palette.length],
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.2,
+                        fill: false
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {mode: 'index', intersect: false},
+                    plugins: {
+                        legend: {position: 'bottom', labels: {boxWidth: 10, font: {size: 9}}},
+                        tooltip: {callbacks: {label: context => `${context.dataset.label} : ${Number(context.parsed.y || 0).toLocaleString('fr-FR', {maximumFractionDigits: 2})}${metric === 'hours' ? ' h' : ' séance(s)'}`}}
+                    },
+                    scales: {
+                        y: {beginAtZero: true, ticks: {precision: metric === 'sessions' ? 0 : 1}, title: {display: true, text: metric === 'hours' ? 'Heures associées' : 'Nombre de séances'}},
+                        x: {ticks: {maxRotation: 45, minRotation: 0}}
+                    }
+                }
+            });
+            if (isApparatus) planningApparatusWorkloadChart = instance;
+            else planningProfileWorkloadChart = instance;
+        }
+
+        function renderPlanningWorkloadCharts() {
+            const filter = document.getElementById('planning-session-filter');
+            const periodInput = document.getElementById('planning-workload-period');
+            const metricInput = document.getElementById('planning-workload-metric');
+            if (!periodInput || !metricInput) return;
+            const selectedMicrocycle = filter ? filter.value : 'all';
+            const period = periodInput.value === 'month' ? 'month' : 'week';
+            const metric = metricInput.value === 'hours' ? 'hours' : 'sessions';
+            const sessions = getPlanningCollection('session')
+                .filter(item => selectedMicrocycle === 'all' || item.microcycleId === selectedMicrocycle);
+            renderPlanningWorkloadChart('apparatus', buildPlanningWorkloadData(sessions, period, metric, PROGRESSION_APPARATUS, 'apparatuses'), metric);
+            renderPlanningWorkloadChart('profile', buildPlanningWorkloadData(sessions, period, metric, PROGRESSION_FAMILIES, 'technicalProfiles'), metric);
         }
 
         function renderPlanning() {
@@ -5182,6 +5508,252 @@
                 }
             });
             renderPlanning();
+        }
+
+        // ────────────────────────────────────────────────────────────── FEUILLE D'APPEL
+        // ──────────────────────────────────────────────────────────────
+        function getAttendanceSheet(levelId, session) {
+            normalizeAttendanceData(data);
+            if (!session) return null;
+            return data.attendanceSheets.find(sheet => sheet.levelId === levelId && (
+                sheet.planningSessionKey === session.id ||
+                (sheet.planningSessionId && sheet.planningSessionId === session.planningSessionId &&
+                    (!sheet.microcycleId || sheet.microcycleId === session.microcycleId))
+            )) || null;
+        }
+
+        function getDefaultAttendanceSessionKey(sessions) {
+            if (!sessions.length) return '';
+            const today = new Date();
+            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const upcoming = sessions.find(session => session.date >= todayKey);
+            return (upcoming || sessions[sessions.length - 1]).id;
+        }
+
+        function renderAttendanceSelectors() {
+            const levelSelect = document.getElementById('attendance-level-select');
+            const sessionSelect = document.getElementById('attendance-session-select');
+            if (!levelSelect || !sessionSelect) return;
+            const levels = getGymLevels();
+            levelSelect.innerHTML = levels.map(level => `<option value="${escapeHtml(level.id)}">${escapeHtml(level.name)}</option>`).join('');
+            if (!levels.some(level => level.id === currentAttendanceLevelId)) currentAttendanceLevelId = levels[0] ? levels[0].id : '';
+            levelSelect.value = currentAttendanceLevelId;
+
+            const sessions = getPlanningCollection('session')
+                .slice()
+                .sort((left, right) => left.date.localeCompare(right.date) || left.startTime.localeCompare(right.startTime));
+            sessionSelect.innerHTML = sessions.map(session => {
+                const time = session.startTime && session.endTime ? ` · ${session.startTime}–${session.endTime}` : '';
+                return `<option value="${escapeHtml(session.id)}">${escapeHtml(`${formatPlanningDate(session.date)}${time} · ${session.type}`)}</option>`;
+            }).join('');
+            if (!sessions.some(session => session.id === currentAttendanceSessionKey))
+                currentAttendanceSessionKey = getDefaultAttendanceSessionKey(sessions);
+            sessionSelect.value = currentAttendanceSessionKey;
+            levelSelect.disabled = levels.length === 0;
+            sessionSelect.disabled = sessions.length === 0;
+        }
+
+        function getCurrentAttendanceSession() {
+            return getPlanningEntity('session', currentAttendanceSessionKey);
+        }
+
+        function loadAttendanceDraft() {
+            const session = getCurrentAttendanceSession();
+            const sheet = getAttendanceSheet(currentAttendanceLevelId, session);
+            attendanceDraftEntries = sheet ? {...sheet.entries} : {};
+            attendanceDraftDirty = false;
+            renderAttendanceSessionSummary();
+            renderAttendanceList();
+        }
+
+        function changeAttendanceSelection() {
+            if (attendanceDraftDirty) saveAttendanceSheet(true);
+            const levelSelect = document.getElementById('attendance-level-select');
+            const sessionSelect = document.getElementById('attendance-session-select');
+            currentAttendanceLevelId = levelSelect ? levelSelect.value : '';
+            currentAttendanceSessionKey = sessionSelect ? sessionSelect.value : '';
+            loadAttendanceDraft();
+        }
+
+        function renderAttendanceSessionSummary() {
+            const container = document.getElementById('attendance-session-summary');
+            const saveButton = document.getElementById('attendance-save-button');
+            if (!container) return;
+            const session = getCurrentAttendanceSession();
+            const level = getLevelById(currentAttendanceLevelId);
+            if (!session || !level) {
+                container.textContent = !session
+                    ? 'Aucune séance planifiée. Ajoutez d’abord une séance dans Planification.'
+                    : 'Aucune catégorie de gymnastes disponible.';
+                if (saveButton) saveButton.disabled = true;
+                return;
+            }
+            if (saveButton) saveButton.disabled = false;
+            const apparatuses = normalizePlanningWorkTags(session.apparatuses, PROGRESSION_APPARATUS)
+                .map(key => (PROGRESSION_APPARATUS.find(item => item.key === key) || {}).label).filter(Boolean);
+            container.innerHTML = `<strong>${escapeHtml(level.name)}</strong> · ${escapeHtml(formatPlanningDate(session.date))} · ${escapeHtml(session.startTime && session.endTime ? `${session.startTime}–${session.endTime}` : 'horaire libre')} · ${escapeHtml(formatPlanningHours(calculatePlanningSessionHours(session)))}<span class="mt-1 block text-[10px]">${escapeHtml(session.type)}${apparatuses.length ? ` · ${escapeHtml(apparatuses.join(', '))}` : ''}</span>`;
+        }
+
+        function setAttendanceStatus(gymId, status) {
+            if (!['present', 'absent'].includes(status)) delete attendanceDraftEntries[gymId];
+            else attendanceDraftEntries[gymId] = status;
+            attendanceDraftDirty = true;
+            renderAttendanceList();
+        }
+
+        function setAllAttendance(status) {
+            const gymnasts = data.gymnastes.filter(gymnast => gymnast.niveauId === currentAttendanceLevelId);
+            gymnasts.forEach(gymnast => {
+                if (status === 'present' || status === 'absent') attendanceDraftEntries[gymnast.id] = status;
+                else delete attendanceDraftEntries[gymnast.id];
+            });
+            attendanceDraftDirty = true;
+            renderAttendanceList();
+        }
+
+        function renderAttendanceList() {
+            const container = document.getElementById('attendance-list');
+            const count = document.getElementById('attendance-count');
+            if (!container) return;
+            const gymnasts = data.gymnastes
+                .filter(gymnast => gymnast.niveauId === currentAttendanceLevelId)
+                .slice()
+                .sort((left, right) => `${left.nom || ''} ${left.prenom || ''}`.localeCompare(`${right.nom || ''} ${right.prenom || ''}`, 'fr', {sensitivity: 'base'}));
+            const presentCount = gymnasts.filter(gymnast => attendanceDraftEntries[gymnast.id] === 'present').length;
+            const absentCount = gymnasts.filter(gymnast => attendanceDraftEntries[gymnast.id] === 'absent').length;
+            if (count) count.textContent = `${gymnasts.length} gymnaste${gymnasts.length === 1 ? '' : 's'} · ${presentCount} présente${presentCount === 1 ? '' : 's'} · ${absentCount} absente${absentCount === 1 ? '' : 's'} · ${gymnasts.length - presentCount - absentCount} non renseignée${gymnasts.length - presentCount - absentCount === 1 ? '' : 's'}`;
+            container.innerHTML = '';
+            if (!gymnasts.length) {
+                container.innerHTML = '<p class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-xs text-gray-400">Aucune gymnaste dans cette catégorie.</p>';
+                return;
+            }
+            gymnasts.forEach(gymnast => {
+                const current = attendanceDraftEntries[gymnast.id] || '';
+                const row = document.createElement('div');
+                row.className = 'grid gap-2 rounded-xl border border-gray-100 bg-gray-50 p-2 sm:grid-cols-[minmax(150px,1fr)_auto] sm:items-center';
+                const name = document.createElement('strong');
+                name.className = 'min-w-0 truncate text-xs text-gray-700';
+                name.textContent = `${gymnast.nom || ''} ${gymnast.prenom || ''}`.trim();
+                const controls = document.createElement('div');
+                controls.className = 'grid grid-cols-3 gap-1 text-[10px]';
+                [
+                    {value: 'present', label: '✓ Présente', active: 'bg-emerald-600 text-white border-emerald-600'},
+                    {value: 'absent', label: '✕ Absente', active: 'bg-red-600 text-white border-red-600'},
+                    {value: '', label: '— Non renseigné', active: 'bg-gray-600 text-white border-gray-600'}
+                ].forEach(option => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.textContent = option.label;
+                    button.className = `rounded-lg border px-2 py-2 font-bold ${current === option.value ? option.active : 'border-gray-200 bg-white text-gray-500'}`;
+                    button.setAttribute('aria-pressed', current === option.value ? 'true' : 'false');
+                    button.onclick = () => setAttendanceStatus(gymnast.id, option.value);
+                    controls.appendChild(button);
+                });
+                row.append(name, controls);
+                container.appendChild(row);
+            });
+        }
+
+        function saveAttendanceSheet(silent = false) {
+            const session = getCurrentAttendanceSession();
+            const level = getLevelById(currentAttendanceLevelId);
+            if (!session || !level) {
+                if (!silent) alert('Sélectionnez une catégorie et une séance.');
+                return false;
+            }
+            normalizeAttendanceData(data);
+            const existing = getAttendanceSheet(currentAttendanceLevelId, session);
+            const validGymIds = new Set(data.gymnastes.filter(gymnast => gymnast.niveauId === currentAttendanceLevelId).map(gymnast => gymnast.id));
+            const preservedHistoricalEntries = existing
+                ? Object.fromEntries(Object.entries(existing.entries).filter(([gymId]) => !validGymIds.has(gymId)))
+                : {};
+            const entries = {
+                ...preservedHistoricalEntries,
+                ...Object.fromEntries(Object.entries(attendanceDraftEntries)
+                    .filter(([gymId, status]) => validGymIds.has(gymId) && ['present', 'absent'].includes(status)))
+            };
+            if (existing) data.attendanceSheets = data.attendanceSheets.filter(sheet => sheet.id !== existing.id);
+            if (Object.keys(entries).length) {
+                data.attendanceSheets.push(normalizeAttendanceData({attendanceSheets: [{
+                    id: existing ? existing.id : `ATTENDANCE-${currentAttendanceLevelId}-${session.planningSessionId || Date.now()}`,
+                    planningSessionId: session.planningSessionId,
+                    planningSessionKey: session.id,
+                    microcycleId: session.microcycleId,
+                    levelId: currentAttendanceLevelId,
+                    date: session.date,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    type: session.type,
+                    durationHours: calculatePlanningSessionHours(session),
+                    entries,
+                    updatedAt: new Date().toISOString()
+                }]}).attendanceSheets[0]);
+            }
+            attendanceDraftEntries = entries;
+            attendanceDraftDirty = false;
+            saveAllData();
+            const status = document.getElementById('attendance-save-status');
+            if (status && !silent) {
+                status.textContent = Object.keys(entries).length ? '✓ Feuille enregistrée' : '✓ Feuille effacée';
+                status.classList.remove('hidden');
+                setTimeout(() => status.classList.add('hidden'), 2500);
+            }
+            if (!silent) renderAttendanceList();
+            return true;
+        }
+
+        function renderAttendanceScreen() {
+            normalizeAttendanceData(data);
+            renderAttendanceSelectors();
+            loadAttendanceDraft();
+        }
+
+        function calculateGymnastAttendanceStats(gymId) {
+            normalizeAttendanceData(data);
+            const history = data.attendanceSheets
+                .filter(sheet => ['present', 'absent'].includes(sheet.entries[gymId]))
+                .map(sheet => ({
+                    ...sheet,
+                    attendanceStatus: sheet.entries[gymId],
+                    effectiveHours: Number(sheet.durationHours) || calculatePlanningSessionHours(sheet)
+                }))
+                .sort((left, right) => right.date.localeCompare(left.date) || right.startTime.localeCompare(left.startTime));
+            const present = history.filter(item => item.attendanceStatus === 'present');
+            const absent = history.filter(item => item.attendanceStatus === 'absent');
+            const roundHours = items => Math.round(items.reduce((sum, item) => sum + item.effectiveHours, 0) * 100) / 100;
+            return {
+                presentSessions: present.length,
+                absentSessions: absent.length,
+                presentHours: roundHours(present),
+                absentHours: roundHours(absent),
+                markedSessions: history.length,
+                attendanceRate: history.length ? Math.round((present.length / history.length) * 1000) / 10 : null,
+                history
+            };
+        }
+
+        function renderGymnastAttendanceSummary() {
+            const summary = document.getElementById('attendance-profile-summary');
+            if (!summary || !currentGymId) return;
+            const stats = calculateGymnastAttendanceStats(currentGymId);
+            const setText = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            };
+            setText('attendance-present-sessions', String(stats.presentSessions));
+            setText('attendance-present-hours', formatPlanningHours(stats.presentHours));
+            setText('attendance-absent-sessions', String(stats.absentSessions));
+            setText('attendance-absent-hours', formatPlanningHours(stats.absentHours));
+            setText('attendance-profile-rate', stats.attendanceRate === null ? '—' : `${stats.attendanceRate.toLocaleString('fr-FR')} %`);
+            summary.textContent = stats.markedSessions
+                ? `${stats.markedSessions} séance${stats.markedSessions === 1 ? '' : 's'} renseignée${stats.markedSessions === 1 ? '' : 's'}`
+                : 'Aucune présence renseignée';
+            const history = document.getElementById('attendance-profile-history');
+            if (history) {
+                history.innerHTML = stats.history.length
+                    ? `<p class="font-bold text-gray-600">Dernières séances</p>${stats.history.slice(0, 5).map(item => `<div class="flex items-center justify-between gap-2 rounded bg-white px-2 py-1"><span>${escapeHtml(formatPlanningDate(item.date))} · ${escapeHtml(item.type)}</span><strong class="${item.attendanceStatus === 'present' ? 'text-emerald-700' : 'text-red-600'}">${item.attendanceStatus === 'present' ? 'Présente' : 'Absente'}</strong></div>`).join('')}`
+                    : '';
+            }
         }
 
         function planningDetailRow(label, value, full = false) {
@@ -5275,6 +5847,10 @@
                 : item.source === 'generated_holiday' ? 'Horaire de vacances'
                 : item.source === 'generated_regular' ? 'Horaire habituel'
                 : 'Importée';
+            const apparatusLabels = normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS)
+                .map(key => (PROGRESSION_APPARATUS.find(entry => entry.key === key) || {}).label).filter(Boolean);
+            const profileLabels = normalizePlanningWorkTags(item.technicalProfiles, PROGRESSION_FAMILIES)
+                .map(key => (PROGRESSION_FAMILIES.find(entry => entry.key === key) || {}).label).filter(Boolean);
             return `${status}
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     ${planningDetailRow('Microcycle', microcycle ? microcycle.name : 'Non rattaché')}
@@ -5285,6 +5861,8 @@
                     ${planningDetailRow('Durée', formatPlanningHours(calculatePlanningSessionHours(item)))}
                     ${planningDetailRow('Origine', sourceLabel)}
                     ${planningDetailRow('Statut', item.status)}
+                    ${planningDetailRow('Agrès travaillés', apparatusLabels.join(', ') || 'Non renseignés')}
+                    ${planningDetailRow('Profils techniques', profileLabels.join(', ') || 'Non renseignés', true)}
                     ${planningDetailRow('Notes / contenu', item.notes, true)}
                 </div>`;
         }
@@ -5351,6 +5929,18 @@
                 return `<label class="text-[10px] font-bold text-gray-600${full}">${escapeHtml(label)}<select name="${escapeHtml(name)}"${required} class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal">${optionHtml}</select>${help}</label>`;
             }
             return `<label class="text-[10px] font-bold text-gray-600${full}">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="${escapeHtml(type)}" value="${escapeHtml(value || '')}"${required}${options.min !== undefined ? ` min="${Number(options.min)}"` : ''}${options.step !== undefined ? ` step="${Number(options.step)}"` : ''} class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs font-normal">${help}</label>`;
+        }
+
+        function planningEditorCheckboxGroup(name, label, definitions, selectedValues, colorClass = 'accent-amber-600') {
+            const selected = new Set(Array.isArray(selectedValues) ? selectedValues : []);
+            return `<fieldset class="sm:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                <legend class="px-1 text-[10px] font-bold text-gray-600">${escapeHtml(label)}</legend>
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">${definitions.map(item => `
+                    <label class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 text-[10px] font-semibold text-gray-700">
+                        <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(item.key)}"${selected.has(item.key) ? ' checked' : ''} class="h-4 w-4 shrink-0 ${colorClass}">
+                        <span>${escapeHtml(item.label)}</span>
+                    </label>`).join('')}</div>
+            </fieldset>`;
         }
 
         function openPlanningEditor(type, id = '') {
@@ -5436,6 +6026,8 @@
                     planningEditorField('startTime', 'Heure de début', item.startTime, {type: 'time'}),
                     planningEditorField('endTime', 'Heure de fin', item.endTime, {type: 'time'}),
                     planningEditorField('status', 'Statut', item.status || 'Planifié'),
+                    planningEditorCheckboxGroup('apparatuses', 'Agrès travaillés', PROGRESSION_APPARATUS, item.apparatuses, 'accent-amber-600'),
+                    planningEditorCheckboxGroup('technicalProfiles', 'Profils techniques travaillés', PROGRESSION_FAMILIES, item.technicalProfiles, 'accent-purple-600'),
                     planningEditorField('notes', 'Notes / contenu prévu', item.notes, {type: 'textarea', full: true, rows: 5})
                 ].join('');
             }
@@ -5456,6 +6048,8 @@
             row.dataset.generatedReferenceDate = session.generatedReferenceDate || '';
             row.dataset.generatedReferenceType = session.generatedReferenceType || '';
             row.dataset.generatedReferenceStartTime = session.generatedReferenceStartTime || '';
+            row.dataset.sessionApparatuses = JSON.stringify(normalizePlanningWorkTags(session.apparatuses, PROGRESSION_APPARATUS));
+            row.dataset.sessionTechnicalProfiles = JSON.stringify(normalizePlanningWorkTags(session.technicalProfiles, PROGRESSION_FAMILIES));
             row.dataset.originalSession = JSON.stringify({
                 date: session.date || '', startTime: session.startTime || '', endTime: session.endTime || '',
                 type: session.type || 'Entraînement', status: session.status || 'Planifié', notes: session.notes || ''
@@ -5482,8 +6076,11 @@
                 };
                 const current = {
                     date: read('date'), startTime: read('startTime'), endTime: read('endTime'),
-                    type: read('type'), status: read('status'), notes: read('notes')
+                    type: read('type'), status: read('status'), notes: read('notes'),
+                    apparatuses: [], technicalProfiles: []
                 };
+                try { current.apparatuses = JSON.parse(row.dataset.sessionApparatuses || '[]'); } catch (_) {}
+                try { current.technicalProfiles = JSON.parse(row.dataset.sessionTechnicalProfiles || '[]'); } catch (_) {}
                 let original = {};
                 try { original = JSON.parse(row.dataset.originalSession || '{}'); } catch (_) {}
                 const changed = ['date', 'startTime', 'endTime', 'type', 'status', 'notes']
@@ -5522,6 +6119,8 @@
                 const sessionType = normalizePlanningText(form.get('type') || 'Entraînement', 60);
                 const startTime = normalizePlanningText(form.get('startTime'), 5);
                 const endTime = normalizePlanningText(form.get('endTime'), 5);
+                const apparatuses = normalizePlanningWorkTags(form.getAll('apparatuses'), PROGRESSION_APPARATUS);
+                const technicalProfiles = normalizePlanningWorkTags(form.getAll('technicalProfiles'), PROGRESSION_FAMILIES);
                 if (!targetMicrocycle) {
                     alert('Sélectionnez un microcycle pour cette séance.');
                     return;
@@ -5544,7 +6143,8 @@
                             notes: normalizePlanningText(form.get('notes'), 1000)
                         };
                         return String(nextValues[field] || '') !== String(original[field] || '');
-                    });
+                    }) || JSON.stringify(apparatuses) !== JSON.stringify(normalizePlanningWorkTags(original.apparatuses, PROGRESSION_APPARATUS)) ||
+                    JSON.stringify(technicalProfiles) !== JSON.stringify(normalizePlanningWorkTags(original.technicalProfiles, PROGRESSION_FAMILIES));
                 const generatedSources = ['generated_regular', 'generated_holiday', 'event', 'legacy'];
                 const replacesGenerated = original.replacesGenerated === true ||
                     (changed && generatedSources.includes(original.source));
@@ -5557,6 +6157,8 @@
                     type: sessionType,
                     status: normalizePlanningText(form.get('status') || 'Planifié', 60),
                     notes: normalizePlanningText(form.get('notes'), 1000),
+                    apparatuses,
+                    technicalProfiles,
                     source: changed ? 'manual' : (original.source || 'manual'),
                     mesocycleId: targetMicrocycle.mesocycleId || '',
                     replacesGenerated,
@@ -5880,6 +6482,7 @@
             initMouvementsTab();
             renderGymnastMusic();
             renderGymnastLicence();
+            renderGymnastAttendanceSummary();
         }
 
         // ────────────────────────────────────────────────────────────── MUSIQUE
@@ -8815,7 +9418,7 @@
                 preview
                     .classList
                     .add('hidden');
-            if (currentLevelId && currentLevelId !== COMPETITION_LEVEL_ID) 
+            if (currentLevelId && !PROTECTED_LEVEL_IDS.includes(currentLevelId)) 
                 document
                     .getElementById('gym-niveau')
                     .value = currentLevelId;
@@ -9004,6 +9607,13 @@
                     if (session.scores && session.scores[currentGymId])
                         delete session.scores[currentGymId];
                 });
+
+                // 6. Retrait de ses statuts dans les feuilles d'appel conservées
+                if (Array.isArray(data.attendanceSheets)) {
+                    data.attendanceSheets.forEach(sheet => {
+                        if (sheet.entries && sheet.entries[currentGymId]) delete sheet.entries[currentGymId];
+                    });
+                }
 
                 // Enregistrement des modifications
                 saveAllData();
@@ -10192,7 +10802,7 @@
 
         async function exportLevelStatsPDF() {
             const currentLevel = getLevelById(currentLevelId);
-            if (!currentLevel || currentLevel.id === COMPETITION_LEVEL_ID) {
+            if (!currentLevel || PROTECTED_LEVEL_IDS.includes(currentLevel.id)) {
                 alert("⚠️ Ouvrez d'abord une catégorie de gymnastes.");
                 return;
             }
