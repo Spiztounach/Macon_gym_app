@@ -162,6 +162,17 @@
                 overscroll-behavior: contain;
                 cursor: crosshair;
             }
+            #gym-music-player {
+                min-height: 3.5rem;
+            }
+            #gym-music-player.gym-music-player-expanded {
+                display: block;
+                width: 100%;
+                min-height: 4.5rem;
+            }
+            #gym-music-large-host {
+                min-height: 5rem;
+            }
             @media (max-width: 380px) {
                 .progression-radar-shell {
                     min-height: 330px;
@@ -642,23 +653,26 @@
                                 <p id="gym-music-name" class="text-xs font-bold text-gray-700 mt-0.5">Aucune musique enregistrée</p>
                                 <p id="gym-music-status" class="text-[10px] text-gray-500 mt-0.5">La musique reste disponible hors connexion sur cet appareil.</p>
                             </div>
-                            <audio id="gym-music-player" class="hidden w-full h-10" controls preload="metadata"></audio>
-                            <div class="flex gap-2">
-                                <label class="flex-1 text-center bg-purple-600 text-white py-2 rounded-lg text-xs font-bold shadow cursor-pointer hover:bg-purple-700 transition">
-                                    🎵 Ajouter / Remplacer
-                                    <input
-                                        id="gym-music-file"
-                                        type="file"
-                                        accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg"
-                                        onchange="saveGymnastMusic(event)"
-                                        class="hidden">
-                                </label>
+                            <div id="gym-music-player-home" class="w-full">
+                                <audio id="gym-music-player" class="hidden w-full" controls preload="metadata"></audio>
+                            </div>
+                            <button id="btn-open-gym-music-large" type="button" onclick="openGymMusicPlayerLarge()" class="hidden w-full rounded-lg border border-purple-200 bg-white py-2 text-xs font-bold text-purple-700 hover:bg-purple-50">⛶ Ouvrir le lecteur en grand</button>
+                            <input
+                                id="gym-music-file"
+                                type="file"
+                                accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg"
+                                onchange="saveGymnastMusic(event)"
+                                class="hidden">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="openGymMusicFilePicker()" class="rounded-lg bg-purple-600 py-2 text-xs font-bold text-white shadow transition hover:bg-purple-700">🎵 Appareil</button>
+                                <button type="button" onclick="openGymMusicDrivePicker()" class="rounded-lg border border-blue-200 bg-blue-50 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100">☁️ Google Drive</button>
                                 <button
                                     id="btn-delete-gym-music"
                                     type="button"
                                     onclick="deleteGymnastMusic()"
-                                    class="hidden bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
+                                    class="hidden col-span-2 bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
                             </div>
+                            <p class="text-[9px] leading-relaxed text-purple-500">Pour Drive, choisissez votre compte Google dans le menu du sélecteur Android. Le morceau sera copié sur l’appareil pour rester disponible hors connexion.</p>
                         </div>
                         <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2.5">
                             <div class="flex items-start justify-between gap-2">
@@ -1413,6 +1427,21 @@
         class="hidden fixed bottom-6 right-6 bg-pink-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl text-2xl font-bold hover:bg-pink-700 transition"
         onclick="openAddModal()">+</button>
 
+    <!-- ═════════════════════════════════════ LECTEUR MUSICAL AGRANDI ═══ -->
+    <div id="modal-gym-music-player" role="dialog" aria-modal="true" aria-labelledby="gym-music-large-title" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm" onclick="handleGymMusicModalBackdrop(event)">
+        <div class="w-full max-w-4xl rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-purple-500">Musique de la gymnaste</p>
+                    <h2 id="gym-music-large-title" class="mt-1 truncate text-lg font-black text-gray-800">Lecteur musical</h2>
+                </div>
+                <button id="btn-close-gym-music-large" type="button" onclick="closeGymMusicPlayerLarge()" class="shrink-0 rounded-full bg-gray-100 px-3 py-2 text-sm font-bold text-gray-600" aria-label="Fermer le lecteur musical">✕</button>
+            </div>
+            <div id="gym-music-large-host" class="mt-6 flex w-full items-center rounded-xl border border-purple-100 bg-purple-50 p-3 sm:p-5"></div>
+            <p class="mt-3 text-center text-[10px] text-gray-500">La barre de lecture utilise toute la largeur disponible.</p>
+        </div>
+    </div>
+
     <!-- ═══════════════════════════════════════ MODAL PLANIFICATION ═══ -->
     <div id="modal-planning-editor" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
         <div class="w-full max-w-2xl overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
@@ -1827,7 +1856,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.25.0';
+        const APP_VERSION = '1.25.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1870,6 +1899,7 @@
         const GYM_MUSIC_DB_NAME = 'gymsuivi-media-v1';
         const GYM_MUSIC_STORE_NAME = 'gymnast-music';
         const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
+        const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const MAX_GYM_LICENCE_SIZE_BYTES = 25 * 1024 * 1024;
         const PLANNING_WEEKDAYS = [
@@ -3288,6 +3318,82 @@
             if (googleAccessToken) 
                 uploadDataToDrive();
             }
+
+        // Préférences d'affichage locales : elles ne modifient pas les données métier.
+        function normalizeUiFilterPreferences(value) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const allowedSorts = ['name_asc', 'first_name_asc', 'age_asc', 'age_desc', 'category_asc'];
+            const allowedAges = ['all', 'under_7', 'poussine', 'benjamine', 'minime', 'cadette', 'junior', 'senior', 'unknown'];
+            const shortText = (input, max) => String(input || '').slice(0, max);
+            return {
+                gymnastSearch: shortText(source.gymnastSearch, 120),
+                gymnastSort: allowedSorts.includes(source.gymnastSort) ? source.gymnastSort : 'name_asc',
+                gymnastAge: allowedAges.includes(source.gymnastAge) ? source.gymnastAge : 'all',
+                planningMicrocycle: shortText(source.planningMicrocycle || 'all', 180) || 'all',
+                planningMicroSearch: shortText(source.planningMicroSearch, 160),
+                planningSession: shortText(source.planningSession || 'all', 240) || 'all',
+                planningSessionSearch: shortText(source.planningSessionSearch, 160),
+                workloadPeriod: source.workloadPeriod === 'month' ? 'month' : 'week',
+                workloadMetric: source.workloadMetric === 'hours' ? 'hours' : 'sessions'
+            };
+        }
+
+        function getUiFilterPreferences() {
+            try {
+                return normalizeUiFilterPreferences(JSON.parse(localStorage.getItem(UI_FILTER_STORAGE_KEY) || '{}'));
+            } catch (error) {
+                console.warn('[GymSuivi] Préférences de filtres invalides, valeurs par défaut restaurées.', error);
+                localStorage.removeItem(UI_FILTER_STORAGE_KEY);
+                return normalizeUiFilterPreferences({});
+            }
+        }
+
+        function saveUiFilterPreferences() {
+            const previous = getUiFilterPreferences();
+            const readText = (id, fallback, max) => {
+                const input = document.getElementById(id);
+                return input ? String(input.value || '').slice(0, max) : fallback;
+            };
+            const readSelect = (id, fallback) => {
+                const input = document.getElementById(id);
+                if (!input || (input.options && input.options.length === 0)) return fallback;
+                return String(input.value || fallback);
+            };
+            const next = normalizeUiFilterPreferences({
+                gymnastSearch: readText('gymnasts-search-input', previous.gymnastSearch, 120),
+                gymnastSort: readSelect('gymnasts-sort-select', previous.gymnastSort),
+                gymnastAge: readSelect('gymnasts-age-filter', previous.gymnastAge),
+                planningMicrocycle: readSelect('planning-micro-filter', previous.planningMicrocycle),
+                planningMicroSearch: readText('planning-micro-search', previous.planningMicroSearch, 160),
+                planningSession: readSelect('planning-session-filter', previous.planningSession),
+                planningSessionSearch: readText('planning-session-search', previous.planningSessionSearch, 160),
+                workloadPeriod: readSelect('planning-workload-period', previous.workloadPeriod),
+                workloadMetric: readSelect('planning-workload-metric', previous.workloadMetric)
+            });
+            localStorage.setItem(UI_FILTER_STORAGE_KEY, JSON.stringify(next));
+            return next;
+        }
+
+        function restoreUiFilterPreferences() {
+            const preferences = getUiFilterPreferences();
+            const setText = (id, value) => {
+                const input = document.getElementById(id);
+                if (input) input.value = value;
+            };
+            const setSelect = (id, value) => {
+                const input = document.getElementById(id);
+                if (!input || !input.options || !Array.from(input.options).some(option => option.value === value)) return;
+                input.value = value;
+            };
+            setText('gymnasts-search-input', preferences.gymnastSearch);
+            setSelect('gymnasts-sort-select', preferences.gymnastSort);
+            setSelect('gymnasts-age-filter', preferences.gymnastAge);
+            setText('planning-micro-search', preferences.planningMicroSearch);
+            setText('planning-session-search', preferences.planningSessionSearch);
+            setSelect('planning-workload-period', preferences.workloadPeriod);
+            setSelect('planning-workload-metric', preferences.workloadMetric);
+            return preferences;
+        }
         
         // ────────────────────────────────────────────────────────────── IDENTITÉ APP
         // (FIX 4 : cohérence emoji / titre)
@@ -5264,7 +5370,7 @@
         function renderPlanningMicrocycleFilter() {
             const select = document.getElementById('planning-micro-filter');
             if (!select) return;
-            const selected = select.value || 'all';
+            const selected = select.value || getUiFilterPreferences().planningMicrocycle || 'all';
             select.innerHTML = '<option value="all">Tous les mésocycles</option>';
             [...getPlanningCollection('mesocycle')]
                 .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.code.localeCompare(b.code))
@@ -5284,6 +5390,7 @@
             const searchInput = document.getElementById('planning-micro-search');
             const selectedMeso = filter ? filter.value : 'all';
             const search = String(searchInput ? searchInput.value : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr').trim();
+            saveUiFilterPreferences();
             const items = [...getPlanningCollection('microcycle')]
                 .filter(item => selectedMeso === 'all' || item.mesocycleId === selectedMeso)
                 .filter(item => {
@@ -5308,7 +5415,7 @@
         function renderPlanningSessionFilter() {
             const select = document.getElementById('planning-session-filter');
             if (!select) return;
-            const selected = select.value || 'all';
+            const selected = select.value || getUiFilterPreferences().planningSession || 'all';
             select.innerHTML = '<option value="all">Tous les microcycles</option>';
             [...getPlanningCollection('microcycle')]
                 .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'))
@@ -5328,6 +5435,7 @@
             const searchInput = document.getElementById('planning-session-search');
             const selectedMicrocycle = filter ? filter.value : 'all';
             const search = String(searchInput ? searchInput.value : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr').trim();
+            saveUiFilterPreferences();
             const items = getPlanningCollection('session')
                 .filter(item => selectedMicrocycle === 'all' || item.microcycleId === selectedMicrocycle)
                 .filter(item => {
@@ -5473,6 +5581,7 @@
             const selectedMicrocycle = filter ? filter.value : 'all';
             const period = periodInput.value === 'month' ? 'month' : 'week';
             const metric = metricInput.value === 'hours' ? 'hours' : 'sessions';
+            saveUiFilterPreferences();
             const sessions = getPlanningCollection('session')
                 .filter(item => selectedMicrocycle === 'all' || item.microcycleId === selectedMicrocycle);
             renderPlanningWorkloadChart('apparatus', buildPlanningWorkloadData(sessions, period, metric, PROGRESSION_APPARATUS, 'apparatuses'), metric);
@@ -6360,6 +6469,7 @@
             if (search) search.value = '';
             if (sort) sort.value = 'name_asc';
             if (age) age.value = 'all';
+            saveUiFilterPreferences();
             renderGymnastes();
         }
 
@@ -6369,6 +6479,7 @@
             const search = document.getElementById('gymnasts-search-input');
             const sort = document.getElementById('gymnasts-sort-select');
             const ageFilter = document.getElementById('gymnasts-age-filter');
+            saveUiFilterPreferences();
             const filtered = getFilteredSortedGymnasts(currentLevelId, {
                 search: search ? search.value : '',
                 sortMode: sort ? sort.value : 'name_asc',
@@ -6571,6 +6682,47 @@
             }
         }
 
+        function openGymMusicFilePicker(source = 'device') {
+            const input = document.getElementById('gym-music-file');
+            if (!input || !currentGymId) return;
+            input.dataset.source = source;
+            input.click();
+        }
+
+        function openGymMusicDrivePicker() {
+            const status = document.getElementById('gym-music-status');
+            if (status) status.innerText = 'Dans le sélecteur, ouvrez le menu puis choisissez Google Drive.';
+            openGymMusicFilePicker('drive');
+        }
+
+        function openGymMusicPlayerLarge() {
+            const modal = document.getElementById('modal-gym-music-player');
+            const player = document.getElementById('gym-music-player');
+            const host = document.getElementById('gym-music-large-host');
+            const title = document.getElementById('gym-music-large-title');
+            const name = document.getElementById('gym-music-name');
+            if (!modal || !player || !host || player.classList.contains('hidden')) return;
+            if (title) title.textContent = name && name.textContent ? name.textContent : 'Lecteur musical';
+            host.appendChild(player);
+            player.classList.add('gym-music-player-expanded');
+            modal.classList.remove('hidden');
+            const closeButton = document.getElementById('btn-close-gym-music-large');
+            if (closeButton && typeof closeButton.focus === 'function') closeButton.focus();
+        }
+
+        function closeGymMusicPlayerLarge() {
+            const modal = document.getElementById('modal-gym-music-player');
+            const player = document.getElementById('gym-music-player');
+            const home = document.getElementById('gym-music-player-home');
+            if (player && home && player.parentElement !== home) home.appendChild(player);
+            if (player) player.classList.remove('gym-music-player-expanded');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function handleGymMusicModalBackdrop(event) {
+            if (event && event.target === event.currentTarget) closeGymMusicPlayerLarge();
+        }
+
         async function renderGymnastMusic() {
             const requestedGymId = currentGymId;
             const token = ++gymMusicRenderToken;
@@ -6578,14 +6730,17 @@
             const name = document.getElementById('gym-music-name');
             const status = document.getElementById('gym-music-status');
             const deleteButton = document.getElementById('btn-delete-gym-music');
+            const largeButton = document.getElementById('btn-open-gym-music-large');
             const fileInput = document.getElementById('gym-music-file');
             if (!player || !name || !status || !deleteButton)
                 return;
+            closeGymMusicPlayerLarge();
             player.pause();
             player.removeAttribute('src');
             player.load();
             player.classList.add('hidden');
             deleteButton.classList.add('hidden');
+            if (largeButton) largeButton.classList.add('hidden');
             name.innerText = 'Chargement de la musique…';
             status.innerText = 'Recherche du fichier enregistré sur cet appareil.';
             if (fileInput)
@@ -6605,6 +6760,7 @@
                 player.classList.remove('hidden');
                 player.load();
                 deleteButton.classList.remove('hidden');
+                if (largeButton) largeButton.classList.remove('hidden');
                 name.innerText = record.name || 'Musique de la gymnaste';
                 const sizeMb = Number(record.size || record.blob.size || 0) / (1024 * 1024);
                 status.innerText = `Enregistrée sur cet appareil${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''}.`;
@@ -6621,6 +6777,7 @@
             const fileInput = event.target;
             const file = fileInput.files && fileInput.files[0];
             const gymId = currentGymId;
+            const source = fileInput.dataset.source || 'device';
             if (!file || !gymId)
                 return;
             const extensionIsAudio = /\.(mp3|m4a|aac|wav|ogg)$/i.test(file.name || '');
@@ -6635,7 +6792,7 @@
                 return;
             }
             const status = document.getElementById('gym-music-status');
-            status.innerText = 'Enregistrement de la musique…';
+            status.innerText = source === 'drive' ? 'Copie de la musique depuis Google Drive…' : 'Enregistrement de la musique…';
             try {
                 await storeGymnastMusic(gymId, file);
                 if (currentGymId === gymId)
@@ -6647,6 +6804,7 @@
                     await renderGymnastMusic();
             } finally {
                 fileInput.value = '';
+                delete fileInput.dataset.source;
             }
         }
 
@@ -11479,7 +11637,7 @@
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
                 "s."
             )) {
-                ['gym_master_data_v3', 'gym_colors_v3', 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY]
+                ['gym_master_data_v3', 'gym_colors_v3', UI_FILTER_STORAGE_KEY, 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY]
                     .forEach(key => localStorage.removeItem(key));
                 window
                     .location
@@ -11489,6 +11647,7 @@
 
         // ────────────────────────────────────────────────────────────── INITIALISATION
         // ──────────────────────────────────────────────────────────────
+        restoreUiFilterPreferences();
         renderLevels();
         renderAppVersion();
         applyCustomColors();
