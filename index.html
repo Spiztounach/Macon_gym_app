@@ -672,7 +672,7 @@
                                     onclick="deleteGymnastMusic()"
                                     class="hidden col-span-2 bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
                             </div>
-                            <p class="text-[9px] leading-relaxed text-purple-500">Pour Drive, choisissez votre compte Google dans le menu du sélecteur Android. Le morceau sera copié sur l’appareil pour rester disponible hors connexion.</p>
+                            <p class="text-[9px] leading-relaxed text-purple-500">Google Drive ouvre le sélecteur officiel et n’autorise que le morceau choisi. Celui-ci est ensuite copié sur l’appareil pour rester disponible hors connexion.</p>
                         </div>
                         <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2.5">
                             <div class="flex items-start justify-between gap-2">
@@ -1856,7 +1856,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.25.1';
+        const APP_VERSION = '1.25.2';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1901,6 +1901,12 @@
         const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
         const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
+        const GOOGLE_PICKER_API_KEY = 'AIzaSyB2GOfvBRHy-LrVzUQMB1B0YuRSTMZproc';
+        const GOOGLE_PICKER_APP_ID = '759389909007';
+        const DRIVE_MUSIC_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+        const DRIVE_MUSIC_TOKEN_KEY = 'drive_music_access_token_v1';
+        const DRIVE_MUSIC_TOKEN_EXPIRY_KEY = 'drive_music_access_token_expires_v1';
+        const DRIVE_MUSIC_GRANTED_KEY = 'drive_music_scope_granted_v1';
         const MAX_GYM_LICENCE_SIZE_BYTES = 25 * 1024 * 1024;
         const PLANNING_WEEKDAYS = [
             {value: 1, label: 'Lundi'}, {value: 2, label: 'Mardi'},
@@ -2852,9 +2858,14 @@
 
         // FIX 9 : deux flags distincts pour éviter la double initialisation
         let tokenClient;
+        let musicTokenClient;
         let gapiInited = false;
+        let pickerInited = false;
         let gisInited = false;
         let googleAccessToken = null;
+        let googleMusicAccessToken = null;
+        let googleMusicAccessTokenExpiresAt = 0;
+        let musicPickerRequestGymId = null;
         let driveFileId = null;
         let syncInProgress = false;
         const DRIVE_DATA_NAME = 'gym_cloud_data_v3.json';
@@ -3529,10 +3540,11 @@
                 updateDriveStatusUI(false, 'Google API indisponible. Vérifie la connexion Internet.');
                 return;
             }
-            gapi.load('client', async () => {
+            gapi.load('client:picker', async () => {
                 try {
                     await gapi.client.init({discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});
                     gapiInited = true;
+                    pickerInited = typeof google !== 'undefined' && Boolean(google.picker);
                     checkAuthStates();
                 } catch (err) {
                     reportDriveError(err);
@@ -3608,11 +3620,74 @@
             return true;
         }
 
+        function googleTokenHasScope(response, scope) {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 &&
+                typeof google.accounts.oauth2.hasGrantedAllScopes === 'function') {
+                return google.accounts.oauth2.hasGrantedAllScopes(response, scope);
+            }
+            return String(response && response.scope || '').split(/\s+/).includes(scope);
+        }
+
+        function clearGoogleMusicAccessToken(forgetGrant = false) {
+            googleMusicAccessToken = null;
+            googleMusicAccessTokenExpiresAt = 0;
+            localStorage.removeItem(DRIVE_MUSIC_TOKEN_KEY);
+            localStorage.removeItem(DRIVE_MUSIC_TOKEN_EXPIRY_KEY);
+            if (forgetGrant) localStorage.removeItem(DRIVE_MUSIC_GRANTED_KEY);
+        }
+
+        function restoreGoogleMusicAccessToken() {
+            const stored = localStorage.getItem(DRIVE_MUSIC_TOKEN_KEY);
+            const expiresAt = Number(localStorage.getItem(DRIVE_MUSIC_TOKEN_EXPIRY_KEY));
+            if (stored && expiresAt > Date.now() + 60000) {
+                googleMusicAccessToken = stored;
+                googleMusicAccessTokenExpiresAt = expiresAt;
+                return true;
+            }
+            clearGoogleMusicAccessToken(false);
+            return false;
+        }
+
+        function handleGoogleMusicTokenResponse(response) {
+            const status = document.getElementById('gym-music-status');
+            if (!response || response.error || !response.access_token) {
+                if (status) status.innerText = 'Connexion Google Drive interrompue. Appuyez à nouveau sur Google Drive.';
+                musicPickerRequestGymId = null;
+                return false;
+            }
+            if (!googleTokenHasScope(response, DRIVE_MUSIC_SCOPE)) {
+                clearGoogleMusicAccessToken(false);
+                if (status) status.innerText = 'Autorisez la sélection des fichiers Drive pour choisir une musique.';
+                musicPickerRequestGymId = null;
+                return false;
+            }
+            googleMusicAccessToken = response.access_token;
+            googleMusicAccessTokenExpiresAt = Date.now() + (Number(response.expires_in) || 3600) * 1000;
+            localStorage.setItem(DRIVE_MUSIC_TOKEN_KEY, googleMusicAccessToken);
+            localStorage.setItem(DRIVE_MUSIC_TOKEN_EXPIRY_KEY, String(googleMusicAccessTokenExpiresAt));
+            localStorage.setItem(DRIVE_MUSIC_GRANTED_KEY, 'true');
+            showGoogleDriveMusicPicker();
+            return true;
+        }
+
+        function handleGoogleMusicTokenError() {
+            const status = document.getElementById('gym-music-status');
+            if (status) status.innerText = 'Fenêtre Google fermée ou bloquée. Appuyez à nouveau sur Google Drive.';
+            musicPickerRequestGymId = null;
+        }
+
         function gisLoaded() {
             if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
                 updateDriveStatusUI(false, 'Connexion Google indisponible. Recharge la page avec Internet.');
                 return;
             }
+            musicTokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: DRIVE_MUSIC_SCOPE,
+                include_granted_scopes: true,
+                callback: handleGoogleMusicTokenResponse,
+                error_callback: handleGoogleMusicTokenError
+            });
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
@@ -3650,6 +3725,7 @@
                         : 'Fenêtre Google fermée ou bloquée. Appuie sur Connexion Google pour réessayer.');
                 }
             });
+            restoreGoogleMusicAccessToken();
             gisInited = true;
             checkAuthStates();
         }
@@ -3717,6 +3793,8 @@
             driveFileId = null;
             driveResolution = null;
             driveConflictCandidates = [];
+            musicPickerRequestGymId = null;
+            clearGoogleMusicAccessToken(true);
             document.getElementById('drive-conflict').classList.add('hidden');
             localStorage.removeItem('drive_access_token_v3');
             localStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
@@ -6691,8 +6769,167 @@
 
         function openGymMusicDrivePicker() {
             const status = document.getElementById('gym-music-status');
-            if (status) status.innerText = 'Dans le sélecteur, ouvrez le menu puis choisissez Google Drive.';
-            openGymMusicFilePicker('drive');
+            if (!currentGymId) return;
+            if (navigator.onLine === false) {
+                if (status) status.innerText = 'Google Drive nécessite une connexion Internet.';
+                return;
+            }
+            if (!pickerInited || typeof google === 'undefined' || !google.picker) {
+                if (status) status.innerText = 'Le sélecteur Google Drive se prépare. Réessayez dans un instant.';
+                return;
+            }
+            musicPickerRequestGymId = currentGymId;
+            if (googleMusicAccessToken && googleMusicAccessTokenExpiresAt > Date.now() + 60000) {
+                showGoogleDriveMusicPicker();
+                return;
+            }
+            clearGoogleMusicAccessToken(false);
+            if (!musicTokenClient) {
+                if (status) status.innerText = 'La connexion Google Drive se prépare. Réessayez dans un instant.';
+                return;
+            }
+            if (status) status.innerText = 'Autorisation Google Drive en cours…';
+            const alreadyGranted = localStorage.getItem(DRIVE_MUSIC_GRANTED_KEY) === 'true';
+            try {
+                musicTokenClient.requestAccessToken({
+                    scope: DRIVE_MUSIC_SCOPE,
+                    include_granted_scopes: true,
+                    prompt: alreadyGranted ? '' : 'consent'
+                });
+            } catch (error) {
+                musicPickerRequestGymId = null;
+                if (status) status.innerText = 'Impossible d’ouvrir la connexion Google. Réessayez.';
+                console.warn('[GymSuivi] Sélecteur musical Drive indisponible', error && error.name ? error.name : 'OAuth');
+            }
+        }
+
+        function showGoogleDriveMusicPicker() {
+            const status = document.getElementById('gym-music-status');
+            if (!musicPickerRequestGymId || !googleMusicAccessToken ||
+                googleMusicAccessTokenExpiresAt <= Date.now() + 60000) {
+                clearGoogleMusicAccessToken(false);
+                if (status) status.innerText = 'La session Drive a expiré. Appuyez à nouveau sur Google Drive.';
+                return false;
+            }
+            if (!pickerInited || typeof google === 'undefined' || !google.picker) {
+                if (status) status.innerText = 'Le sélecteur Google Drive n’est pas encore disponible.';
+                return false;
+            }
+            try {
+                const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+                view.setMimeTypes([
+                    'audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/aac',
+                    'audio/wav', 'audio/x-wav', 'audio/ogg', 'application/ogg'
+                ].join(','));
+                if (google.picker.DocsViewMode && google.picker.DocsViewMode.LIST)
+                    view.setMode(google.picker.DocsViewMode.LIST);
+                const builder = new google.picker.PickerBuilder()
+                    .addView(view)
+                    .setOAuthToken(googleMusicAccessToken)
+                    .setDeveloperKey(GOOGLE_PICKER_API_KEY)
+                    .setAppId(GOOGLE_PICKER_APP_ID)
+                    .setCallback(handleGoogleDriveMusicPicker);
+                if (typeof builder.setOrigin === 'function') builder.setOrigin(window.location.origin);
+                const picker = builder.build();
+                picker.setVisible(true);
+                if (status) status.innerText = 'Choisissez une musique dans Google Drive.';
+                return true;
+            } catch (error) {
+                musicPickerRequestGymId = null;
+                if (status) status.innerText = 'Google Picker indisponible. Vérifiez l’activation de l’API et les restrictions de la clé.';
+                console.warn('[GymSuivi] Ouverture Google Picker impossible', error && error.name ? error.name : 'Picker');
+                return false;
+            }
+        }
+
+        function getGooglePickerDocumentValue(fileData, constantName, fallbacks = []) {
+            const pickerKey = typeof google !== 'undefined' && google.picker && google.picker.Document
+                ? google.picker.Document[constantName]
+                : null;
+            if (pickerKey && fileData && fileData[pickerKey] !== undefined) return fileData[pickerKey];
+            for (const key of fallbacks) {
+                if (fileData && fileData[key] !== undefined) return fileData[key];
+            }
+            return '';
+        }
+
+        function handleGoogleDriveMusicPicker(result) {
+            if (!result || typeof google === 'undefined' || !google.picker) return;
+            const actionKey = google.picker.Response && google.picker.Response.ACTION;
+            const action = (actionKey && result[actionKey]) || result.action;
+            const status = document.getElementById('gym-music-status');
+            if (action === google.picker.Action.CANCEL) {
+                musicPickerRequestGymId = null;
+                if (status) status.innerText = 'Sélection Google Drive annulée.';
+                return;
+            }
+            if (action !== google.picker.Action.PICKED) return;
+            const documentsKey = google.picker.Response && google.picker.Response.DOCUMENTS;
+            const files = (documentsKey && result[documentsKey]) || result.docs || result.documents || [];
+            const selected = Array.isArray(files) ? files[0] : null;
+            const gymId = musicPickerRequestGymId || currentGymId;
+            musicPickerRequestGymId = null;
+            if (!selected || !gymId) {
+                if (status) status.innerText = 'Aucune musique n’a été sélectionnée.';
+                return;
+            }
+            const driveFile = {
+                id: String(getGooglePickerDocumentValue(selected, 'ID', ['id']) || ''),
+                name: String(getGooglePickerDocumentValue(selected, 'NAME', ['name']) || 'Musique'),
+                mimeType: String(getGooglePickerDocumentValue(selected, 'MIME_TYPE', ['mimeType', 'type']) || ''),
+                size: Number(getGooglePickerDocumentValue(selected, 'SIZE_BYTES', ['sizeBytes', 'size']) || 0)
+            };
+            importGymnastMusicFromDrive(driveFile, gymId);
+        }
+
+        function isSupportedGymMusicFile(name, mimeType) {
+            return String(mimeType || '').startsWith('audio/') ||
+                String(mimeType || '') === 'application/ogg' ||
+                /\.(mp3|m4a|aac|wav|ogg)$/i.test(String(name || ''));
+        }
+
+        async function importGymnastMusicFromDrive(driveFile, gymId) {
+            const status = document.getElementById('gym-music-status');
+            if (!driveFile || !driveFile.id || !gymId) return false;
+            if (!googleMusicAccessToken || googleMusicAccessTokenExpiresAt <= Date.now() + 10000) {
+                clearGoogleMusicAccessToken(false);
+                if (status && currentGymId === gymId) status.innerText = 'La session Drive a expiré. Appuyez à nouveau sur Google Drive.';
+                return false;
+            }
+            if (status && currentGymId === gymId) status.innerText = 'Lecture des informations de la musique Drive…';
+            try {
+                const headers = {Authorization: `Bearer ${googleMusicAccessToken}`};
+                const metadataUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFile.id)}` +
+                    '?fields=id,name,mimeType,size&supportsAllDrives=true';
+                const metadataResponse = await fetch(metadataUrl, {headers, cache: 'no-store'});
+                if (metadataResponse.status === 401) clearGoogleMusicAccessToken(false);
+                if (!metadataResponse.ok) throw new Error(`Drive refuse la lecture du fichier (erreur ${metadataResponse.status}).`);
+                const metadata = await metadataResponse.json();
+                const name = String(metadata.name || driveFile.name || 'Musique');
+                const mimeType = String(metadata.mimeType || driveFile.mimeType || 'audio/mpeg');
+                const declaredSize = Number(metadata.size || driveFile.size || 0);
+                if (!isSupportedGymMusicFile(name, mimeType))
+                    throw new Error('Le fichier choisi n’est pas une musique MP3, M4A, AAC, WAV ou OGG.');
+                if (declaredSize > MAX_GYM_MUSIC_SIZE_BYTES)
+                    throw new Error('Le fichier audio dépasse la limite de 80 Mo.');
+                if (status && currentGymId === gymId) status.innerText = `Téléchargement de « ${name} » depuis Google Drive…`;
+                const contentUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFile.id)}` +
+                    '?alt=media&supportsAllDrives=true';
+                const contentResponse = await fetch(contentUrl, {headers, cache: 'no-store'});
+                if (contentResponse.status === 401) clearGoogleMusicAccessToken(false);
+                if (!contentResponse.ok) throw new Error(`Téléchargement Drive impossible (erreur ${contentResponse.status}).`);
+                const blob = await contentResponse.blob();
+                if (blob.size > MAX_GYM_MUSIC_SIZE_BYTES)
+                    throw new Error('Le fichier audio dépasse la limite de 80 Mo.');
+                const file = new File([blob], name, {type: mimeType || blob.type || 'audio/mpeg'});
+                await storeGymnastMusic(gymId, file);
+                if (currentGymId === gymId) await renderGymnastMusic();
+                return true;
+            } catch (error) {
+                console.error('[GymSuivi] Import musical Drive impossible :', error && error.message ? error.message : 'Drive');
+                if (status && currentGymId === gymId) status.innerText = error.message || 'Impossible de copier cette musique depuis Drive.';
+                return false;
+            }
         }
 
         function openGymMusicPlayerLarge() {
@@ -6780,8 +7017,7 @@
             const source = fileInput.dataset.source || 'device';
             if (!file || !gymId)
                 return;
-            const extensionIsAudio = /\.(mp3|m4a|aac|wav|ogg)$/i.test(file.name || '');
-            if (!(file.type || '').startsWith('audio/') && !extensionIsAudio) {
+            if (!isSupportedGymMusicFile(file.name, file.type)) {
                 fileInput.value = '';
                 alert("⚠️ Sélectionnez un fichier audio compatible.");
                 return;
@@ -11637,7 +11873,8 @@
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
                 "s."
             )) {
-                ['gym_master_data_v3', 'gym_colors_v3', UI_FILTER_STORAGE_KEY, 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY, DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY]
+                ['gym_master_data_v3', 'gym_colors_v3', UI_FILTER_STORAGE_KEY, 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY,
+                    DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY, DRIVE_MUSIC_TOKEN_KEY, DRIVE_MUSIC_TOKEN_EXPIRY_KEY, DRIVE_MUSIC_GRANTED_KEY]
                     .forEach(key => localStorage.removeItem(key));
                 window
                     .location
