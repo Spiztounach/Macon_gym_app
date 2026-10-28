@@ -1,15 +1,27 @@
-const CACHE_NAME = 'gymsuivi-v42';
+const CACHE_NAME = 'gymsuivi-v45';
 const BIRTHDAY_STATE_URL = new URL('./__birthday_state__', self.registration.scope).href;
 const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
+
+const catalogAssetRange = (prefix, count) => Array.from({length: count}, (_, index) =>
+  `./assets/ffgym-federal-a/${prefix}-${String(index + 1).padStart(2, '0')}.png`
+);
+const FFGYM_FEDERAL_A_ASSETS = [
+  ...catalogAssetRange('SAU', 4),
+  ...catalogAssetRange('BAR', 31),
+  ...catalogAssetRange('POU', 51),
+  ...catalogAssetRange('SOL', 44)
+];
 
 const URLS_TO_CACHE = [
   './',
   './index.html',
+  './ffgym-federal-a-catalog.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-192-maskable.png',
   './icons/icon-512.png',
-  './icons/icon-512-maskable.png'
+  './icons/icon-512-maskable.png',
+  ...FFGYM_FEDERAL_A_ASSETS
 ];
 
 self.addEventListener('install', event => {

@@ -251,7 +251,7 @@
                     min-width: 0;
                     margin-block: 0;
                 }
-                #keyboard-container {
+                #keyboard-container .movement-category-grid {
                     grid-template-columns: repeat(8, minmax(0, 1fr));
                 }
                 #content-suivi > div:first-child {
@@ -898,15 +898,15 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-700">Tableau de progression</h3>
-                                    <p class="text-[10px] text-purple-600">La liste des éléments et leurs agrès est commune à toutes les gymnastes. Chaque gymnaste possède une évaluation personnelle et indépendante sur chaque agrès.</p>
+                                    <p class="text-[10px] text-purple-600">Les éléments proviennent de la même bibliothèque que l’onglet Mouvements. Chaque gymnaste possède ensuite une évaluation personnelle et indépendante sur chaque agrès.</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button id="btn-open-progression-add" type="button" onclick="openProgressionAddPanel()" class="whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-700">＋ Ajouter</button>
+                                    <button id="btn-open-progression-add" type="button" onclick="openProgressionAddPanel()" class="whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-700">＋ Nouvel élément</button>
                                     <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
                                 </div>
                             </div>
                             <div class="rounded-lg border border-purple-200 bg-white px-3 py-2 text-[10px] text-purple-800">
-                                <strong>🌐 Référentiel commun :</strong> ajouter, renommer, déplacer ou supprimer un élément modifie la liste pour toutes les fiches, sans modifier leurs validations personnelles.
+                                <strong>🌐 Bibliothèque unique :</strong> créez une seule fois le nom, le sigle, l’image, les agrès et les profils. L’élément sera disponible dans Mouvements et Progression, sans double saisie.
                             </div>
                             <form id="form-progression" onsubmit="saveProgressionItem(event)" class="hidden grid gap-2 rounded-xl border border-purple-200 bg-purple-50/70 p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
                                 <input type="hidden" id="edit-progression-id">
@@ -929,12 +929,11 @@
                                     <div class="grid grid-cols-1 gap-1.5 min-[390px]:grid-cols-2 lg:grid-cols-4">
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="acro_forward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie avant</label>
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="acro_backward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie arrière</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="flexibility" class="h-4 w-4 shrink-0 accent-purple-600">Souplesse</label>
                                         <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="strength_core" class="h-4 w-4 shrink-0 accent-purple-600">Force et gainage</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="alignment" class="h-4 w-4 shrink-0 accent-purple-600">Alignement et tenue</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="balance" class="h-4 w-4 shrink-0 accent-purple-600">Équilibre et proprioception</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="power" class="h-4 w-4 shrink-0 accent-purple-600">Impulsion et détente</label>
-                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="coordination" class="h-4 w-4 shrink-0 accent-purple-600">Coordination et rythme</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="flexibility" class="h-4 w-4 shrink-0 accent-purple-600">Souplesse et amplitude</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="alignment" class="h-4 w-4 shrink-0 accent-purple-600">Posture et alignements</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="motor_control" class="h-4 w-4 shrink-0 accent-purple-600">Contrôle moteur</label>
+                                        <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="progression-family" value="power" class="h-4 w-4 shrink-0 accent-purple-600">Impulsion et explosivité</label>
                                     </div>
                                 </fieldset>
                             </form>
@@ -1007,9 +1006,16 @@
                                     <span class="text-xs font-bold text-purple-800">Note de départ calculée</span>
                                     <output id="movement-start-score" class="text-xl font-black text-purple-700">0</output>
                                 </div>
+                                <label id="movement-saut-variant-row" class="mt-2 hidden items-center justify-between gap-3 rounded-lg border border-purple-200 bg-white px-2 py-1.5 text-[10px] font-semibold text-purple-800">
+                                    Matériel utilisé au saut
+                                    <select id="movement-saut-variant" onchange="setMovementSautScoringVariant(this.value)" class="rounded border border-purple-200 bg-white px-2 py-1 text-[10px] font-bold text-purple-800">
+                                        <option value="tremplin">Tremplin</option>
+                                        <option value="trampo_tremp">Trampo-tremp</option>
+                                    </select>
+                                </label>
                                 <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-purple-700">
                                     <span>Valeur des mouvements : <strong id="movement-value-total">0</strong></span>
-                                    <span>Bonifications : <strong id="movement-bonus-total">0</strong></span>
+                                    <span>Bonifications potentielles : <strong id="movement-bonus-total">0</strong></span>
                                 </div>
                                 <p id="movement-score-warning" class="hidden mt-1 text-[10px] font-semibold text-amber-700"></p>
                             </div>
@@ -1027,7 +1033,7 @@
                             </div>
                             <div id="sigle-palette-breadcrumb" class="flex flex-wrap items-center gap-1 text-[10px] text-gray-500"></div>
                             <div id="sigle-palette-folders" class="grid grid-cols-2 gap-2"></div>
-                            <div class="grid grid-cols-4 gap-2" id="keyboard-container"></div>
+                            <div class="space-y-3" id="keyboard-container"></div>
                             <p id="sigle-palette-empty" class="hidden text-center text-[10px] text-gray-400 py-2">Aucune image dans ce dossier.</p>
                         </div>
                     </div>
@@ -1747,7 +1753,7 @@
         <div
             class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden text-xs max-h-[90vh] flex flex-col">
             <div class="bg-pink-600 text-white p-4 font-bold flex justify-between">
-                <span id="modal-custom-sigle-title">Gérer les images des mouvements</span>
+                <span id="modal-custom-sigle-title">Bibliothèque des éléments techniques</span>
                 <button onclick="closeCustomSigleModal()" class="text-white">✕</button>
             </div>
             <div class="p-4 space-y-3 overflow-y-auto">
@@ -1768,18 +1774,58 @@
                         class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
                 <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Catégorie de l'élément :</label>
+                    <select id="sigle-category-input" class="w-full p-2 border border-gray-300 rounded-md bg-white">
+                        <option value="auto">Détection automatique selon le nom</option>
+                        <option value="entries">Entrées</option>
+                        <option value="jumps">Sauts</option>
+                        <option value="turns">Tours</option>
+                        <option value="kips">Bascules</option>
+                        <option value="reversals">Renversements</option>
+                        <option value="swings">Élans et balancés</option>
+                        <option value="supports">Appuis et placements</option>
+                        <option value="acro_forward">Acrobaties avant</option>
+                        <option value="acro_backward">Acrobaties arrière</option>
+                        <option value="exits">Sorties</option>
+                        <option value="other">Autres</option>
+                    </select>
+                    <p class="mt-1 text-[9px] text-gray-400">Exemple : un pivot est classé dans « Tours ».</p>
+                </div>
+                <div>
                     <label class="block font-semibold text-gray-700 mb-1">Dossier de classement :</label>
                     <select id="sigle-folder-input" class="w-full p-2 border border-gray-300 rounded-md bg-white"></select>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl border border-purple-200 bg-purple-50/70 p-3 space-y-3">
                     <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Valeur du mouvement :</label>
-                        <input type="text" inputmode="decimal" id="sigle-movement-value-input" placeholder="Ex : 0,50" class="w-full p-2 border border-gray-300 rounded-md">
+                        <p class="font-bold text-purple-800">Progression et mouvements liés</p>
+                        <p class="text-[10px] text-purple-700">Ces informations sont saisies une seule fois puis utilisées dans les deux onglets.</p>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-gray-700 mb-1">Bonus de bonification :</label>
-                        <input type="text" inputmode="decimal" id="sigle-bonus-input" placeholder="Ex : 0,10" class="w-full p-2 border border-gray-300 rounded-md">
-                    </div>
+                    <fieldset id="sigle-progression-apparatus" class="rounded-lg border border-blue-200 bg-white p-2">
+                        <legend class="px-1 text-[10px] font-bold text-blue-700">Agrès — plusieurs choix possibles</legend>
+                        <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-apparatus" value="saut" onchange="renderSigleScoringInputs()" class="h-4 w-4 shrink-0 accent-blue-600">Saut</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-apparatus" value="barres" onchange="renderSigleScoringInputs()" class="h-4 w-4 shrink-0 accent-blue-600">Barres</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-apparatus" value="poutre" onchange="renderSigleScoringInputs()" class="h-4 w-4 shrink-0 accent-blue-600">Poutre</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-blue-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-apparatus" value="sol" onchange="renderSigleScoringInputs()" class="h-4 w-4 shrink-0 accent-blue-600">Sol</label>
+                        </div>
+                    </fieldset>
+                    <fieldset id="sigle-progression-family" class="rounded-lg border border-purple-200 bg-white p-2">
+                        <legend class="px-1 text-[10px] font-bold text-purple-700">Profils techniques — plusieurs choix possibles</legend>
+                        <div class="grid grid-cols-1 gap-1.5 min-[390px]:grid-cols-2">
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="acro_forward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie avant</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="acro_backward" class="h-4 w-4 shrink-0 accent-purple-600">Acrobatie arrière</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="strength_core" class="h-4 w-4 shrink-0 accent-purple-600">Force et gainage</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="flexibility" class="h-4 w-4 shrink-0 accent-purple-600">Souplesse et amplitude</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="alignment" class="h-4 w-4 shrink-0 accent-purple-600">Posture et alignements</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="motor_control" class="h-4 w-4 shrink-0 accent-purple-600">Contrôle moteur</label>
+                            <label class="flex min-h-10 items-center gap-2 rounded border border-purple-100 px-2 py-1.5 text-[10px]"><input type="checkbox" name="sigle-progression-family" value="power" class="h-4 w-4 shrink-0 accent-purple-600">Impulsion et explosivité</label>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="rounded-xl border border-purple-200 bg-white p-3 space-y-2">
+                    <p class="font-bold text-purple-800">Valeur et bonification par agrès</p>
+                    <p class="text-[10px] text-purple-600">Un même élément peut avoir une note différente au sol, à la poutre ou sur un autre agrès.</p>
+                    <div id="sigle-scoring-by-apparatus" class="grid gap-2 sm:grid-cols-2"></div>
                 </div>
                 <div>
                     <label id="sigle-image-label" class="block font-semibold text-gray-700 mb-1">Image du mouvement :</label>
@@ -1825,7 +1871,7 @@
                     <button
                         id="btn-save-custom-sigle"
                         onclick="saveCustomSigle()"
-                        class="col-span-2 py-2 bg-pink-600 text-white font-medium rounded-md shadow hover:bg-pink-700">Enregistrer l'image</button>
+                        class="col-span-2 py-2 bg-pink-600 text-white font-medium rounded-md shadow hover:bg-pink-700">Enregistrer l'élément</button>
                     <button
                         id="btn-cancel-custom-sigle-edit"
                         onclick="cancelCustomSigleEdit()"
@@ -1834,8 +1880,8 @@
 
                 <div class="border-t border-gray-200 pt-3 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="font-bold text-gray-700">Dossiers et images importées</span>
-                        <span id="custom-sigles-count" class="text-[10px] text-gray-400">0 image</span>
+                        <span class="font-bold text-gray-700">Dossiers et éléments enregistrés</span>
+                        <span id="custom-sigles-count" class="text-[10px] text-gray-400">0 élément</span>
                     </div>
                     <div id="sigle-manager-breadcrumb" class="flex flex-wrap items-center gap-1 text-[10px] text-gray-500"></div>
                     <div class="grid grid-cols-3 gap-1.5">
@@ -1852,11 +1898,12 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════ SCRIPT ═══ -->
+    <script src="./ffgym-federal-a-catalog.js"></script>
     <script>
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.25.2';
+        const APP_VERSION = '1.28.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1880,12 +1927,24 @@
         const PROGRESSION_FAMILIES = [
             {key: 'acro_forward', label: 'Acrobatie avant'},
             {key: 'acro_backward', label: 'Acrobatie arrière'},
-            {key: 'flexibility', label: 'Souplesse'},
             {key: 'strength_core', label: 'Force et gainage'},
-            {key: 'alignment', label: 'Alignement et tenue'},
-            {key: 'balance', label: 'Équilibre et proprioception'},
-            {key: 'power', label: 'Impulsion et détente'},
-            {key: 'coordination', label: 'Coordination et rythme'}
+            {key: 'flexibility', label: 'Souplesse et amplitude'},
+            {key: 'alignment', label: 'Posture et alignements'},
+            {key: 'motor_control', label: 'Contrôle moteur'},
+            {key: 'power', label: 'Impulsion et explosivité'}
+        ];
+        const MOVEMENT_CATEGORIES = [
+            {key: 'entries', label: 'Entrées'},
+            {key: 'jumps', label: 'Sauts'},
+            {key: 'turns', label: 'Tours'},
+            {key: 'kips', label: 'Bascules'},
+            {key: 'reversals', label: 'Renversements'},
+            {key: 'swings', label: 'Élans et balancés'},
+            {key: 'supports', label: 'Appuis et placements'},
+            {key: 'acro_forward', label: 'Acrobaties avant'},
+            {key: 'acro_backward', label: 'Acrobaties arrière'},
+            {key: 'exits', label: 'Sorties'},
+            {key: 'other', label: 'Autres'}
         ];
         const PROGRESSION_QUALITY_LEVELS = [
             {value: 1, label: 'À corriger', percent: 25},
@@ -2443,12 +2502,16 @@
 
         function normalizePlanningWorkTags(value, definitions) {
             const valid = new Set((Array.isArray(definitions) ? definitions : []).map(item => item.key));
+            const aliases = {balance: 'motor_control', coordination: 'motor_control', proprioception: 'motor_control'};
             const source = Array.isArray(value)
                 ? value
                 : value === undefined || value === null || value === ''
                     ? []
                     : String(value).split(',');
-            return [...new Set(source.map(item => String(item || '').trim()).filter(item => valid.has(item)))];
+            return [...new Set(source
+                .map(item => String(item || '').trim())
+                .map(item => valid.has(item) ? item : aliases[item])
+                .filter(item => valid.has(item)))];
         }
 
         function normalizePlanningSession(value, fallbackId) {
@@ -3010,7 +3073,13 @@
         }
 
         function normalizeProgressionFamily(value) {
-            const key = String(value || '').trim();
+            const legacyAliases = {
+                balance: 'motor_control',
+                coordination: 'motor_control',
+                proprioception: 'motor_control'
+            };
+            const raw = String(value || '').trim();
+            const key = legacyAliases[raw] || raw;
             return PROGRESSION_FAMILIES.some(item => item.key === key) ? key : 'unclassified';
         }
 
@@ -3051,6 +3120,57 @@
             return labels.length ? labels.join(', ') : 'À classer';
         }
 
+        function normalizeMovementCategory(value, elementName = '') {
+            const raw = String(value || '').trim().toLocaleLowerCase('fr');
+            const aliases = {
+                entree: 'entries', entrees: 'entries', entry: 'entries',
+                saut: 'jumps', sauts: 'jumps', jump: 'jumps',
+                pivot: 'turns', pivots: 'turns', tour: 'turns', tours: 'turns',
+                bascule: 'kips', bascules: 'kips',
+                renversement: 'reversals', renversements: 'reversals',
+                elan: 'swings', elans: 'swings', balance: 'swings', balances: 'swings',
+                appui: 'supports', appuis: 'supports', position: 'supports', positions: 'supports',
+                sortie: 'exits', sorties: 'exits'
+            };
+            const direct = aliases[raw] || raw;
+            if (MOVEMENT_CATEGORIES.some(category => category.key === direct)) return direct;
+            const name = String(elementName || '').normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+            if (/\bsortie\b/.test(name)) return 'exits';
+            if (/\bentree\b/.test(name)) return 'entries';
+            if (/\b(pivot|tour)\b/.test(name)) return 'turns';
+            if (/bascule/.test(name)) return 'kips';
+            if (/renversement/.test(name)) return 'reversals';
+            if (/(souplesse arriere|roulade arriere|salto arriere|flip|flic)/.test(name)) return 'acro_backward';
+            if (/(rondade|roue|saut de mains|roulade avant|souplesse avant|salto avant|tic.?tac|\batr\b)/.test(name)) return 'acro_forward';
+            if (/(balance|oscillation|culbute|file|contre volee|reta|prise d.elan)/.test(name)) return 'swings';
+            if (/(\bsaut\b|sissonne|jete|cabriole|cosaque|carpe|chat|ciseaux)/.test(name)) return 'jumps';
+            if (/(appui|pose de pieds|cavalier|crapahute|chandelle|equerre|arabesque)/.test(name)) return 'supports';
+            return 'other';
+        }
+
+        function getMovementCategoryDefinition(value, elementName = '') {
+            const key = normalizeMovementCategory(value, elementName);
+            return MOVEMENT_CATEGORIES.find(category => category.key === key) ||
+                MOVEMENT_CATEGORIES[MOVEMENT_CATEGORIES.length - 1];
+        }
+
+        function getMovementCategoryLabel(value, elementName = '') {
+            return getMovementCategoryDefinition(value, elementName).label;
+        }
+
+        function getMovementCategoryKey(item) {
+            return normalizeMovementCategory(item && item.category, item && item.nom);
+        }
+
+        function groupMovementEntriesByCategory(entries) {
+            const source = Array.isArray(entries) ? entries : [];
+            return MOVEMENT_CATEGORIES.map(category => ({
+                ...category,
+                entries: source.filter(entry => getMovementCategoryKey(entry && entry.item) === category.key)
+            })).filter(group => group.entries.length > 0);
+        }
+
         function normalizeProgressionQualityRating(value) {
             const rating = Number(value);
             return PROGRESSION_QUALITY_LEVELS.some(level => level.value === rating) ? rating : null;
@@ -3060,7 +3180,14 @@
             const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
             const normalized = {};
             normalizeProgressionFamilies(families).forEach(family => {
-                const rating = normalizeProgressionQualityRating(source[family]);
+                const legacyRatings = family === 'motor_control'
+                    ? [source.motor_control, source.balance, source.coordination, source.proprioception]
+                        .map(normalizeProgressionQualityRating)
+                        .filter(rating => rating !== null)
+                    : [];
+                const rating = legacyRatings.length
+                    ? Math.min(...legacyRatings)
+                    : normalizeProgressionQualityRating(source[family]);
                 if (rating !== null) normalized[family] = rating;
             });
             return normalized;
@@ -3142,12 +3269,14 @@
             const usedIds = new Set();
             const elementIdAliases = new Map();
 
-            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatuses = [], families = []) => {
+            const normalizeElementCode = value => String(value || '').trim().toUpperCase().slice(0, 12);
+            const ensureElement = (rawName, preferredId = '', updatedAt = '', apparatuses = [], families = [], metadata = {}) => {
                 const name = normalizeProgressionName(rawName);
                 if (!name) return null;
                 const key = name.toLocaleLowerCase('fr');
                 const normalizedApparatuses = normalizeProgressionApparatuses(apparatuses);
                 const normalizedFamilies = normalizeProgressionFamilies(families);
+                const code = normalizeElementCode(metadata && metadata.code);
                 if (elementsByName.has(key)) {
                     const existing = elementsByName.get(key);
                     existing.apparatuses = normalizeProgressionApparatuses([
@@ -3155,6 +3284,8 @@
                         ...normalizedApparatuses
                     ]);
                     existing.families = normalizeProgressionFamilies([...existing.families, ...normalizedFamilies]);
+                    if (code) existing.code = code;
+                    if (metadata && metadata.movementLinked === true) existing.movementLinked = true;
                     if (preferredId) elementIdAliases.set(String(preferredId), existing.id);
                     return existing;
                 }
@@ -3170,7 +3301,9 @@
                     name,
                     apparatuses: normalizedApparatuses,
                     families: normalizedFamilies,
-                    updatedAt: String(updatedAt || '')
+                    updatedAt: String(updatedAt || ''),
+                    ...(code ? {code} : {}),
+                    ...(metadata && metadata.movementLinked === true ? {movementLinked: true} : {})
                 };
                 elements.push(element);
                 elementsByName.set(key, element);
@@ -3180,15 +3313,76 @@
                 return element;
             };
 
+            const federalCatalog = Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
+                ? globalThis.FFGYM_FEDERAL_A_CATALOG
+                : [];
+            const federalCatalogCodes = new Set(federalCatalog.map(item => String(item.abrev || item.catalogId || '')));
+            const deletedCatalogCodes = new Set(Array.isArray(target.deletedDefaultSigles) ? target.deletedDefaultSigles : []);
+            federalCatalog.forEach(item => {
+                const code = String(item.abrev || item.catalogId || '');
+                if (!code || deletedCatalogCodes.has(code)) return;
+                ensureElement(
+                    item.nom,
+                    `PROG-FFGYM-${code}`,
+                    '',
+                    item.apparatuses,
+                    item.families,
+                    {code, movementLinked: true}
+                );
+            });
+
             catalogSource.forEach(element => {
                 if (!element || typeof element !== 'object' || Array.isArray(element)) return;
+                const catalogCode = String(element.code || '').trim().toUpperCase();
+                if (federalCatalogCodes.has(catalogCode) && deletedCatalogCodes.has(catalogCode)) return;
                 ensureElement(
                     element.name,
                     element.id,
                     element.updatedAt,
                     element.apparatuses !== undefined ? element.apparatuses : element.apparatus,
-                    element.families !== undefined ? element.families : element.family
+                    element.families !== undefined ? element.families : element.family,
+                    {code: element.code, movementLinked: element.movementLinked === true}
                 );
+            });
+
+            (Array.isArray(target.customSigles) ? target.customSigles : []).forEach((sigle, index) => {
+                if (!sigle || typeof sigle !== 'object' || Array.isArray(sigle)) return;
+                const name = normalizeProgressionName(sigle.nom || sigle.abrev);
+                if (!name) return;
+                const code = normalizeElementCode(sigle.abrev);
+                const preferredId = String(sigle.progressionElementId || `PROG-MOV-${code || index + 1}`).trim();
+                let element = elements.find(entry => entry.id === preferredId) ||
+                    elements.find(entry => code && String(entry.code || '').toUpperCase() === code) ||
+                    elementsByName.get(name.toLocaleLowerCase('fr')) || null;
+                const hasApparatuses = Array.isArray(sigle.apparatuses) && sigle.apparatuses.length > 0;
+                const hasFamilies = Array.isArray(sigle.families) && sigle.families.length > 0;
+                if (!element) {
+                    element = ensureElement(
+                        name,
+                        preferredId,
+                        sigle.updatedAt,
+                        hasApparatuses ? sigle.apparatuses : ['unclassified'],
+                        hasFamilies ? sigle.families : [],
+                        {code, movementLinked: true}
+                    );
+                } else {
+                    const previousKey = element.name.toLocaleLowerCase('fr');
+                    const nextKey = name.toLocaleLowerCase('fr');
+                    if (previousKey !== nextKey && (!elementsByName.has(nextKey) || elementsByName.get(nextKey) === element)) {
+                        elementsByName.delete(previousKey);
+                        element.name = name;
+                        elementsByName.set(nextKey, element);
+                    }
+                    if (hasApparatuses) element.apparatuses = normalizeProgressionApparatuses(sigle.apparatuses);
+                    if (hasFamilies) element.families = normalizeProgressionFamilies(sigle.families);
+                    if (code) element.code = code;
+                    element.movementLinked = true;
+                    elementIdAliases.set(preferredId, element.id);
+                }
+                if (!element) return;
+                sigle.progressionElementId = element.id;
+                sigle.apparatuses = [...element.apparatuses];
+                sigle.families = [...element.families];
             });
 
             const orderedGymIds = [];
@@ -3865,7 +4059,7 @@
             return ['gymnastes', 'scores', 'teams', 'competitionSessions', 'customSigles', 'movementFolders', 'deletedDefaultSigles', 'attendanceSheets']
                 .some(key => snapshot[key] && snapshot[key].length) || Object.keys(snapshot.mouvements || {}).length > 0 ||
                 Object.keys(snapshot.defaultSigleScoring || {}).length > 0 ||
-                (Array.isArray(snapshot.progressionElements) && snapshot.progressionElements.length > 0) ||
+                JSON.stringify(snapshot.progressionElements || []) !== JSON.stringify(INITIAL_GYM_DATA.progressionElements || []) ||
                 Object.values(snapshot.progressions || {}).some(statuses =>
                     statuses && typeof statuses === 'object' && Object.keys(statuses).length > 0
                 ) ||
@@ -7228,6 +7422,26 @@
             return data.progressionElements;
         }
 
+        function getLinkedCustomSigleIndex(progressionElementId) {
+            return (Array.isArray(data.customSigles) ? data.customSigles : []).findIndex(item =>
+                item && String(item.progressionElementId || '') === String(progressionElementId || '')
+            );
+        }
+
+        function getLinkedProgressionElementForSigle(sigle) {
+            if (!sigle) return null;
+            const elements = getProgressionElements();
+            const linkedId = String(sigle.progressionElementId || '');
+            if (linkedId) {
+                const linked = elements.find(item => item.id === linkedId);
+                if (linked) return linked;
+            }
+            const code = String(sigle.abrev || '').trim().toUpperCase();
+            const name = normalizeProgressionName(sigle.nom || sigle.abrev).toLocaleLowerCase('fr');
+            return elements.find(item => code && String(item.code || '').toUpperCase() === code) ||
+                elements.find(item => item.name.toLocaleLowerCase('fr') === name) || null;
+        }
+
         function getGymnastProgressionStatusMap(gymId = currentGymId) {
             if (!gymId) return {};
             getProgressionElements();
@@ -7509,13 +7723,24 @@
             if (families !== undefined) {
                 item.families = normalizeProgressionFamilies(families);
             }
+            const updatedAt = new Date().toISOString();
+            item.updatedAt = updatedAt;
+            const linkedSigleIndex = getLinkedCustomSigleIndex(itemId);
+            if (linkedSigleIndex >= 0) {
+                data.customSigles[linkedSigleIndex] = {
+                    ...data.customSigles[linkedSigleIndex],
+                    nom: item.name,
+                    apparatuses: [...item.apparatuses],
+                    families: [...item.families],
+                    updatedAt
+                };
+            }
             Object.values(data.progressions || {}).forEach(statuses => {
                 if (!statuses || typeof statuses !== 'object' || Array.isArray(statuses)) return;
                 const saved = statuses[itemId];
                 if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
                 statuses[itemId] = normalizeProgressionRecord(saved, item);
             });
-            item.updatedAt = new Date().toISOString();
             saveAllData();
             return item;
         }
@@ -7696,13 +7921,13 @@
         }
 
         function openProgressionAddPanel() {
-            cancelProgressionEdit(false);
-            const form = document.getElementById('form-progression');
-            const openButton = document.getElementById('btn-open-progression-add');
-            if (form) form.classList.remove('hidden');
-            if (openButton) openButton.classList.add('hidden');
-            const input = document.getElementById('progression-element-name');
-            if (input) input.focus();
+            cancelProgressionEdit();
+            openCustomSigleModal({
+                initialApparatus: currentProgressionApparatusTab === 'unclassified'
+                    ? String(currentMvtAgres || '').toLocaleLowerCase('fr')
+                    : currentProgressionApparatusTab,
+                title: 'Ajouter un élément à la bibliothèque commune'
+            });
         }
 
         function closeProgressionAddPanel() {
@@ -7715,6 +7940,12 @@
         function startProgressionEdit(itemId) {
             const item = getProgressionElements().find(entry => entry.id === itemId);
             if (!item) return;
+            const linkedSigleIndex = getLinkedCustomSigleIndex(itemId);
+            if (linkedSigleIndex >= 0) {
+                openCustomSigleModal();
+                editCustomSigle(linkedSigleIndex);
+                return;
+            }
             const form = document.getElementById('form-progression');
             const openButton = document.getElementById('btn-open-progression-add');
             if (form) form.classList.remove('hidden');
@@ -7740,6 +7971,11 @@
 
         function deleteProgressionItem(itemId) {
             const item = getGymnastProgression().find(entry => entry.id === itemId);
+            const linkedSigleIndex = getLinkedCustomSigleIndex(itemId);
+            if (linkedSigleIndex >= 0) {
+                deleteCustomSigle(linkedSigleIndex);
+                return;
+            }
             if (!item || !confirm(
                 `Supprimer l'élément « ${item.name} » pour toutes les gymnastes ?\n\nLes statuts personnels associés seront également supprimés.`
             )) return;
@@ -8676,7 +8912,7 @@
 
         // ────────────────────────────────────────────────────────────── MOUVEMENTS &
         // SIGLES ──────────────────────────────────────────────────────────────
-        const defaultSiglesGym = [
+        const legacyDefaultSiglesGym = [
             {
                 symbole: "↷",
                 abrev: "BSC",
@@ -8715,6 +8951,43 @@
                 nom: "Tsukahara"
             }
         ];
+        const federalACatalogSigles = Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
+            ? globalThis.FFGYM_FEDERAL_A_CATALOG.map(item => ({...item, symbole: ''}))
+            : [];
+        const defaultSiglesGym = [...legacyDefaultSiglesGym, ...federalACatalogSigles];
+        const MOVEMENT_SAUT_VARIANT_KEY = 'gym_movement_saut_variant_v1';
+        const MOVEMENT_APPARATUS_KEYS = {Saut: 'saut', Barres: 'barres', Poutre: 'poutre', Sol: 'sol'};
+        let movementSautScoringVariant = localStorage.getItem(MOVEMENT_SAUT_VARIANT_KEY) === 'trampo_tremp'
+            ? 'trampo_tremp'
+            : 'tremplin';
+
+        function getCurrentMovementApparatusKey() {
+            return MOVEMENT_APPARATUS_KEYS[currentMvtAgres] || 'saut';
+        }
+
+        function getDefaultSigleToken(item) {
+            return item && item.catalogId
+                ? `[${item.abrev}]`
+                : `${item.symbole} (${item.abrev})`;
+        }
+
+        function setMovementSautScoringVariant(value) {
+            movementSautScoringVariant = value === 'trampo_tremp' ? 'trampo_tremp' : 'tremplin';
+            localStorage.setItem(MOVEMENT_SAUT_VARIANT_KEY, movementSautScoringVariant);
+            const select = document.getElementById('movement-saut-variant');
+            if (select) select.value = movementSautScoringVariant;
+            updateMovementStartScoreDisplay();
+        }
+
+        function updateMovementSautVariantUI() {
+            const row = document.getElementById('movement-saut-variant-row');
+            const select = document.getElementById('movement-saut-variant');
+            if (row) {
+                row.classList.toggle('hidden', currentMvtAgres !== 'Saut');
+                row.classList.toggle('flex', currentMvtAgres === 'Saut');
+            }
+            if (select) select.value = movementSautScoringVariant;
+        }
 
         function normalizeMovementScoringValue(value) {
             if (value === null || value === undefined || String(value).trim() === '') return null;
@@ -8749,21 +9022,65 @@
             return {valid: true, value};
         }
 
-        function getDefaultSigleScoring(item) {
-            const saved = data.defaultSigleScoring && item
-                ? data.defaultSigleScoring[item.abrev]
+        function resolveMovementScoringRecord(item, apparatus = getCurrentMovementApparatusKey()) {
+            const byApparatus = item && item.scoringByApparatus && typeof item.scoringByApparatus === 'object'
+                ? item.scoringByApparatus[apparatus]
                 : null;
+            const record = byApparatus && typeof byApparatus === 'object' ? byApparatus : {};
+            const variantValue = apparatus === 'saut' && record.variants && typeof record.variants === 'object'
+                ? record.variants[movementSautScoringVariant]
+                : undefined;
+            const movementSource = variantValue !== undefined
+                ? variantValue
+                : Object.hasOwn(record, 'movementValue')
+                    ? record.movementValue
+                    : item && item.movementValue;
+            const bonusSource = Object.hasOwn(record, 'bonusValue')
+                ? record.bonusValue
+                : item && item.bonusValue;
             return {
-                movementValue: normalizeMovementScoringValue(saved && saved.movementValue),
-                bonusValue: normalizeMovementScoringValue(saved && saved.bonusValue)
+                movementValue: normalizeMovementScoringValue(movementSource),
+                bonusValue: normalizeMovementScoringValue(bonusSource) || 0,
+                bonusRule: String(record.bonusRule || item && item.bonusRule || '')
             };
         }
 
-        function getCustomSigleScoring(item) {
+        function getDefaultSigleScoring(item, apparatus = getCurrentMovementApparatusKey()) {
+            const base = resolveMovementScoringRecord(item, apparatus);
+            const saved = data.defaultSigleScoring && item
+                ? data.defaultSigleScoring[item.abrev]
+                : null;
+            const savedByApparatus = saved && saved.scoringByApparatus && typeof saved.scoringByApparatus === 'object'
+                ? saved.scoringByApparatus[apparatus]
+                : null;
+            const override = savedByApparatus && typeof savedByApparatus === 'object'
+                ? savedByApparatus
+                : saved && (!saved.scoringByApparatus || !item.catalogId)
+                    ? saved
+                    : null;
             return {
-                movementValue: normalizeMovementScoringValue(item && item.movementValue),
-                bonusValue: normalizeMovementScoringValue(item && item.bonusValue)
+                movementValue: override && Object.hasOwn(override, 'movementValue')
+                    ? normalizeMovementScoringValue(override.movementValue)
+                    : base.movementValue,
+                bonusValue: override && Object.hasOwn(override, 'bonusValue')
+                    ? normalizeMovementScoringValue(override.bonusValue) || 0
+                    : base.bonusValue,
+                bonusRule: String(override && override.bonusRule || base.bonusRule || '')
             };
+        }
+
+        function getCustomSigleScoring(item, apparatus = getCurrentMovementApparatusKey()) {
+            return resolveMovementScoringRecord(item, apparatus);
+        }
+
+        function getCustomSigleScoringSummary(item) {
+            const apparatuses = normalizeProgressionApparatuses(item && item.apparatuses)
+                .filter(apparatus => apparatus !== 'unclassified');
+            return apparatuses.map(apparatus => {
+                const definition = PROGRESSION_APPARATUS.find(entry => entry.key === apparatus);
+                const scoring = getCustomSigleScoring(item, apparatus);
+                return `${definition ? definition.label : apparatus} : V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}`;
+            }).join(' | ') || 'Valeur non renseignée';
         }
 
         function countMovementTokenOccurrences(content, token) {
@@ -8785,6 +9102,7 @@
             let recognizedCount = 0;
             let unvaluedCount = 0;
             const details = [];
+            const appliedBonusRules = new Set();
             const addOccurrences = (label, token, scoring) => {
                 const count = countMovementTokenOccurrences(text, token);
                 if (!count) return;
@@ -8793,16 +9111,27 @@
                 recognizedCount += count;
                 if (scoring.movementValue === null) unvaluedCount += count;
                 movementValueTotal += movementValue * count;
-                bonusTotal += bonusValue * count;
+                if (scoring.bonusRule) {
+                    if (!appliedBonusRules.has(scoring.bonusRule)) {
+                        appliedBonusRules.add(scoring.bonusRule);
+                        bonusTotal += bonusValue;
+                    }
+                } else {
+                    bonusTotal += bonusValue * count;
+                }
                 details.push({label, token, count, movementValue, bonusValue});
             };
             defaultSiglesGym.forEach(item => {
-                addOccurrences(item.nom, `${item.symbole} (${item.abrev})`, getDefaultSigleScoring(item));
+                const token = item && item.catalogId ? `[${item.abrev}]` : `${item.symbole} (${item.abrev})`;
+                addOccurrences(item.nom, token, getDefaultSigleScoring(item));
             });
             data.customSigles.forEach(item => {
                 addOccurrences(item.nom || item.abrev, `[${item.abrev}]`, getCustomSigleScoring(item));
             });
-            const knownCustomCodes = new Set(data.customSigles.map(item => String(item.abrev || '')));
+            const knownCustomCodes = new Set([
+                ...data.customSigles.map(item => String(item.abrev || '')),
+                ...defaultSiglesGym.filter(item => item.catalogId).map(item => String(item.abrev || ''))
+            ]);
             const unknownCount = [...text.matchAll(/\[([A-Z0-9_-]{1,12})\]/g)]
                 .filter(match => !knownCustomCodes.has(match[1])).length;
             movementValueTotal = Math.round(movementValueTotal * 1000) / 1000;
@@ -8820,11 +9149,11 @@
 
         function getMovementCompositionTokenDefinitions() {
             const defaults = defaultSiglesGym.map(item => ({
-                token: `${item.symbole} (${item.abrev})`,
+                token: item && item.catalogId ? `[${item.abrev}]` : `${item.symbole} (${item.abrev})`,
                 code: item.abrev,
                 name: item.nom,
                 symbol: item.symbole,
-                image: '',
+                image: item.img || '',
                 type: 'default'
             }));
             const customs = (Array.isArray(data.customSigles) ? data.customSigles : [])
@@ -8869,7 +9198,7 @@
                 const card = document.createElement('figure');
                 card.className = 'flex w-20 shrink-0 flex-col items-center rounded-lg border border-pink-200 bg-white p-1.5 text-center shadow-sm';
                 card.title = `${definition.name} — ${definition.code}`;
-                if (definition.type === 'custom' && definition.image) {
+                if (definition.image) {
                     const image = document.createElement('img');
                     image.src = definition.image;
                     image.alt = definition.name;
@@ -8944,13 +9273,31 @@
             if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object' || Array.isArray(data.defaultSigleScoring))
                 data.defaultSigleScoring = {};
             const previousScoring = JSON.parse(JSON.stringify(data.defaultSigleScoring || {}));
-            if (movementValue.value === null && bonusValue.value === null)
+            if (item.catalogId) {
+                const apparatus = Array.isArray(item.apparatuses) && item.apparatuses[0]
+                    ? item.apparatuses[0]
+                    : getCurrentMovementApparatusKey();
+                const current = data.defaultSigleScoring[item.abrev] || {};
+                const scoringByApparatus = {...(current.scoringByApparatus || {})};
+                if (movementValue.value === null && bonusValue.value === null)
+                    delete scoringByApparatus[apparatus];
+                else
+                    scoringByApparatus[apparatus] = {
+                        movementValue: movementValue.value,
+                        bonusValue: bonusValue.value
+                    };
+                if (Object.keys(scoringByApparatus).length)
+                    data.defaultSigleScoring[item.abrev] = {...current, scoringByApparatus};
+                else
+                    delete data.defaultSigleScoring[item.abrev];
+            } else if (movementValue.value === null && bonusValue.value === null) {
                 delete data.defaultSigleScoring[item.abrev];
-            else
+            } else {
                 data.defaultSigleScoring[item.abrev] = {
                     movementValue: movementValue.value,
                     bonusValue: bonusValue.value
                 };
+            }
             try {
                 saveAllData();
             } catch (error) {
@@ -9193,13 +9540,41 @@
             renderSiglesPalette();
         }
 
+        function renderMovementPaletteEntry(entry) {
+            const item = entry.item;
+            const categoryLabel = getMovementCategoryLabel(item.category, item.nom);
+            if (entry.kind === 'custom') {
+                const image = item.img
+                    ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-8 w-8 object-contain">`
+                    : '<span class="text-base">🖼️</span>';
+                const scoring = getCustomSigleScoring(item);
+                return `<button type="button" onclick="insertCustomSigleToken(${entry.index})"
+                    title="${escapeHtml(item.nom)} — ${escapeHtml(categoryLabel)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
+                    class="min-h-20 rounded-xl border border-pink-200 bg-white p-1.5 flex flex-col items-center justify-center text-center hover:bg-pink-50 transition">
+                    ${image}
+                    <span class="mt-0.5 block w-full truncate text-[8px] font-bold text-pink-600">${escapeHtml(item.abrev)}</span>
+                    <span class="block w-full truncate text-[7px] font-bold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
+                </button>`;
+            }
+            const scoring = getDefaultSigleScoring(item);
+            const visual = item.img
+                ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-8 w-8 object-contain">`
+                : `<span class="block text-sm font-bold text-gray-800">${escapeHtml(item.symbole)}</span>`;
+            return `<button type="button" onclick="insertSigleToken('${getDefaultSigleToken(item)}')"
+                title="${escapeHtml(item.nom)} — ${escapeHtml(categoryLabel)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
+                class="min-h-20 rounded-xl border border-gray-200 bg-white p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
+                ${visual}
+                <span class="block w-full truncate text-[8px] font-semibold text-gray-400">${escapeHtml(item.abrev)}</span>
+                <span class="block w-full truncate text-[7px] font-bold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
+            </button>`;
+        }
+
         function renderSiglesPalette() {
             const kbd = document.getElementById('keyboard-container');
             const foldersBox = document.getElementById('sigle-palette-folders');
             const breadcrumb = document.getElementById('sigle-palette-breadcrumb');
             const empty = document.getElementById('sigle-palette-empty');
             currentSiglePaletteFolderId = normalizeMovementFolderId(currentSiglePaletteFolderId);
-            kbd.innerHTML = '';
             const path = getMovementFolderPath(currentSiglePaletteFolderId);
             breadcrumb.innerHTML = `<button type="button" onclick="openSiglePaletteFolder(null)" class="font-semibold ${currentSiglePaletteFolderId === null ? 'text-pink-700' : 'text-gray-500'}">📚 Non classées</button>` +
                 path.map(folder => `<span>›</span><button type="button" onclick="openSiglePaletteFolder('${folder.id}')" class="font-semibold text-pink-700">${escapeHtml(folder.name)}</button>`).join('');
@@ -9213,43 +9588,134 @@
                 </button>`;
             }).join('');
             const activeDefault = currentSiglePaletteFolderId === null
-                ? defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item))
+                ? defaultSiglesGym.filter(item => !isDefaultSigleDeleted(item) && (
+                    !item.catalogId || (Array.isArray(item.apparatuses) && item.apparatuses.includes(getCurrentMovementApparatusKey()))
+                ))
                 : [];
-            activeDefault.forEach(item => {
-                const scoring = getDefaultSigleScoring(item);
-                kbd.innerHTML += `
-                <button type="button" onclick="insertSigleToken('${item.symbole} (${item.abrev})')"
-                    title="${escapeHtml(item.nom)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
-                    class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition">
-                    <span class="font-bold text-gray-800 text-sm block">${item.symbole}</span>
-                    <span class="text-[8px] text-gray-400 font-semibold truncate w-full block">${item.abrev}</span>
-                    <span class="text-[7px] text-purple-600 font-bold truncate w-full block">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
-                </button>`;
-            });
             const visibleCustom = data.customSigles
                 .map((item, index) => ({item, index}))
-                .filter(entry => normalizeMovementFolderId(entry.item.folderId) === currentSiglePaletteFolderId)
+                .filter(entry => normalizeMovementFolderId(entry.item.folderId) === currentSiglePaletteFolderId && (
+                    !Array.isArray(entry.item.apparatuses) || entry.item.apparatuses.length === 0 ||
+                    entry.item.apparatuses.includes(getCurrentMovementApparatusKey())
+                ))
                 .sort((a, b) => String(a.item.nom || '').localeCompare(String(b.item.nom || ''), 'fr', {sensitivity: 'base'}));
-            visibleCustom.forEach(({item, index}) => {
-                const image = item.img
-                    ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="w-5 h-5 object-contain">`
-                    : '<span class="text-base">🖼️</span>';
-                const scoring = getCustomSigleScoring(item);
-                kbd.innerHTML += `
-                <button type="button" onclick="insertCustomSigleToken(${index})"
-                    title="${escapeHtml(item.nom)} — valeur ${scoring.movementValue === null ? 'non renseignée' : formatMovementScoringValue(scoring.movementValue)}, bonus ${formatMovementScoringValue(scoring.bonusValue)}"
-                    class="bg-white border border-pink-200 rounded-xl p-1.5 flex flex-col items-center justify-center text-center hover:bg-pink-50 transition">
-                    ${image}
-                    <span class="text-[8px] text-pink-600 font-bold truncate w-full block mt-0.5">${escapeHtml(item.abrev)}</span>
-                    <span class="text-[7px] text-purple-600 font-bold truncate w-full block">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
-                </button>`;
-            });
-            empty.classList.toggle('hidden', activeDefault.length + visibleCustom.length + children.length > 0);
+            const paletteEntries = [
+                ...activeDefault.map(item => ({kind: 'default', item})),
+                ...visibleCustom.map(entry => ({kind: 'custom', ...entry}))
+            ];
+            kbd.innerHTML = groupMovementEntriesByCategory(paletteEntries).map(group => `
+                <section class="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/70">
+                    <div class="flex items-center justify-between border-b border-gray-200 bg-white px-2.5 py-1.5">
+                        <h4 class="text-[10px] font-black uppercase tracking-wider text-gray-600">${escapeHtml(group.label)}</h4>
+                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[8px] font-bold text-gray-500">${group.entries.length}</span>
+                    </div>
+                    <div class="movement-category-grid grid grid-cols-3 gap-2 p-2 min-[390px]:grid-cols-4 sm:grid-cols-6 lg:grid-cols-8">
+                        ${group.entries.map(renderMovementPaletteEntry).join('')}
+                    </div>
+                </section>`).join('');
+            empty.classList.toggle('hidden', paletteEntries.length + children.length > 0);
         }
 
-        function openCustomSigleModal() {
+        function getSigleProgressionApparatusInputs() {
+            return [...document.querySelectorAll('#sigle-progression-apparatus input[name="sigle-progression-apparatus"]')];
+        }
+
+        function getSelectedSigleProgressionApparatuses() {
+            return normalizeProgressionApparatuses(
+                getSigleProgressionApparatusInputs().filter(input => input.checked).map(input => input.value)
+            ).filter(apparatus => apparatus !== 'unclassified');
+        }
+
+        function setSelectedSigleProgressionApparatuses(apparatuses) {
+            const selected = new Set(normalizeProgressionApparatuses(apparatuses).filter(item => item !== 'unclassified'));
+            getSigleProgressionApparatusInputs().forEach(input => {
+                input.checked = selected.has(input.value);
+            });
+        }
+
+        function captureSigleScoringDraft() {
+            return Object.fromEntries(PROGRESSION_APPARATUS.map(({key}) => {
+                const valueInput = document.getElementById(`sigle-score-value-${key}`);
+                const bonusInput = document.getElementById(`sigle-score-bonus-${key}`);
+                return [key, valueInput || bonusInput ? {
+                    movementValue: valueInput ? valueInput.value : '',
+                    bonusValue: bonusInput ? bonusInput.value : ''
+                } : null];
+            }).filter(([, value]) => value));
+        }
+
+        function renderSigleScoringInputs(item = undefined) {
+            const container = document.getElementById('sigle-scoring-by-apparatus');
+            if (!container) return;
+            const drafts = captureSigleScoringDraft();
+            const selected = getSelectedSigleProgressionApparatuses();
+            const sourceItem = item === undefined && editingCustomSigleIndex !== null
+                ? data.customSigles[editingCustomSigleIndex]
+                : item;
+            if (!selected.length) {
+                container.innerHTML = '<p class="sm:col-span-2 rounded-lg border border-dashed border-purple-200 p-3 text-center text-[10px] text-purple-500">Cochez au moins un agrès pour saisir sa valeur.</p>';
+                return;
+            }
+            container.innerHTML = selected.map(apparatus => {
+                const definition = PROGRESSION_APPARATUS.find(entry => entry.key === apparatus);
+                const scoring = getCustomSigleScoring(sourceItem, apparatus);
+                const draft = drafts[apparatus];
+                const movementValue = draft ? draft.movementValue : movementScoringInputValue(scoring.movementValue);
+                const bonusValue = draft ? draft.bonusValue : movementScoringInputValue(scoring.bonusValue);
+                return `<fieldset class="rounded-lg border border-purple-100 bg-purple-50/40 p-2">
+                    <legend class="px-1 text-[10px] font-black text-purple-800">${escapeHtml(definition ? definition.label : apparatus)}</legend>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="text-[9px] font-semibold text-gray-600">Valeur
+                            <input id="sigle-score-value-${apparatus}" type="text" inputmode="decimal" value="${escapeHtml(movementValue)}" placeholder="0,00" class="mt-1 w-full rounded border border-purple-200 bg-white p-2 text-xs">
+                        </label>
+                        <label class="text-[9px] font-semibold text-gray-600">Bonification
+                            <input id="sigle-score-bonus-${apparatus}" type="text" inputmode="decimal" value="${escapeHtml(bonusValue)}" placeholder="0,00" class="mt-1 w-full rounded border border-purple-200 bg-white p-2 text-xs">
+                        </label>
+                    </div>
+                </fieldset>`;
+            }).join('');
+        }
+
+        function readSigleScoringByApparatus(apparatuses) {
+            const scoringByApparatus = {};
+            for (const apparatus of apparatuses) {
+                const movementValue = readMovementScoringInput(`sigle-score-value-${apparatus}`, `La valeur ${apparatus}`);
+                const bonusValue = readMovementScoringInput(`sigle-score-bonus-${apparatus}`, `La bonification ${apparatus}`);
+                if (!movementValue.valid || !bonusValue.valid) return {valid: false, value: {}};
+                scoringByApparatus[apparatus] = {
+                    movementValue: movementValue.value,
+                    bonusValue: bonusValue.value
+                };
+            }
+            return {valid: true, value: scoringByApparatus};
+        }
+
+        function getSigleProgressionFamilyInputs() {
+            return [...document.querySelectorAll('#sigle-progression-family input[name="sigle-progression-family"]')];
+        }
+
+        function getSelectedSigleProgressionFamilies() {
+            return normalizeProgressionFamilies(
+                getSigleProgressionFamilyInputs().filter(input => input.checked).map(input => input.value)
+            );
+        }
+
+        function setSelectedSigleProgressionFamilies(families) {
+            const selected = new Set(normalizeProgressionFamilies(families));
+            getSigleProgressionFamilyInputs().forEach(input => {
+                input.checked = selected.has(input.value);
+            });
+        }
+
+        function openCustomSigleModal(options = {}) {
             currentSigleManagerFolderId = normalizeMovementFolderId(currentSiglePaletteFolderId);
             cancelCustomSigleEdit();
+            const initialApparatus = normalizeProgressionApparatus(
+                options.initialApparatus || String(currentMvtAgres || '').toLocaleLowerCase('fr')
+            );
+            if (initialApparatus !== 'unclassified') setSelectedSigleProgressionApparatuses([initialApparatus]);
+            renderSigleScoringInputs(null);
+            if (options.title) document.getElementById('modal-custom-sigle-title').innerText = options.title;
             renderCustomSiglesManager();
             document
                 .getElementById('modal-custom-sigle')
@@ -9470,19 +9936,32 @@
 
         function cancelCustomSigleEdit() {
             editingCustomSigleIndex = null;
-            document.getElementById('modal-custom-sigle-title').innerText = 'Gérer les images des mouvements';
+            document.getElementById('modal-custom-sigle-title').innerText = 'Bibliothèque des éléments techniques';
             document.getElementById('sigle-abrev-input').value = '';
             document.getElementById('sigle-nom-input').value = '';
-            document.getElementById('sigle-movement-value-input').value = '';
-            document.getElementById('sigle-bonus-input').value = '';
+            document.getElementById('sigle-category-input').value = 'auto';
+            setSelectedSigleProgressionApparatuses([]);
+            renderSigleScoringInputs(null);
+            setSelectedSigleProgressionFamilies([]);
             document.getElementById('sigle-image-file').value = '';
             document.getElementById('sigle-image-label').innerText = 'Image du mouvement :';
             document.getElementById('sigle-image-preview').removeAttribute('src');
             document.getElementById('sigle-image-preview-container').classList.add('hidden');
             resetSigleDrawingEditor();
-            document.getElementById('btn-save-custom-sigle').innerText = "Enregistrer l'image";
+            document.getElementById('btn-save-custom-sigle').innerText = "Enregistrer l'élément";
             document.getElementById('btn-cancel-custom-sigle-edit').classList.add('hidden');
             refreshCustomSigleFolderSelect(currentSigleManagerFolderId);
+        }
+
+        function renderMovementManagerCategoryGroups(entries, renderCard) {
+            return groupMovementEntriesByCategory(entries).map(group => `
+                <section class="space-y-2 rounded-xl border border-gray-200 bg-white p-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[9px] font-black uppercase tracking-wider text-gray-500">${escapeHtml(group.label)}</p>
+                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[8px] font-bold text-gray-500">${group.entries.length}</span>
+                    </div>
+                    ${group.entries.map(renderCard).join('')}
+                </section>`).join('');
         }
 
         function renderCustomSiglesManager() {
@@ -9512,19 +9991,29 @@
                 .map((item, index) => ({item, index}))
                 .filter(entry => normalizeMovementFolderId(entry.item.folderId) === currentSigleManagerFolderId)
                 .sort((a, b) => String(a.item.nom || '').localeCompare(String(b.item.nom || ''), 'fr', {sensitivity: 'base'}));
-            count.innerText = `${visibleCustomSigles.length} ici · ${data.customSigles.length} importée${data.customSigles.length === 1 ? '' : 's'}`;
+            count.innerText = `${visibleCustomSigles.length} ici · ${data.customSigles.length} élément${data.customSigles.length === 1 ? '' : 's'}`;
             const activeDefaultSigles = isRoot ? defaultSiglesGym
                 .map((item, index) => ({item, index}))
-                .filter(entry => !isDefaultSigleDeleted(entry.item)) : [];
+                .filter(entry => !isDefaultSigleDeleted(entry.item) && (
+                    !entry.item.catalogId || (Array.isArray(entry.item.apparatuses) && entry.item.apparatuses.includes(getCurrentMovementApparatusKey()))
+                )) : [];
             const defaultList = activeDefaultSigles.length ? `<div class="space-y-2">
-                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${activeDefaultSigles.map(({item, index}) => {
-                const scoring = getDefaultSigleScoring(item);
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images intégrées</p>${renderMovementManagerCategoryGroups(activeDefaultSigles, ({item, index}) => {
+                const scoringApparatus = item.catalogId && Array.isArray(item.apparatuses) && item.apparatuses[0]
+                    ? item.apparatuses[0]
+                    : getCurrentMovementApparatusKey();
+                const scoring = getDefaultSigleScoring(item, scoringApparatus);
+                const visual = item.img
+                    ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-12 w-12 object-contain rounded bg-white border border-gray-100">`
+                    : `<span class="w-12 h-12 flex items-center justify-center text-2xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>`;
                 return `
                 <div class="flex flex-wrap items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
-                    <span class="w-12 h-12 flex items-center justify-center text-2xl rounded bg-white border border-gray-100">${escapeHtml(item.symbole)}</span>
+                    ${visual}
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
                         <p class="text-[10px] text-gray-500 font-semibold">${escapeHtml(item.abrev)} · image intégrée</p>
+                        <p class="text-[9px] font-bold text-pink-600">${escapeHtml(getMovementCategoryLabel(item.category, item.nom))}</p>
+                        ${item.catalogId ? `<p class="text-[9px] text-blue-600">${escapeHtml(getProgressionApparatusLabels(item.apparatuses).join(' · '))}</p><p class="text-[9px] text-gray-500 line-clamp-2">${escapeHtml(getProgressionFamilyLabels(item.families).join(' · '))}</p>` : ''}
                     </div>
                     <div class="w-full sm:w-52 grid grid-cols-2 gap-1">
                         <label class="text-[9px] text-gray-500">Valeur
@@ -9537,15 +10026,18 @@
                     </div>
                     <button type="button" onclick="deleteDefaultSigle(${index})" class="w-full sm:w-auto px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
                 </div>`;
-            }).join('')}</div>` : '';
+            })}</div>` : '';
             const customList = visibleCustomSigles.length ? `<div class="space-y-2 ${isRoot && activeDefaultSigles.length ? 'border-t border-gray-200 pt-2 mt-2' : ''}">
-                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Images importées</p>${visibleCustomSigles.map(({item, index}) => `
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Éléments personnalisés</p>${renderMovementManagerCategoryGroups(visibleCustomSigles, ({item, index}) => `
                 <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
                     <img src="${escapeHtml(item.img || '')}" alt="${escapeHtml(item.nom)}" class="w-12 h-12 object-contain rounded bg-white border border-gray-100">
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800 truncate">${escapeHtml(item.nom)}</p>
                         <p class="text-[10px] text-pink-600 font-semibold">[${escapeHtml(item.abrev)}]</p>
-                        <p class="text-[9px] text-purple-600 font-semibold">Valeur ${getCustomSigleScoring(item).movementValue === null ? '—' : formatMovementScoringValue(getCustomSigleScoring(item).movementValue)} · Bonus ${formatMovementScoringValue(getCustomSigleScoring(item).bonusValue)}</p>
+                        <p class="text-[9px] font-bold text-pink-600">${escapeHtml(getMovementCategoryLabel(item.category, item.nom))}</p>
+                        <p class="text-[9px] text-purple-600 font-semibold">${escapeHtml(getCustomSigleScoringSummary(item))}</p>
+                        <p class="text-[9px] text-blue-600">${escapeHtml(getProgressionApparatusLabels(item.apparatuses).join(' · '))}</p>
+                        <p class="text-[9px] text-gray-500 line-clamp-2">${escapeHtml(getProgressionFamilyLabels(item.families).join(' · ') || 'Profil à classer')}</p>
                     </div>
                     <div class="w-28 flex flex-col gap-1">
                         <select aria-label="Déplacer ${escapeHtml(item.nom)}" onchange="moveCustomSigleToFolder(${index}, this.value)" class="w-full p-1 rounded border border-gray-300 bg-white text-[9px]">${getMovementFolderOptionsHtml(item.folderId)}</select>
@@ -9553,7 +10045,7 @@
                         <button type="button" onclick="deleteCustomSigle(${index})" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200 font-semibold">🗑️ Supprimer</button>
                     </div>
                 </div>
-            `).join('')}</div>` : '';
+            `)}</div>` : '';
             list.innerHTML = `${defaultList}${customList}` ||
                 '<p class="text-center text-gray-400 py-4">Ce dossier est vide.</p>';
             const editingItem = editingCustomSigleIndex === null ? null : data.customSigles[editingCustomSigleIndex];
@@ -9582,19 +10074,27 @@
             }
             renderSiglesPalette();
             renderCustomSiglesManager();
+            renderProgressionTable();
+            renderProgressionStatistics();
         }
 
         function editCustomSigle(index) {
             const item = data.customSigles[index];
             if (!item) return;
-            const scoring = getCustomSigleScoring(item);
+            const progressionElement = getLinkedProgressionElementForSigle(item);
             resetSigleDrawingEditor();
             editingCustomSigleIndex = index;
             document.getElementById('modal-custom-sigle-title').innerText = `Modifier ${item.nom}`;
             document.getElementById('sigle-abrev-input').value = item.abrev || '';
             document.getElementById('sigle-nom-input').value = item.nom || '';
-            document.getElementById('sigle-movement-value-input').value = movementScoringInputValue(scoring.movementValue);
-            document.getElementById('sigle-bonus-input').value = movementScoringInputValue(scoring.bonusValue);
+            document.getElementById('sigle-category-input').value = getMovementCategoryKey(item);
+            setSelectedSigleProgressionApparatuses(
+                item.apparatuses !== undefined ? item.apparatuses : progressionElement && progressionElement.apparatuses
+            );
+            renderSigleScoringInputs(item);
+            setSelectedSigleProgressionFamilies(
+                item.families !== undefined ? item.families : progressionElement && progressionElement.families
+            );
             document.getElementById('sigle-image-file').value = '';
             document.getElementById('sigle-image-label').innerText = 'Remplacer l’image (optionnel) :';
             document.getElementById('sigle-image-preview').src = item.img || '';
@@ -9622,9 +10122,11 @@
                 area.value = area.value.replace(pattern, `[${newAbrev}]`);
         }
 
-        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined, movementValue = undefined, bonusValue = undefined) {
+        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined, movementValue = undefined, bonusValue = undefined, apparatuses = undefined, families = undefined, scoringByApparatus = undefined, category = undefined) {
             const previousSigles = data.customSigles.map(item => ({...item}));
             const previousMouvements = JSON.parse(JSON.stringify(data.mouvements || {}));
+            const previousProgressionElements = JSON.parse(JSON.stringify(data.progressionElements || []));
+            const previousProgressions = JSON.parse(JSON.stringify(data.progressions || {}));
             const movementArea = document.getElementById('txt-mouvement-content');
             const previousAreaValue = movementArea ? movementArea.value : null;
             const previousItem = editingCustomSigleIndex === null
@@ -9633,12 +10135,49 @@
             const targetFolderId = folderId === undefined
                 ? normalizeMovementFolderId(previousItem && previousItem.folderId)
                 : normalizeMovementFolderId(folderId);
-            const targetMovementValue = movementValue === undefined
-                ? getCustomSigleScoring(previousItem).movementValue
-                : normalizeMovementScoringValue(movementValue);
-            const targetBonusValue = bonusValue === undefined
-                ? getCustomSigleScoring(previousItem).bonusValue
-                : normalizeMovementScoringValue(bonusValue);
+            const linkedElement = getLinkedProgressionElementForSigle(previousItem);
+            const fallbackApparatus = normalizeProgressionApparatus(String(currentMvtAgres || '').toLocaleLowerCase('fr'));
+            const targetApparatuses = apparatuses === undefined
+                ? normalizeProgressionApparatuses(
+                    previousItem && previousItem.apparatuses !== undefined
+                        ? previousItem.apparatuses
+                        : linkedElement && linkedElement.apparatuses !== undefined
+                            ? linkedElement.apparatuses
+                            : [fallbackApparatus]
+                )
+                : normalizeProgressionApparatuses(apparatuses);
+            const sourceScoringByApparatus = scoringByApparatus && typeof scoringByApparatus === 'object'
+                ? scoringByApparatus
+                : previousItem && previousItem.scoringByApparatus && typeof previousItem.scoringByApparatus === 'object'
+                    ? previousItem.scoringByApparatus
+                    : {};
+            const targetScoringByApparatus = Object.fromEntries(targetApparatuses.map(apparatus => {
+                const saved = sourceScoringByApparatus[apparatus];
+                const legacy = getCustomSigleScoring(previousItem, apparatus);
+                return [apparatus, {
+                    movementValue: normalizeMovementScoringValue(saved && saved.movementValue !== undefined
+                        ? saved.movementValue
+                        : movementValue !== undefined ? movementValue : legacy.movementValue),
+                    bonusValue: normalizeMovementScoringValue(saved && saved.bonusValue !== undefined
+                        ? saved.bonusValue
+                        : bonusValue !== undefined ? bonusValue : legacy.bonusValue)
+                }];
+            }));
+            const firstScoring = targetScoringByApparatus[targetApparatuses[0]] || {movementValue: null, bonusValue: null};
+            const targetMovementValue = firstScoring.movementValue;
+            const targetBonusValue = firstScoring.bonusValue;
+            const targetFamilies = families === undefined
+                ? normalizeProgressionFamilies(
+                    previousItem && previousItem.families !== undefined
+                        ? previousItem.families
+                        : linkedElement && linkedElement.families
+                )
+                : normalizeProgressionFamilies(families);
+            const targetCategory = normalizeMovementCategory(
+                category === undefined && previousItem ? previousItem.category : category,
+                nom
+            );
+            const updatedAt = new Date().toISOString();
             if (previousItem) {
                 data.customSigles[editingCustomSigleIndex] = {
                     ...previousItem,
@@ -9647,7 +10186,12 @@
                     img: imageData,
                     folderId: targetFolderId,
                     movementValue: targetMovementValue,
-                    bonusValue: targetBonusValue
+                    bonusValue: targetBonusValue,
+                    scoringByApparatus: targetScoringByApparatus,
+                    apparatuses: targetApparatuses,
+                    families: targetFamilies,
+                    category: targetCategory,
+                    updatedAt
                 };
                 replaceCustomSigleTokens(previousItem.abrev, abrev);
             } else {
@@ -9657,7 +10201,12 @@
                     img: imageData,
                     folderId: targetFolderId,
                     movementValue: targetMovementValue,
-                    bonusValue: targetBonusValue
+                    bonusValue: targetBonusValue,
+                    scoringByApparatus: targetScoringByApparatus,
+                    apparatuses: targetApparatuses,
+                    families: targetFamilies,
+                    category: targetCategory,
+                    updatedAt
                 });
             }
 
@@ -9666,6 +10215,8 @@
             } catch (error) {
                 data.customSigles = previousSigles;
                 data.mouvements = previousMouvements;
+                data.progressionElements = previousProgressionElements;
+                data.progressions = previousProgressions;
                 if (movementArea && previousAreaValue !== null)
                     movementArea.value = previousAreaValue;
                 console.error('[GymSuivi] Image non enregistrée :', error);
@@ -9677,7 +10228,9 @@
             renderSiglesPalette();
             renderCustomSiglesManager();
             updateMovementStartScoreDisplay();
-            alert('🟢 Image enregistrée !');
+            renderProgressionTable();
+            renderProgressionStatistics();
+            alert('🟢 Élément enregistré dans Mouvements et Progression !');
         }
 
         function saveCustomSigle() {
@@ -9692,48 +10245,76 @@
                 .trim();
             const fileInput = document.getElementById('sigle-image-file');
             const folderId = document.getElementById('sigle-folder-input').value || null;
-            const movementValue = readMovementScoringInput('sigle-movement-value-input', 'La valeur du mouvement');
-            const bonusValue = readMovementScoringInput('sigle-bonus-input', 'Le bonus');
+            const category = normalizeMovementCategory(document.getElementById('sigle-category-input').value, nom);
+            const apparatuses = getSelectedSigleProgressionApparatuses();
+            const families = getSelectedSigleProgressionFamilies();
             if (!abrev || !nom)
                 return alert("Veuillez remplir l'abréviation et le nom.");
-            if (!movementValue.valid || !bonusValue.valid) return;
+            if (apparatuses.length === 0 || families.length === 0)
+                return alert('⚠️ Choisissez au moins un agrès et un profil technique.');
+            const scoring = readSigleScoringByApparatus(apparatuses);
+            if (!scoring.valid) return;
             if (!/^[A-Z0-9_-]{1,12}$/.test(abrev))
                 return alert("Le code doit contenir 1 à 12 lettres, chiffres, tirets ou tirets bas.");
             const duplicateIndex = data.customSigles.findIndex((item, index) =>
-                item.abrev === abrev && index !== editingCustomSigleIndex
+                String(item.abrev || '').trim().toUpperCase() === abrev && index !== editingCustomSigleIndex
             );
-            if (duplicateIndex >= 0)
+            const collidesWithIntegratedCode = defaultSiglesGym.some(item =>
+                String(item.abrev || '').trim().toUpperCase() === abrev
+            );
+            if (duplicateIndex >= 0 || collidesWithIntegratedCode)
                 return alert("⚠️ Cette abréviation existe déjà dans la bibliothèque.");
 
             const currentItem = editingCustomSigleIndex === null
                 ? null
                 : data.customSigles[editingCustomSigleIndex];
+            const linkedElement = getLinkedProgressionElementForSigle(currentItem);
+            const matchingProgression = getProgressionElements().find(item =>
+                item.name.toLocaleLowerCase('fr') === normalizeProgressionName(nom).toLocaleLowerCase('fr')
+            );
+            const matchingSigleIndex = matchingProgression ? getLinkedCustomSigleIndex(matchingProgression.id) : -1;
+            const collidesWithAnotherElement = matchingProgression && linkedElement && matchingProgression.id !== linkedElement.id;
+            const collidesWithAnotherSigle = matchingSigleIndex >= 0 && matchingSigleIndex !== editingCustomSigleIndex;
+            if (collidesWithAnotherElement || collidesWithAnotherSigle)
+                return alert('⚠️ Un élément portant ce nom existe déjà dans la bibliothèque commune.');
             if (!fileInput.files[0] && !customSigleDrawingData && (!currentItem || !currentItem.img))
                 return alert("Veuillez sélectionner une image ou dessiner un symbole à enregistrer.");
             if (customSigleDrawingData && !fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, customSigleDrawingData, folderId, movementValue.value, bonusValue.value);
+                commitCustomSigleSave(abrev, nom, customSigleDrawingData, folderId, undefined, undefined, apparatuses, families, scoring.value, category);
                 return;
             }
             if (!fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, currentItem.img, folderId, movementValue.value, bonusValue.value);
+                commitCustomSigleSave(abrev, nom, currentItem.img, folderId, undefined, undefined, apparatuses, families, scoring.value, category);
                 return;
             }
 
             compressImage(fileInput.files[0], 160, 160, 0.82, compressedBase64 => {
-                commitCustomSigleSave(abrev, nom, compressedBase64, folderId, movementValue.value, bonusValue.value);
+                commitCustomSigleSave(abrev, nom, compressedBase64, folderId, undefined, undefined, apparatuses, families, scoring.value, category);
             });
         }
 
         function deleteCustomSigle(index) {
             const item = data.customSigles[index];
             if (!item) return;
-            if (!confirm(`Supprimer définitivement l'image « ${item.nom} » ?\n\nLes codes déjà insérés dans les enchaînements resteront enregistrés.`))
+            if (!confirm(`Supprimer l'élément partagé « ${item.nom} » ?\n\nIl disparaîtra de Mouvements et Progression. Les codes déjà insérés dans les enchaînements resteront enregistrés.`))
                 return;
+            const previousProgressionElements = JSON.parse(JSON.stringify(data.progressionElements || []));
+            const previousProgressions = JSON.parse(JSON.stringify(data.progressions || {}));
             const removed = data.customSigles.splice(index, 1)[0];
+            const progressionElementId = String(removed.progressionElementId || '');
+            if (progressionElementId) {
+                data.progressionElements = getProgressionElements().filter(element => element.id !== progressionElementId);
+                Object.values(data.progressions || {}).forEach(statuses => {
+                    if (statuses && typeof statuses === 'object' && !Array.isArray(statuses))
+                        delete statuses[progressionElementId];
+                });
+            }
             try {
                 saveAllData();
             } catch (error) {
                 data.customSigles.splice(index, 0, removed);
+                data.progressionElements = previousProgressionElements;
+                data.progressions = previousProgressions;
                 console.error('[GymSuivi] Suppression non enregistrée :', error);
                 alert("❌ La suppression n'a pas pu être enregistrée.");
                 return;
@@ -9745,6 +10326,8 @@
             renderSiglesPalette();
             renderCustomSiglesManager();
             updateMovementStartScoreDisplay();
+            renderProgressionTable();
+            renderProgressionStatistics();
         }
 
         function switchMvtAgres(agres) {
@@ -9765,6 +10348,8 @@
                 .value = (
                     data.mouvements[currentGymId] && data.mouvements[currentGymId][agres]
                 ) || "";
+            updateMovementSautVariantUI();
+            renderSiglesPalette();
             updateMovementStartScoreDisplay();
         }
 
