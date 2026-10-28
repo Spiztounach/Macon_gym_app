@@ -1881,7 +1881,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.31.0';
+        const APP_VERSION = '1.32.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1938,6 +1938,7 @@
         const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
         const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
         const MOVEMENT_COLLAPSED_CATEGORIES_KEY = 'gym_movement_collapsed_categories_v1';
+        const PROGRESSION_COLLAPSED_CATEGORIES_KEY = 'gym_progression_collapsed_categories_v1';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const GOOGLE_PICKER_API_KEY = 'AIzaSyB2GOfvBRHy-LrVzUQMB1B0YuRSTMZproc';
         const GOOGLE_PICKER_APP_ID = '759389909007';
@@ -2983,6 +2984,7 @@
         let editingDefaultSigleIndex = null;
         let customSigleImageRemoved = false;
         const movementCollapsedCategories = new Set(loadMovementCollapsedCategoryKeys());
+        const progressionCollapsedCategories = new Set(loadProgressionCollapsedCategoryKeys());
         let teamModalMemberSelection = new Set();
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
@@ -8254,6 +8256,113 @@
             return definitions;
         }
 
+        function loadProgressionCollapsedCategoryKeys() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(PROGRESSION_COLLAPSED_CATEGORIES_KEY) || '[]');
+                return Array.isArray(saved) ? saved.filter(value => typeof value === 'string') : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function saveProgressionCollapsedCategoryKeys() {
+            localStorage.setItem(
+                PROGRESSION_COLLAPSED_CATEGORIES_KEY,
+                JSON.stringify([...progressionCollapsedCategories])
+            );
+        }
+
+        function getProgressionCategoryCollapseKey(categoryKey, apparatus = currentProgressionApparatusTab) {
+            return `${normalizeProgressionApparatus(apparatus)}:${String(categoryKey || '')}`;
+        }
+
+        function isProgressionCategoryCollapsed(categoryKey, apparatus = currentProgressionApparatusTab) {
+            return progressionCollapsedCategories.has(getProgressionCategoryCollapseKey(categoryKey, apparatus));
+        }
+
+        function toggleProgressionCategorySection(categoryKey) {
+            const key = getProgressionCategoryCollapseKey(categoryKey);
+            if (progressionCollapsedCategories.has(key)) progressionCollapsedCategories.delete(key);
+            else progressionCollapsedCategories.add(key);
+            saveProgressionCollapsedCategoryKeys();
+            renderProgressionTable();
+            return progressionCollapsedCategories.has(key);
+        }
+
+        function getProgressionItemCategoryDefinition(item) {
+            const entry = getMovementEntryForProgressionItem(item);
+            if (entry && entry.item)
+                return getMovementCategoryDefinition(entry.item.category, entry.item.nom || item && item.name);
+            const categories = getMovementCategoryDefinitions();
+            return categories.find(category => category.key === 'other') || categories[categories.length - 1];
+        }
+
+        function groupProgressionItemsByCategory(items) {
+            const source = Array.isArray(items) ? items : [];
+            const categories = getMovementCategoryDefinitions();
+            return categories.map(category => ({
+                ...category,
+                entries: source.filter(item => getProgressionItemCategoryDefinition(item).key === category.key)
+            })).filter(group => group.entries.length > 0);
+        }
+
+        function createProgressionCategoryToggleButton(group) {
+            const collapsed = isProgressionCategoryCollapsed(group.key);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left';
+            button.style.backgroundColor = `${group.accent || '#64748b'}10`;
+            button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            button.setAttribute('aria-label', `${collapsed ? 'Déplier' : 'Replier'} la catégorie ${group.label}`);
+            const title = document.createElement('span');
+            title.className = 'text-[10px] font-black uppercase tracking-wider';
+            title.style.color = group.accent || '#4b5563';
+            title.textContent = `${group.icon || ''} ${group.label}`.trim();
+            const meta = document.createElement('span');
+            meta.className = 'flex items-center gap-2';
+            const count = document.createElement('span');
+            count.className = 'rounded-full bg-white px-2 py-0.5 text-[8px] font-bold text-gray-500 shadow-sm';
+            count.textContent = String(group.entries.length);
+            const indicator = document.createElement('span');
+            indicator.className = 'text-sm font-black text-gray-500';
+            indicator.textContent = collapsed ? '＋' : '−';
+            meta.append(count, indicator);
+            button.append(title, meta);
+            button.onclick = () => toggleProgressionCategorySection(group.key);
+            return button;
+        }
+
+        function createProgressionElementVisualPreview(item) {
+            const entry = getMovementEntryForProgressionItem(item);
+            if (!entry || !entry.item) return null;
+            const source = entry.item;
+            const container = document.createElement('div');
+            container.className = 'flex shrink-0 items-center gap-1 rounded-lg border border-gray-100 bg-gray-50 p-1';
+            if (source.img) {
+                const symbol = document.createElement('img');
+                symbol.src = source.img;
+                symbol.alt = `Sigle de ${item.name}`;
+                symbol.loading = 'lazy';
+                symbol.className = 'h-9 w-9 rounded bg-white object-contain';
+                container.appendChild(symbol);
+            } else if (source.symbole) {
+                const symbol = document.createElement('span');
+                symbol.className = 'flex h-9 w-9 items-center justify-center rounded bg-white text-xl';
+                symbol.title = `Sigle de ${item.name}`;
+                symbol.textContent = source.symbole;
+                container.appendChild(symbol);
+            }
+            if (source.brochureImg) {
+                const brochure = document.createElement('img');
+                brochure.src = source.brochureImg;
+                brochure.alt = `Illustration de ${item.name} dans la brochure`;
+                brochure.loading = 'lazy';
+                brochure.className = 'h-9 w-16 rounded bg-white object-contain';
+                container.appendChild(brochure);
+            }
+            return container.childElementCount ? container : null;
+        }
+
         function getProgressionExportSelection(gymId = currentGymId) {
             const key = String(gymId || '');
             if (!key) return new Set();
@@ -8342,7 +8451,20 @@
             empty.textContent = currentProgressionApparatusTab === 'unclassified'
                 ? 'Aucun élément restant à classer.'
                 : `Aucun élément enregistré en ${getProgressionApparatusLabel(currentProgressionApparatusTab)}.`;
-            items.forEach(item => {
+            const categoryGroups = groupProgressionItemsByCategory(items);
+            categoryGroups.forEach(group => {
+                const categoryRow = document.createElement('tr');
+                const categoryCell = document.createElement('td');
+                categoryCell.colSpan = 5;
+                categoryCell.className = 'border-b border-gray-200 bg-gray-50 p-1.5';
+                categoryCell.appendChild(createProgressionCategoryToggleButton(group));
+                categoryRow.appendChild(categoryCell);
+                body.appendChild(categoryRow);
+                const mobileCategoryButton = createProgressionCategoryToggleButton(group);
+                mobileCategoryButton.classList.add('border', 'border-gray-200', 'bg-white');
+                mobileList.appendChild(mobileCategoryButton);
+                if (isProgressionCategoryCollapsed(group.key)) return;
+                group.entries.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'bg-white hover:bg-gray-50';
                 const nameCell = document.createElement('td');
@@ -8352,7 +8474,10 @@
                 const name = document.createElement('p');
                 name.className = 'min-w-0 flex-1 font-bold text-gray-800 break-words';
                 name.textContent = item.name;
-                nameLine.append(createProgressionExportCheckbox(item), name);
+                nameLine.appendChild(createProgressionExportCheckbox(item));
+                const visualPreview = createProgressionElementVisualPreview(item);
+                if (visualPreview) nameLine.appendChild(visualPreview);
+                nameLine.appendChild(name);
                 const classifications = createProgressionClassificationBadges(item);
                 const actions = document.createElement('div');
                 actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
@@ -8393,7 +8518,10 @@
                 const cardName = document.createElement('p');
                 cardName.className = 'min-w-0 flex-1 break-words text-xs font-black text-gray-800';
                 cardName.textContent = item.name;
-                cardNameGroup.append(createProgressionExportCheckbox(item), cardName);
+                cardNameGroup.appendChild(createProgressionExportCheckbox(item));
+                const cardVisualPreview = createProgressionElementVisualPreview(item);
+                if (cardVisualPreview) cardNameGroup.appendChild(cardVisualPreview);
+                cardNameGroup.appendChild(cardName);
                 const orderButtons = document.createElement('div');
                 orderButtons.className = 'flex shrink-0 gap-1';
                 orderButtons.append(
@@ -8432,6 +8560,7 @@
                 cardActions.append(mobileQuality, mobileEdit, mobileRemove);
                 card.append(cardHeader, cardClassifications, statusButtons, cardActions);
                 mobileList.appendChild(card);
+                });
             });
             updateProgressionExportSelectionUI();
         }
@@ -8969,41 +9098,62 @@
             const itemId = String(item.id || '');
             const code = String(item.code || '').trim().toUpperCase();
             const name = String(item.name || '').trim().toLocaleLowerCase('fr');
-            const custom = (Array.isArray(data.customSigles) ? data.customSigles : [])
-                .map((candidate, index) => ({kind: 'custom', index, item: candidate}))
-                .find(entry =>
-                    String(entry.item.progressionElementId || '') === itemId ||
-                    code && String(entry.item.abrev || '').trim().toUpperCase() === code ||
-                    name && String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
-                );
-            if (custom) return custom;
+            const apparatus = normalizeProgressionApparatus(item.apparatus);
+            const supportsApparatus = entry => normalizeProgressionApparatuses(entry.item.apparatuses)
+                .includes(apparatus);
+            const customEntries = (Array.isArray(data.customSigles) ? data.customSigles : [])
+                .map((candidate, index) => ({kind: 'custom', index, item: candidate}));
+            const linkedCustom = customEntries.find(entry =>
+                String(entry.item.progressionElementId || '') === itemId && supportsApparatus(entry)
+            );
+            if (linkedCustom) return linkedCustom;
+
+            const defaultEntries = getResolvedDefaultSigleEntries();
+            const officialEntries = defaultEntries.filter(entry => entry.item.catalogId && supportsApparatus(entry));
             const catalogCode = itemId.startsWith('PROG-FFGYM-')
                 ? itemId.slice('PROG-FFGYM-'.length).toUpperCase()
                 : '';
-            return getResolvedDefaultSigleEntries().find(entry => {
+            const matchesCode = (entry, expectedCode) => {
+                if (!expectedCode) return false;
                 const identity = getDefaultSigleIdentity(entry.item).toUpperCase();
                 const resolvedCode = String(entry.item.abrev || '').trim().toUpperCase();
                 const baseCode = String(entry.baseItem && entry.baseItem.abrev || '').trim().toUpperCase();
-                const resolvedName = String(entry.item.nom || '').trim().toLocaleLowerCase('fr');
-                return catalogCode && [identity, resolvedCode, baseCode].includes(catalogCode) ||
-                    code && [identity, resolvedCode, baseCode].includes(code) ||
-                    name && resolvedName === name;
-            }) || null;
+                return [identity, resolvedCode, baseCode].includes(expectedCode);
+            };
+            const exactCatalog = officialEntries.find(entry => matchesCode(entry, catalogCode));
+            if (exactCatalog) return exactCatalog;
+            const officialByCode = officialEntries.find(entry => matchesCode(entry, code));
+            if (officialByCode) return officialByCode;
+            const customByCode = customEntries.find(entry =>
+                supportsApparatus(entry) && code && String(entry.item.abrev || '').trim().toUpperCase() === code
+            );
+            if (customByCode) return customByCode;
+            const officialByName = officialEntries.find(entry =>
+                name && String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
+            );
+            if (officialByName) return officialByName;
+            const customByName = customEntries.find(entry =>
+                supportsApparatus(entry) && name &&
+                String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
+            );
+            if (customByName) return customByName;
+            return defaultEntries.find(entry =>
+                !entry.item.catalogId && name &&
+                String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
+            ) || null;
         }
 
         function getProgressionEvaluationPdfItems(items = getSelectedProgressionItems()) {
             const apparatusOrder = new Map(PROGRESSION_APPARATUS.map((apparatus, index) => [apparatus.key, index]));
-            return [...(Array.isArray(items) ? items : [])]
-                .sort((left, right) =>
-                    (apparatusOrder.get(normalizeProgressionApparatus(left.apparatus)) ?? 99) -
-                    (apparatusOrder.get(normalizeProgressionApparatus(right.apparatus)) ?? 99) ||
-                    Number(left.catalogIndex || 0) - Number(right.catalogIndex || 0) ||
-                    String(left.name || '').localeCompare(String(right.name || ''), 'fr', {sensitivity: 'base'})
-                )
-                .map(item => {
+            const categoryOrder = new Map(getMovementCategoryDefinitions().map((category, index) => [category.key, index]));
+            return [...(Array.isArray(items) ? items : [])].map(item => {
                     const entry = getMovementEntryForProgressionItem(item);
                     const source = entry && entry.item || {};
                     const apparatus = normalizeProgressionApparatus(item.apparatus);
+                    const categoryDefinition = entry
+                        ? getMovementCategoryDefinition(source.category, source.nom)
+                        : getMovementCategoryDefinitions().find(category => category.key === 'other') ||
+                            getMovementCategoryDefinitions()[getMovementCategoryDefinitions().length - 1];
                     const scoring = entry
                         ? entry.kind === 'default'
                             ? getDefaultSigleScoring(source, apparatus)
@@ -9018,13 +9168,114 @@
                         brochureImage: String(source.brochureImg || ''),
                         apparatus,
                         apparatusLabel: getProgressionApparatusLabel(apparatus),
-                        category: entry
-                            ? getMovementCategoryLabel(source.category, source.nom)
-                            : 'Élément personnalisé',
+                        categoryKey: categoryDefinition.key,
+                        category: categoryDefinition.label,
+                        categoryIcon: categoryDefinition.icon || '',
+                        categoryAccent: categoryDefinition.accent || '#64748b',
                         movementValue: scoring.movementValue,
-                        bonusValue: scoring.bonusValue
+                        bonusValue: scoring.bonusValue,
+                        catalogIndex: Number(item.catalogIndex || 0)
                     };
-                });
+                }).sort((left, right) =>
+                    (apparatusOrder.get(left.apparatus) ?? 99) - (apparatusOrder.get(right.apparatus) ?? 99) ||
+                    (categoryOrder.get(left.categoryKey) ?? 999) - (categoryOrder.get(right.categoryKey) ?? 999) ||
+                    left.catalogIndex - right.catalogIndex ||
+                    left.name.localeCompare(right.name, 'fr', {sensitivity: 'base'})
+                );
+        }
+
+        function groupProgressionEvaluationPdfItems(items) {
+            const groups = [];
+            (Array.isArray(items) ? items : []).forEach(item => {
+                const key = `${item.apparatus || 'unclassified'}::${item.categoryKey || 'other'}`;
+                let group = groups[groups.length - 1];
+                if (!group || group.key !== key) {
+                    group = {
+                        key,
+                        apparatus: item.apparatus,
+                        apparatusLabel: item.apparatusLabel,
+                        categoryKey: item.categoryKey,
+                        category: item.category,
+                        categoryIcon: item.categoryIcon,
+                        categoryAccent: item.categoryAccent,
+                        items: []
+                    };
+                    groups.push(group);
+                }
+                group.items.push(item);
+            });
+            return groups;
+        }
+
+        function buildProgressionEvaluationPdfPages(items) {
+            const columns = 3;
+            const usableHeight = 166;
+            const categoryHeaderHeight = 7;
+            const categoryHeaderGap = 1.5;
+            const cardHeight = 30;
+            const rowGap = 1.5;
+            const pages = [{blocks: [], usedHeight: 0}];
+            let page = pages[0];
+            groupProgressionEvaluationPdfItems(items).forEach(group => {
+                const rows = [];
+                for (let index = 0; index < group.items.length; index += columns)
+                    rows.push(group.items.slice(index, index + columns));
+                let rowIndex = 0;
+                let continued = false;
+                while (rowIndex < rows.length) {
+                    let available = usableHeight - page.usedHeight;
+                    const minimumHeight = categoryHeaderHeight + categoryHeaderGap + cardHeight;
+                    if (page.blocks.length && available < minimumHeight) {
+                        page = {blocks: [], usedHeight: 0};
+                        pages.push(page);
+                        available = usableHeight;
+                    }
+                    const rowsThatFit = Math.max(1, Math.floor(
+                        (available - categoryHeaderHeight - categoryHeaderGap + rowGap) /
+                        (cardHeight + rowGap)
+                    ));
+                    const blockRows = rows.slice(rowIndex, rowIndex + rowsThatFit);
+                    page.blocks.push({
+                        ...group,
+                        continued,
+                        rows: blockRows,
+                        pageItemCount: blockRows.reduce((total, row) => total + row.length, 0)
+                    });
+                    page.usedHeight += categoryHeaderHeight + categoryHeaderGap +
+                        blockRows.length * (cardHeight + rowGap);
+                    rowIndex += blockRows.length;
+                    if (rowIndex < rows.length) {
+                        page = {blocks: [], usedHeight: 0};
+                        pages.push(page);
+                        continued = true;
+                    }
+                }
+            });
+            return pages.filter(currentPage => currentPage.blocks.length > 0);
+        }
+
+        function parsePdfHexColor(value, fallback = [100, 116, 139]) {
+            const match = String(value || '').trim().match(/^#([0-9a-f]{6})$/i);
+            if (!match) return fallback;
+            return [0, 2, 4].map(offset => parseInt(match[1].slice(offset, offset + 2), 16));
+        }
+
+        function drawProgressionEvaluationCategoryHeader(doc, block, x, y, width, height) {
+            const color = parsePdfHexColor(block.categoryAccent);
+            doc.setFillColor(...color);
+            doc.roundedRect(x, y, width, height, 1.2, 1.2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.2);
+            const continuation = block.continued ? ' (suite)' : '';
+            doc.text(`${block.apparatusLabel} — ${block.category}${continuation}`, x + 3, y + 4.7);
+            doc.setFontSize(6);
+            doc.text(
+                `${block.items.length} élément${block.items.length === 1 ? '' : 's'}`,
+                x + width - 3,
+                y + 4.7,
+                {align: 'right'}
+            );
         }
 
         function loadProgressionPdfImage(source, canvasWidth, canvasHeight) {
@@ -9173,19 +9424,18 @@
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const perPage = 15;
             const columns = 3;
             const left = 9;
             const right = 9;
             const top = 34;
-            const bottom = 10;
             const gapX = 2.5;
-            const gapY = 2;
+            const gapY = 1.5;
+            const categoryHeaderHeight = 7;
+            const categoryHeaderGap = 1.5;
+            const cardHeight = 30;
             const cardWidth = (pageWidth - left - right - gapX * (columns - 1)) / columns;
-            const chunks = [];
-            for (let index = 0; index < items.length; index += perPage)
-                chunks.push(items.slice(index, index + perPage));
-            chunks.forEach((chunk, pageIndex) => {
+            const pages = buildProgressionEvaluationPdfPages(items);
+            pages.forEach((page, pageIndex) => {
                 if (pageIndex > 0) doc.addPage('a4', 'landscape');
                 doc.setFillColor(126, 34, 206);
                 doc.rect(0, 0, pageWidth, 22, 'F');
@@ -9197,7 +9447,7 @@
                 doc.setFontSize(9);
                 doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 17);
                 doc.text('Date : ____________________', pageWidth - left, 10, {align: 'right'});
-                doc.text(`Page ${pageIndex + 1} / ${chunks.length}`, pageWidth - left, 17, {align: 'right'});
+                doc.text(`Page ${pageIndex + 1} / ${pages.length}`, pageWidth - left, 17, {align: 'right'});
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
@@ -9206,21 +9456,39 @@
                 doc.setTextColor(107, 114, 128);
                 doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 27, {align: 'right'});
 
-                const rows = Math.max(1, Math.ceil(chunk.length / columns));
-                const availableHeight = pageHeight - top - bottom;
-                const cardHeight = Math.min(38, (availableHeight - gapY * (rows - 1)) / rows);
-                chunk.forEach((item, index) => {
-                    const column = index % columns;
-                    const row = Math.floor(index / columns);
-                    const x = left + column * (cardWidth + gapX);
-                    const y = top + row * (cardHeight + gapY);
-                    drawProgressionEvaluationCard(doc, item, imageMap.get(item.key), x, y, cardWidth, cardHeight);
+                let y = top;
+                page.blocks.forEach(block => {
+                    drawProgressionEvaluationCategoryHeader(
+                        doc,
+                        block,
+                        left,
+                        y,
+                        pageWidth - left - right,
+                        categoryHeaderHeight
+                    );
+                    y += categoryHeaderHeight + categoryHeaderGap;
+                    block.rows.forEach(row => {
+                        row.forEach((item, column) => {
+                            const x = left + column * (cardWidth + gapX);
+                            drawProgressionEvaluationCard(
+                                doc,
+                                item,
+                                imageMap.get(item.key),
+                                x,
+                                y,
+                                cardWidth,
+                                cardHeight
+                            );
+                        });
+                        y += cardHeight + gapY;
+                    });
                 });
                 doc.setTextColor(107, 114, 128);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.5);
                 doc.text('Mâcon Gym Suivi - fiche d’entraînement', left, pageHeight - 4);
-                doc.text(`${chunk.length} élément${chunk.length === 1 ? '' : 's'} sur cette feuille`, pageWidth - left, pageHeight - 4, {align: 'right'});
+                const itemCount = page.blocks.reduce((total, block) => total + block.pageItemCount, 0);
+                doc.text(`${itemCount} élément${itemCount === 1 ? '' : 's'} sur cette feuille`, pageWidth - left, pageHeight - 4, {align: 'right'});
             });
             return doc;
         }
@@ -9263,6 +9531,50 @@
 
         async function exportSelectedMovementPDF() {
             return exportSelectedProgressionEvaluationPDF();
+        }
+
+        function buildGroupedProgressionPdfTableRows(items) {
+            const source = Array.isArray(items) ? items : [];
+            const itemsByKey = new Map(source.map(item => [getProgressionExportKey(item), item]));
+            const metadata = getProgressionEvaluationPdfItems(source);
+            const groupCounts = metadata.reduce((counts, item) => {
+                const key = `${item.apparatus}::${item.categoryKey}`;
+                counts.set(key, (counts.get(key) || 0) + 1);
+                return counts;
+            }, new Map());
+            const rows = [];
+            let previousGroup = '';
+            metadata.forEach(meta => {
+                const groupKey = `${meta.apparatus}::${meta.categoryKey}`;
+                if (groupKey !== previousGroup) {
+                    const color = parsePdfHexColor(meta.categoryAccent);
+                    const count = groupCounts.get(groupKey) || 0;
+                    rows.push([{
+                        content: `${meta.apparatusLabel} — ${meta.category} (${count})`,
+                        colSpan: 7,
+                        styles: {
+                            fillColor: color,
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            halign: 'left',
+                            cellPadding: 1.8
+                        }
+                    }]);
+                    previousGroup = groupKey;
+                }
+                const item = itemsByKey.get(meta.key);
+                if (!item) return;
+                rows.push([
+                    item.name,
+                    meta.apparatusLabel,
+                    getProgressionFamilyQualityText(item),
+                    item.status === 'not_performed' ? 'X' : '',
+                    item.status === 'studied' ? 'X' : '',
+                    item.status === 'in_progress' ? 'X' : '',
+                    item.status === 'acquired' ? 'X' : ''
+                ]);
+            });
+            return rows;
         }
 
         function exportProgressionPDF() {
@@ -9331,15 +9643,7 @@
                 doc.autoTable({
                     startY: classificationWarnings.length ? 126 : 121,
                     head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
-                    body: items.map(item => [
-                        item.name,
-                        getProgressionApparatusLabel(item.apparatus),
-                        getProgressionFamilyQualityText(item),
-                        item.status === 'not_performed' ? 'X' : '',
-                        item.status === 'studied' ? 'X' : '',
-                        item.status === 'in_progress' ? 'X' : '',
-                        item.status === 'acquired' ? 'X' : ''
-                    ]),
+                    body: buildGroupedProgressionPdfTableRows(items),
                     theme: 'grid',
                     styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                     headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
