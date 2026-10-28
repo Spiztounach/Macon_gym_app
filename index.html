@@ -1881,7 +1881,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.32.0';
+        const APP_VERSION = '1.34.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1939,6 +1939,8 @@
         const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
         const MOVEMENT_COLLAPSED_CATEGORIES_KEY = 'gym_movement_collapsed_categories_v1';
         const PROGRESSION_COLLAPSED_CATEGORIES_KEY = 'gym_progression_collapsed_categories_v1';
+        const PDF_PRINT_SAFE_MARGIN_MM = 10;
+        const PDF_PRINT_TABLE_BOTTOM_MARGIN_MM = 16;
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const GOOGLE_PICKER_API_KEY = 'AIzaSyB2GOfvBRHy-LrVzUQMB1B0YuRSTMZproc';
         const GOOGLE_PICKER_APP_ID = '759389909007';
@@ -1947,6 +1949,46 @@
         const DRIVE_MUSIC_TOKEN_EXPIRY_KEY = 'drive_music_access_token_expires_v1';
         const DRIVE_MUSIC_GRANTED_KEY = 'drive_music_scope_granted_v1';
         const MAX_GYM_LICENCE_SIZE_BYTES = 25 * 1024 * 1024;
+
+        function getPdfPrintSafeBounds(doc) {
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            return {
+                pageWidth,
+                pageHeight,
+                left: PDF_PRINT_SAFE_MARGIN_MM,
+                right: pageWidth - PDF_PRINT_SAFE_MARGIN_MM,
+                top: PDF_PRINT_SAFE_MARGIN_MM,
+                bottom: pageHeight - PDF_PRINT_SAFE_MARGIN_MM,
+                width: pageWidth - PDF_PRINT_SAFE_MARGIN_MM * 2,
+                height: pageHeight - PDF_PRINT_SAFE_MARGIN_MM * 2
+            };
+        }
+
+        function getPdfPrintSafeTableMargins(overrides = {}) {
+            return {
+                left: PDF_PRINT_SAFE_MARGIN_MM,
+                right: PDF_PRINT_SAFE_MARGIN_MM,
+                top: PDF_PRINT_SAFE_MARGIN_MM,
+                bottom: PDF_PRINT_TABLE_BOTTOM_MARGIN_MM,
+                ...overrides
+            };
+        }
+
+        function addPdfPrintSafeFooters(doc, label) {
+            const pageCount = doc.getNumberOfPages();
+            for (let page = 1; page <= pageCount; page++) {
+                doc.setPage(page);
+                const bounds = getPdfPrintSafeBounds(doc);
+                doc.setTextColor(107, 114, 128);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                const footerY = bounds.bottom - 2;
+                doc.text(String(label || 'Mâcon Gym Suivi'), bounds.left, footerY);
+                doc.text(`Page ${page} / ${pageCount}`, bounds.right, footerY, {align: 'right'});
+            }
+            return pageCount;
+        }
         const PLANNING_WEEKDAYS = [
             {value: 1, label: 'Lundi'}, {value: 2, label: 'Mardi'},
             {value: 3, label: 'Mercredi'}, {value: 4, label: 'Jeudi'},
@@ -8825,27 +8867,27 @@
             const summary = calculateProgressionSummary(items);
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFillColor(126, 34, 206);
-            doc.rect(0, 0, pageWidth, 24, 'F');
+            doc.rect(0, 0, pageWidth, 29, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(15);
-            doc.text('Progression - éléments sélectionnés', 11, 10);
+            doc.text('Progression - éléments sélectionnés', PDF_PRINT_SAFE_MARGIN_MM, 16);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 11, 18);
-            doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - 11, 18, {align: 'right'});
+            doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), PDF_PRINT_SAFE_MARGIN_MM, 24);
+            doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - PDF_PRINT_SAFE_MARGIN_MM, 24, {align: 'right'});
 
             doc.setTextColor(55, 65, 81);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8);
             doc.text(
                 `Sélection : ${summary.total}  |  Non réalisé : ${summary.not_performed}  |  Étudié : ${summary.studied}  |  En cours : ${summary.in_progress}  |  Acquis : ${summary.acquired}`,
-                11,
-                31
+                PDF_PRINT_SAFE_MARGIN_MM,
+                36
             );
 
             doc.autoTable({
-                startY: 36,
+                startY: 41,
                 head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité']],
                 body: rows,
                 theme: 'grid',
@@ -8872,7 +8914,7 @@
                     2: {cellWidth: 30, fontStyle: 'bold'},
                     3: {cellWidth: 165}
                 },
-                margin: {left: 11, right: 11, top: 12, bottom: 13},
+                margin: getPdfPrintSafeTableMargins({top: 12}),
                 rowPageBreak: 'avoid'
             });
             return doc;
@@ -8898,17 +8940,7 @@
                     doc = createSelectedProgressionPdfDocument(jsPDF, gymnast, items, layout);
                     if (doc.getNumberOfPages() === 1) break;
                 }
-                const pageCount = doc.getNumberOfPages();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                for (let page = 1; page <= pageCount; page++) {
-                    doc.setPage(page);
-                    doc.setTextColor(107, 114, 128);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7.5);
-                    doc.text('Mâcon Gym Suivi - sélection de progression', 11, pageHeight - 5);
-                    doc.text(`Page ${page} / ${pageCount}`, pageWidth - 11, pageHeight - 5, {align: 'right'});
-                }
+                addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - sélection de progression');
                 const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
@@ -9043,9 +9075,9 @@
             const pageHeight = doc.internal.pageSize.getHeight();
             const perPage = 15;
             const columns = 3;
-            const left = 9;
-            const right = 9;
-            const top = 34;
+            const left = PDF_PRINT_SAFE_MARGIN_MM;
+            const right = PDF_PRINT_SAFE_MARGIN_MM;
+            const top = 39;
             const bottom = 10;
             const gapX = 2.5;
             const gapY = 2;
@@ -9056,23 +9088,23 @@
             chunks.forEach((chunk, pageIndex) => {
                 if (pageIndex > 0) doc.addPage('a4', 'landscape');
                 doc.setFillColor(126, 34, 206);
-                doc.rect(0, 0, pageWidth, 22, 'F');
+                doc.rect(0, 0, pageWidth, 29, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(15);
-                doc.text("Fiche d'évaluation technique", left, 9);
+                doc.text("Fiche d'évaluation technique", left, 16);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
-                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 17);
-                doc.text('Date : ____________________', pageWidth - left, 10, {align: 'right'});
-                doc.text(`Page ${pageIndex + 1} / ${chunks.length}`, pageWidth - left, 17, {align: 'right'});
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 24);
+                doc.text('Date : ____________________', pageWidth - left, 16, {align: 'right'});
+                doc.text(`Page ${pageIndex + 1} / ${chunks.length}`, pageWidth - left, 24, {align: 'right'});
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
-                doc.text('Cochez un statut pour chaque élément et complétez la ligne d’observation.', left, 27);
+                doc.text('Cochez un statut pour chaque élément et complétez la ligne d’observation.', left, 33);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(107, 114, 128);
-                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 27, {align: 'right'});
+                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 33, {align: 'right'});
 
                 const rows = Math.max(1, Math.ceil(chunk.length / columns));
                 const availableHeight = pageHeight - top - bottom;
@@ -9084,11 +9116,6 @@
                     const y = top + row * (cardHeight + gapY);
                     drawMovementEvaluationCard(doc, item, imageMap.get(item.key), x, y, cardWidth, cardHeight);
                 });
-                doc.setTextColor(107, 114, 128);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(6.5);
-                doc.text('Mâcon Gym Suivi - fiche d’entraînement', left, pageHeight - 4);
-                doc.text(`${chunk.length} élément${chunk.length === 1 ? '' : 's'} sur cette feuille`, pageWidth - left, pageHeight - 4, {align: 'right'});
             });
             return doc;
         }
@@ -9209,11 +9236,11 @@
 
         function buildProgressionEvaluationPdfPages(items) {
             const columns = 3;
-            const usableHeight = 166;
-            const categoryHeaderHeight = 7;
-            const categoryHeaderGap = 1.5;
-            const cardHeight = 30;
-            const rowGap = 1.5;
+            const usableHeight = 161;
+            const categoryHeaderHeight = 6.5;
+            const categoryHeaderGap = 1.25;
+            const cardHeight = 29;
+            const rowGap = 1.25;
             const pages = [{blocks: [], usedHeight: 0}];
             let page = pages[0];
             groupProgressionEvaluationPdfItems(items).forEach(group => {
@@ -9423,38 +9450,37 @@
         function createSelectedProgressionEvaluationPdfDocument(jsPDF, gymnast, items, imageMap = new Map()) {
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
             const columns = 3;
-            const left = 9;
-            const right = 9;
-            const top = 34;
+            const left = PDF_PRINT_SAFE_MARGIN_MM;
+            const right = PDF_PRINT_SAFE_MARGIN_MM;
+            const top = 39;
             const gapX = 2.5;
-            const gapY = 1.5;
-            const categoryHeaderHeight = 7;
-            const categoryHeaderGap = 1.5;
-            const cardHeight = 30;
+            const gapY = 1.25;
+            const categoryHeaderHeight = 6.5;
+            const categoryHeaderGap = 1.25;
+            const cardHeight = 29;
             const cardWidth = (pageWidth - left - right - gapX * (columns - 1)) / columns;
             const pages = buildProgressionEvaluationPdfPages(items);
             pages.forEach((page, pageIndex) => {
                 if (pageIndex > 0) doc.addPage('a4', 'landscape');
                 doc.setFillColor(126, 34, 206);
-                doc.rect(0, 0, pageWidth, 22, 'F');
+                doc.rect(0, 0, pageWidth, 29, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(15);
-                doc.text("Fiche d'évaluation - progression", left, 9);
+                doc.text("Fiche d'évaluation - progression", left, 16);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
-                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 17);
-                doc.text('Date : ____________________', pageWidth - left, 10, {align: 'right'});
-                doc.text(`Page ${pageIndex + 1} / ${pages.length}`, pageWidth - left, 17, {align: 'right'});
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 24);
+                doc.text('Date : ____________________', pageWidth - left, 16, {align: 'right'});
+                doc.text(`Page ${pageIndex + 1} / ${pages.length}`, pageWidth - left, 24, {align: 'right'});
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(6.5);
-                doc.text('Cochez un statut pour chaque élément et complétez la ligne d’observation.', left, 27);
+                doc.text('Cochez un statut pour chaque élément et complétez la ligne d’observation.', left, 33);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(107, 114, 128);
-                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 27, {align: 'right'});
+                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 33, {align: 'right'});
 
                 let y = top;
                 page.blocks.forEach(block => {
@@ -9483,12 +9509,6 @@
                         y += cardHeight + gapY;
                     });
                 });
-                doc.setTextColor(107, 114, 128);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(6.5);
-                doc.text('Mâcon Gym Suivi - fiche d’entraînement', left, pageHeight - 4);
-                const itemCount = page.blocks.reduce((total, block) => total + block.pageItemCount, 0);
-                doc.text(`${itemCount} élément${itemCount === 1 ? '' : 's'} sur cette feuille`, pageWidth - left, pageHeight - 4, {align: 'right'});
             });
             return doc;
         }
@@ -9595,15 +9615,15 @@
                 if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
                 const summary = calculateProgressionSummary(items);
                 doc.setFillColor(126, 34, 206);
-                doc.rect(0, 0, 210, 29, 'F');
+                doc.rect(0, 0, 210, 30, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(17);
-                doc.text('Tableau de progression', 14, 12);
+                doc.text('Tableau de progression', 14, 17);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
-                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 20);
-                doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 20, {align: 'right'});
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 25);
+                doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 25, {align: 'right'});
 
                 doc.setTextColor(55, 65, 81);
                 doc.setFont('helvetica', 'bold');
@@ -9656,19 +9676,12 @@
                         5: {cellWidth: 22, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
                         6: {cellWidth: 22, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                     },
-                    margin: {left: 11, right: 11, bottom: 14},
+                    margin: getPdfPrintSafeTableMargins(),
+                    showHead: 'everyPage',
                     rowPageBreak: 'avoid'
                 });
 
-                const pageCount = doc.getNumberOfPages();
-                for (let page = 1; page <= pageCount; page++) {
-                    doc.setPage(page);
-                    doc.setTextColor(107, 114, 128);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(8);
-                    doc.text('Mâcon Gym Suivi — progression des éléments', 11, 288);
-                    doc.text(`Page ${page} / ${pageCount}`, 199, 288, {align: 'right'});
-                }
+                addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - progression des éléments');
                 const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
@@ -10694,6 +10707,32 @@
             if (entry) insertSigleToken(getDefaultSigleToken(entry.item));
         }
 
+        function renderMovementElementVisuals(item, variant = 'palette') {
+            const source = item && typeof item === 'object' ? item : {};
+            const name = escapeHtml(source.nom || source.abrev || 'Élément');
+            const manager = variant === 'manager';
+            const symbolSize = manager ? 'h-14 w-14' : 'h-12 w-12';
+            const symbol = source.img
+                ? `<img src="${escapeHtml(source.img)}" alt="Sigle de ${name}" loading="lazy" class="${symbolSize} rounded border border-gray-100 bg-white object-contain">`
+                : `<span role="img" aria-label="Sigle de ${name}" class="flex ${symbolSize} items-center justify-center rounded border border-gray-100 bg-white text-2xl">${escapeHtml(source.symbole || '🖼️')}</span>`;
+            if (!source.brochureImg)
+                return `<div data-movement-element-visuals="single" class="flex shrink-0 justify-center">${symbol}</div>`;
+            const brochureClass = manager ? 'h-14 w-24' : 'h-12 min-w-0 w-full';
+            const wrapperClass = manager
+                ? 'grid w-40 shrink-0 grid-cols-[3.5rem_minmax(0,1fr)] gap-1'
+                : 'grid w-full grid-cols-[3rem_minmax(0,1fr)] gap-1';
+            return `<div data-movement-element-visuals="double" class="${wrapperClass}">
+                <figure class="flex min-w-0 flex-col items-center gap-0.5">
+                    <figcaption class="text-[7px] font-bold uppercase tracking-wide text-gray-400">Sigle</figcaption>
+                    ${symbol}
+                </figure>
+                <figure class="flex min-w-0 flex-col items-center gap-0.5">
+                    <figcaption class="text-[7px] font-bold uppercase tracking-wide text-gray-400">Brochure</figcaption>
+                    <img src="${escapeHtml(source.brochureImg)}" alt="Illustration de ${name} dans la brochure" loading="lazy" class="${brochureClass} rounded border border-gray-100 bg-white object-contain">
+                </figure>
+            </div>`;
+        }
+
         function renderMovementPaletteEntry(entry) {
             const item = entry.item;
             const categoryLabel = getMovementCategoryLabel(item.category, item.nom);
@@ -10701,12 +10740,10 @@
                 ? `insertCustomSigleToken(${entry.index})`
                 : `insertDefaultSigleToken(${entry.index})`;
             const scoring = entry.kind === 'custom' ? getCustomSigleScoring(item) : getDefaultSigleScoring(item);
-            const image = item.img
-                ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-12 w-12 object-contain">`
-                : `<span class="flex h-12 w-12 items-center justify-center text-2xl">${escapeHtml(item.symbole || '🖼️')}</span>`;
-            return `<article class="relative min-h-32 rounded-xl border border-gray-200 bg-white p-1.5 text-center shadow-sm transition hover:border-pink-300">
-                <button type="button" onclick="${insertAction}" title="Ajouter ${escapeHtml(item.nom)} à la composition" class="flex min-h-28 w-full flex-col items-center justify-center rounded-lg px-1 hover:bg-pink-50">
-                    ${image}
+            const visuals = renderMovementElementVisuals(item, 'palette');
+            return `<article class="relative min-h-40 rounded-xl border border-gray-200 bg-white p-1.5 text-center shadow-sm transition hover:border-pink-300">
+                <button type="button" onclick="${insertAction}" title="Ajouter ${escapeHtml(item.nom)} à la composition" class="flex min-h-36 w-full flex-col items-center justify-center rounded-lg px-1 hover:bg-pink-50">
+                    ${visuals}
                     <span class="mt-1 block min-h-7 w-full text-[9px] font-black leading-tight text-gray-800">${escapeHtml(item.nom)}</span>
                     <span class="block w-full truncate text-[7px] text-gray-400">${escapeHtml(item.abrev)} · ${escapeHtml(categoryLabel)}</span>
                     <span class="block w-full truncate text-[7px] font-bold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
@@ -11133,9 +11170,7 @@
                 const scoring = kind === 'default'
                     ? getDefaultSigleScoring(item)
                     : getCustomSigleScoring(item);
-                const visual = item.img
-                    ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-14 w-14 shrink-0 rounded border border-gray-100 bg-white object-contain">`
-                    : `<span class="flex h-14 w-14 shrink-0 items-center justify-center rounded border border-gray-100 bg-white text-2xl">${escapeHtml(item.symbole || '🖼️')}</span>`;
+                const visual = renderMovementElementVisuals(item, 'manager');
                 const editAction = kind === 'default' ? `editDefaultSigle(${index})` : `editCustomSigle(${index})`;
                 const deleteAction = kind === 'default' ? `deleteDefaultSigle(${index})` : `deleteCustomSigle(${index})`;
                 return `<div class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
@@ -12906,13 +12941,13 @@
                 if (!firstPage) {
                     doc.addPage('a4', 'landscape');
                     doc.setFillColor(...color);
-                    doc.rect(0, 0, 297, 17, 'F');
+                    doc.rect(0, 0, 297, 22, 'F');
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(13);
-                    doc.text('Graphique des moyennes par agrès - suite', 14, 11);
+                    doc.text('Graphique des moyennes par agrès - suite', 14, 16);
                 }
-                const chartTop = firstPage ? 66 : 41;
+                const chartTop = firstPage ? 70 : 41;
                 const titleY = chartTop - 16;
                 const legendY = chartTop - 10;
                 const chartBottom = chartTop + pageRows.length * 8.5;
@@ -13006,39 +13041,41 @@
                 const levelName = currentLevel.name;
                 const color = currentLevelId === 'NIV-A' ? [236, 72, 153] : [14, 165, 233];
                 doc.setFillColor(...color);
-                doc.rect(0, 0, 297, 26, 'F');
+                doc.rect(0, 0, 297, 30, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
-                doc.text(`Statistiques globales - ${levelName}`, 14, 11);
+                doc.text(`Statistiques globales - ${levelName}`, 14, 17);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
-                doc.text(`Toutes les gymnastes - Export du ${new Date().toLocaleDateString('fr-FR')}`, 14, 19);
+                doc.text(`Toutes les gymnastes - Export du ${new Date().toLocaleDateString('fr-FR')}`, 14, 25);
 
                 doc.setTextColor(55, 65, 81);
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
-                doc.text(`Gymnastes : ${stats.gymnastCount}`, 14, 36);
-                doc.text(`Évaluations : ${stats.evaluationCount}`, 66, 36);
+                doc.text(`Gymnastes : ${stats.gymnastCount}`, 14, 39);
+                doc.text(`Évaluations : ${stats.evaluationCount}`, 66, 39);
                 doc.text(
                     `Moyennes - Saut : ${formatLevelStat(stats.categoryApparatus.saut.average)}  |  Barres : ${formatLevelStat(stats.categoryApparatus.barres.average)}  |  Poutre : ${formatLevelStat(stats.categoryApparatus.poutre.average)}  |  Sol : ${formatLevelStat(stats.categoryApparatus.sol.average)}`,
                     116,
-                    36
+                    39
                 );
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
-                doc.text('Les moyennes utilisent uniquement les notes finales réellement renseignées.', 14, 43);
+                doc.text('Les moyennes utilisent uniquement les notes finales réellement renseignées.', 14, 46);
 
                 drawLevelPerformanceChart(doc, stats.rows, color);
 
                 doc.addPage('a4', 'landscape');
-                doc.setTextColor(55, 65, 81);
+                doc.setFillColor(...color);
+                doc.rect(0, 0, 297, 22, 'F');
+                doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(12);
-                doc.text(`Détail statistique - ${levelName} - ordre alphabétique`, 10, 11);
+                doc.text(`Détail statistique - ${levelName} - ordre alphabétique`, 14, 16);
 
                 doc.autoTable({
-                    startY: 16,
+                    startY: 28,
                     head: [[
                         'Gymnaste', 'Catégorie âge', 'Éval.',
                         'Saut\nMoy. / Max', 'Barres\nMoy. / Max',
@@ -13081,19 +13118,12 @@
                         2: {cellWidth: 13},
                         7: {fontStyle: 'bold'}
                     },
-                    margin: {left: 10, right: 10, bottom: 14},
+                    margin: getPdfPrintSafeTableMargins(),
+                    showHead: 'everyPage',
                     rowPageBreak: 'avoid'
                 });
 
-                const pageCount = doc.getNumberOfPages();
-                for (let page = 1; page <= pageCount; page++) {
-                    doc.setPage(page);
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(7.5);
-                    doc.setTextColor(107, 114, 128);
-                    doc.text('Mâcon Gym Suivi - statistiques de performance globale', 10, 203);
-                    doc.text(`Page ${page} / ${pageCount}`, 287, 203, {align: 'right'});
-                }
+                addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - statistiques de performance globale');
                 const safeLevel = levelName
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
@@ -13177,7 +13207,7 @@
             let chartImgHtml = '';
             if (typeof myChart !== 'undefined' && myChart) {
                 const chartBase64 = myChart.toBase64Image();
-                chartImgHtml = `<div style="text-align:center; margin:20px 0;"><img src="${chartBase64}" style="max-width:100%; height:auto; border:1px solid #e5e7eb; padding:10px; border-radius:8px;"/></div>`;
+                chartImgHtml = `<div class="print-safe-block" style="text-align:center; margin:20px 0;"><img src="${chartBase64}" style="max-width:100%; height:auto; border:1px solid #e5e7eb; padding:10px; border-radius:8px;"/></div>`;
             }
 
             // Génération de l'historique des notes
@@ -13202,7 +13232,7 @@
                     : '-';
 
                 gScores.forEach(s => {
-                    scoresHtml += `<tr style="border-bottom:1px solid #e5e7eb; text-align:center;">` +
+                    scoresHtml += `<tr style="border-bottom:1px solid #e5e7eb; text-align:center; page-break-inside:avoid; break-inside:avoid;">` +
                             `<td style="border:1px solid #e5e7eb; padding:8px; text-align:left; font-weight:bold;">${s.date} - ${s.type}</td>` +
                             `<td style="border:1px solid #e5e7eb; padding:8px;"><span style="font-weight:bold; color:#ef4444;">${fmt(
                         s.saut
@@ -13223,12 +13253,20 @@
             const progressionHtml = buildGymnastProgressionExportHtml(currentGymId);
 
             const element = document.createElement('div');
-            element.style.padding = '30px';
+            element.style.padding = '0';
             element.style.fontFamily = '"Segoe UI", system-ui, sans-serif';
             element.style.color = '#374151';
+            element.style.boxSizing = 'border-box';
 
             element.innerHTML = `
-                <div style="background-color:${headerColor}; color:white; padding:20px; border-radius:12px; margin-bottom:20px;">
+                <style>
+                    table { break-inside:auto; page-break-inside:auto; }
+                    thead { display:table-header-group; }
+                    tfoot { display:table-footer-group; }
+                    tr, img, svg, .print-safe-block { break-inside:avoid; page-break-inside:avoid; }
+                    h1, h2, h3 { break-after:avoid; page-break-after:avoid; }
+                </style>
+                <div class="print-safe-block" style="background-color:${headerColor}; color:white; padding:20px; border-radius:12px; margin-bottom:20px;">
                     <h1 style="margin:0; font-size:24px; font-weight:bold;">${g.prenom} ${g.nom}</h1>
                     <p style="margin:5px 0 0 0; opacity:0.9; font-size:14px;">${typeof calculateCategory === 'function'
                 ? calculateCategory(g.ddn)
@@ -13242,7 +13280,7 @@
                     : 'Non renseignée'}</p>
                     <p><strong>Téléphone Responsable :</strong> ${g.tel || 'Non renseigné'}</p>
                     <p><strong>E-mail :</strong> ${g.email || 'Non renseigné'}</p>
-                    <div style="background-color:#f9fafb; border:1px solid #e5e7eb; padding:12px; border-radius:8px; margin-top:10px;">
+                    <div class="print-safe-block" style="background-color:#f9fafb; border:1px solid #e5e7eb; padding:12px; border-radius:8px; margin-top:10px;">
                         <strong style="font-size:10px; text-transform:uppercase; color:#6b7280; display:block; margin-bottom:4px;">Objectifs / Remarques :</strong>
                         <span style="font-style:italic;">${g.notes || 'Aucun objectif spécifié.'}</span>
                     </div>
@@ -13258,7 +13296,7 @@
             `;
 
             const opt = {
-                margin: 12,
+                margin: [12, 12, 12, 12],
                 filename: `Fiche_${g.prenom}_${g.nom}.pdf`,
                 image: {
                     type: 'jpeg',
@@ -13267,6 +13305,10 @@
                 html2canvas: {
                     scale: 2,
                     useCORS: true
+                },
+                pagebreak: {
+                    mode: ['css', 'legacy'],
+                    avoid: ['tr', 'thead', 'h2', 'h3', 'img', 'svg', '.print-safe-block']
                 },
                 jsPDF: {
                     unit: 'mm',
@@ -13315,14 +13357,14 @@
                     throw new Error('Le module de tableau PDF est indisponible.');
 
                 doc.setFillColor(124, 58, 237);
-                doc.rect(0, 0, 297, 24, 'F');
+                doc.rect(0, 0, 297, 30, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(18);
                 doc.setFont('helvetica', 'bold');
-                doc.text(`Match - ${team.name}`, 14, 11);
+                doc.text(`Match - ${team.name}`, 14, 17);
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text('Meilleures notes finales, Top 3 équipe et ordres de passage', 14, 18);
+                doc.text('Meilleures notes finales, Top 3 équipe et ordres de passage', 14, 25);
 
                 const top3Values = {};
                 MATCH_APPARATUS.forEach(apparatus => {
@@ -13335,7 +13377,7 @@
                 const matchTotal = MATCH_APPARATUS.reduce((sum, apparatus) => sum + top3Values[apparatus.key], 0);
 
                 doc.autoTable({
-                    startY: 30,
+                    startY: 36,
                     head: [['#', 'Gymnaste', 'Saut', 'Barres', 'Poutre', 'Sol', 'Total 4 agrès']],
                     body: sortedRows.map((row, index) => [
                         String(index + 1),
@@ -13359,7 +13401,10 @@
                     styles: {fontSize: 9, cellPadding: 2.5, halign: 'center', valign: 'middle'},
                     headStyles: {fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold'},
                     footStyles: {fillColor: [237, 233, 254], textColor: [91, 33, 182], fontStyle: 'bold'},
-                    columnStyles: {1: {halign: 'left', cellWidth: 55}}
+                    columnStyles: {1: {halign: 'left', cellWidth: 55}},
+                    margin: getPdfPrintSafeTableMargins({top: 36}),
+                    showHead: 'everyPage',
+                    rowPageBreak: 'avoid'
                 });
 
                 let y = doc.lastAutoTable.finalY + 10;
@@ -13381,7 +13426,8 @@
                         .filter(Boolean)
                         .join('   |   ');
                     const lines = doc.splitTextToSize(`${apparatus.label} : ${orderedNames || 'Aucun passage'}`, 268);
-                    if (y + lines.length * 5 > 195) {
+                    const printBounds = getPdfPrintSafeBounds(doc);
+                    if (y + lines.length * 5 > printBounds.bottom - 5) {
                         doc.addPage('a4', 'landscape');
                         y = 18;
                     }
@@ -13393,6 +13439,8 @@
                     doc.text(detailLines, 42, y);
                     y += Math.max(1, detailLines.length) * 5 + 3;
                 });
+
+                addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - match compétition');
 
                 const safeName = team.name
                     .normalize('NFD')
@@ -13444,21 +13492,21 @@
                     throw new Error('Le module de tableau PDF est indisponible.');
 
                 doc.setFillColor(124, 58, 237);
-                doc.rect(0, 0, 297, 25, 'F');
+                doc.rect(0, 0, 297, 30, 'F');
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(17);
-                doc.text("Composition d'équipe — Feuille de match", 12, 11);
+                doc.text("Composition d'équipe — Feuille de match", 14, 17);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
-                doc.text(team.name, 12, 19);
+                doc.text(team.name, 14, 25);
 
                 doc.setTextColor(55, 65, 81);
                 doc.setFontSize(9);
-                doc.text('Compétition : ______________________________', 12, 33);
-                doc.text('Date : __________________', 112, 33);
-                doc.text('Lieu : ______________________________', 176, 33);
-                doc.text('Entraîneur : __________________________', 12, 41);
+                doc.text('Compétition : ______________________________', 14, 38);
+                doc.text('Date : __________________', 112, 38);
+                doc.text('Lieu : ______________________________', 176, 38);
+                doc.text('Entraîneur : __________________________', 14, 46);
 
                 const passageRankByApparatus = Object.fromEntries(
                     MATCH_APPARATUS.map(apparatus => [
@@ -13494,7 +13542,7 @@
                 });
 
                 doc.autoTable({
-                    startY: 48,
+                    startY: 53,
                     head: [groupedHeader, detailHeader],
                     body,
                     theme: 'grid',
@@ -13515,14 +13563,12 @@
                         minCellHeight: 7
                     },
                     columnStyles,
-                    margin: {left: 14, right: 14, bottom: 12},
+                    margin: getPdfPrintSafeTableMargins({left: 14, right: 14, top: 53}),
+                    showHead: 'everyPage',
                     rowPageBreak: 'avoid'
                 });
 
-                doc.setFontSize(7.5);
-                doc.setTextColor(107, 114, 128);
-                doc.text('D : note de départ • Fautes : pénalités • Finale : note finale', 14, 202);
-                doc.text('Mâcon Gym Suivi — feuille unique', 283, 202, {align: 'right'});
+                addPdfPrintSafeFooters(doc, 'D : note de départ - Fautes : pénalités - Finale : note finale');
 
                 const safeName = team.name
                     .normalize('NFD')
