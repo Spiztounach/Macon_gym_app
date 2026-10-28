@@ -902,7 +902,7 @@
                                 </div>
                                 <div class="flex gap-2">
                                     <button id="btn-open-progression-add" type="button" onclick="openProgressionAddPanel()" class="whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-700">＋ Nouvel élément</button>
-                                    <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 Exporter PDF</button>
+                                    <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 PDF complet</button>
                                 </div>
                             </div>
                             <div class="rounded-lg border border-purple-200 bg-white px-3 py-2 text-[10px] text-purple-800">
@@ -944,6 +944,17 @@
                             <p><strong class="text-amber-700">En cours :</strong> réalisé avec une petite erreur technique, rythmique ou d’amplitude.</p>
                             <p><strong class="text-blue-700">Étudié :</strong> réalisé globalement ou partiellement.</p>
                             <p><strong class="text-red-700">Non réalisé :</strong> élément non effectué.</p>
+                        </div>
+                        <div class="flex flex-col gap-2 rounded-xl border border-purple-200 bg-purple-50 p-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="text-[10px] text-purple-800">
+                                <strong id="progression-export-selection-count">0 élément sélectionné</strong>
+                                <span class="block text-[9px] text-purple-600">La sélection reste active lorsque vous changez d’agrès.</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1.5 sm:flex">
+                                <button type="button" onclick="selectAllVisibleProgressionForExport()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700">Tout l’agrès</button>
+                                <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
+                                <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">PDF sélection</button>
+                            </div>
                         </div>
                         <div id="progression-apparatus-tabs" class="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 sm:grid-cols-4" role="tablist" aria-label="Agrès du tableau de progression"></div>
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
@@ -1903,7 +1914,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.28.0';
+        const APP_VERSION = '1.29.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -4804,6 +4815,7 @@
         let progressionRadarResizeFrame = null;
         let progressionRadarResizeObserver = null;
         let currentProgressionApparatusTab = 'sol';
+        const progressionExportSelections = new Map();
         let currentMvtAgres = "Saut";
         let currentCompetitionTeamId = null;
         let currentCompetitionTab = 'match';
@@ -8181,6 +8193,77 @@
             return definitions;
         }
 
+        function getProgressionExportSelection(gymId = currentGymId) {
+            const key = String(gymId || '');
+            if (!key) return new Set();
+            if (!progressionExportSelections.has(key)) progressionExportSelections.set(key, new Set());
+            return progressionExportSelections.get(key);
+        }
+
+        function getProgressionExportKey(item) {
+            if (!item) return '';
+            return String(item.assessmentId || `${item.id || ''}::${normalizeProgressionApparatus(item.apparatus)}`);
+        }
+
+        function getSelectedProgressionItems(gymId = currentGymId) {
+            const selection = getProgressionExportSelection(gymId);
+            const items = getGymnastProgression(gymId);
+            const validKeys = new Set(items.map(getProgressionExportKey));
+            [...selection].forEach(key => {
+                if (!validKeys.has(key)) selection.delete(key);
+            });
+            return items.filter(item => selection.has(getProgressionExportKey(item)));
+        }
+
+        function updateProgressionExportSelectionUI() {
+            const count = getSelectedProgressionItems().length;
+            const label = document.getElementById('progression-export-selection-count');
+            const button = document.getElementById('btn-export-selected-progression');
+            if (label) label.textContent = `${count} élément${count === 1 ? '' : 's'} sélectionné${count === 1 ? '' : 's'}`;
+            if (button) button.disabled = count === 0;
+            return count;
+        }
+
+        function toggleProgressionExportSelection(item, selected) {
+            const key = getProgressionExportKey(item);
+            if (!key || !currentGymId) return false;
+            const selection = getProgressionExportSelection();
+            if (selected) selection.add(key);
+            else selection.delete(key);
+            document.querySelectorAll('[data-progression-export-key]').forEach(checkbox => {
+                if (checkbox.dataset.progressionExportKey === key) checkbox.checked = selected;
+            });
+            updateProgressionExportSelectionUI();
+            return selection.has(key);
+        }
+
+        function selectAllVisibleProgressionForExport() {
+            const selection = getProgressionExportSelection();
+            getGymnastProgression().filter(item =>
+                normalizeProgressionApparatus(item.apparatus) === currentProgressionApparatusTab
+            ).forEach(item => selection.add(getProgressionExportKey(item)));
+            renderProgressionTable();
+            return selection.size;
+        }
+
+        function clearProgressionExportSelection() {
+            getProgressionExportSelection().clear();
+            renderProgressionTable();
+            return 0;
+        }
+
+        function createProgressionExportCheckbox(item) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            const key = getProgressionExportKey(item);
+            checkbox.dataset.progressionExportKey = key;
+            checkbox.checked = getProgressionExportSelection().has(key);
+            checkbox.className = 'h-4 w-4 shrink-0 cursor-pointer accent-purple-700';
+            checkbox.setAttribute('aria-label', `Sélectionner ${item.name} en ${getProgressionApparatusLabel(item.apparatus)} pour le PDF`);
+            checkbox.onchange = () => toggleProgressionExportSelection(item, checkbox.checked);
+            return checkbox;
+        }
+
         function renderProgressionTable() {
             const body = document.getElementById('progression-table-body');
             const mobileList = document.getElementById('progression-mobile-list');
@@ -8203,9 +8286,13 @@
                 row.className = 'bg-white hover:bg-gray-50';
                 const nameCell = document.createElement('td');
                 nameCell.className = 'border-r border-b border-gray-200 p-2.5';
+                const nameLine = document.createElement('div');
+                nameLine.className = 'flex items-start gap-2';
+                const exportCheckbox = createProgressionExportCheckbox(item);
                 const name = document.createElement('p');
-                name.className = 'font-bold text-gray-800 break-words';
+                name.className = 'min-w-0 flex-1 font-bold text-gray-800 break-words';
                 name.textContent = item.name;
+                nameLine.append(exportCheckbox, name);
                 const classifications = createProgressionClassificationBadges(item);
                 const actions = document.createElement('div');
                 actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
@@ -8227,7 +8314,7 @@
                 remove.textContent = 'Supprimer';
                 remove.onclick = () => deleteProgressionItem(item.id);
                 actions.append(up, down, quality, edit, remove);
-                nameCell.append(name, classifications, actions);
+                nameCell.append(nameLine, classifications, actions);
                 row.append(
                     nameCell,
                     createProgressionStatusCell(item, 'not_performed', 'accent-red-600'),
@@ -8241,16 +8328,20 @@
                 card.className = 'rounded-xl border border-gray-200 bg-white p-3 shadow-sm';
                 const cardHeader = document.createElement('div');
                 cardHeader.className = 'flex items-start justify-between gap-2';
+                const cardNameGroup = document.createElement('div');
+                cardNameGroup.className = 'flex min-w-0 flex-1 items-start gap-2';
+                const mobileExportCheckbox = createProgressionExportCheckbox(item);
                 const cardName = document.createElement('p');
                 cardName.className = 'min-w-0 flex-1 break-words text-xs font-black text-gray-800';
                 cardName.textContent = item.name;
+                cardNameGroup.append(mobileExportCheckbox, cardName);
                 const orderButtons = document.createElement('div');
                 orderButtons.className = 'flex shrink-0 gap-1';
                 orderButtons.append(
                     createProgressionMoveButton(item, item.catalogIndex, -1, catalogTotal),
                     createProgressionMoveButton(item, item.catalogIndex, 1, catalogTotal)
                 );
-                cardHeader.append(cardName, orderButtons);
+                cardHeader.append(cardNameGroup, orderButtons);
                 const cardClassifications = createProgressionClassificationBadges(item);
 
                 const statusButtons = document.createElement('div');
@@ -8283,6 +8374,7 @@
                 card.append(cardHeader, cardClassifications, statusButtons, cardActions);
                 mobileList.appendChild(card);
             });
+            updateProgressionExportSelectionUI();
         }
 
         function renderProgressionStatusList(containerId, items, emptyText) {
@@ -8510,6 +8602,135 @@
             );
             renderProgressionRadarChart(items);
             return summary;
+        }
+
+        function buildSelectedProgressionPdfRows(items) {
+            const apparatusOrder = new Map(PROGRESSION_APPARATUS.map((apparatus, index) => [apparatus.key, index]));
+            return [...(Array.isArray(items) ? items : [])]
+                .sort((left, right) =>
+                    (apparatusOrder.get(normalizeProgressionApparatus(left.apparatus)) ?? 99) -
+                    (apparatusOrder.get(normalizeProgressionApparatus(right.apparatus)) ?? 99) ||
+                    Number(left.catalogIndex || 0) - Number(right.catalogIndex || 0) ||
+                    String(left.name || '').localeCompare(String(right.name || ''), 'fr', {sensitivity: 'base'})
+                )
+                .map(item => [
+                    item.name,
+                    getProgressionApparatusLabel(item.apparatus),
+                    getProgressionStatusLabel(item.status),
+                    getProgressionFamilyQualityText(item)
+                ]);
+        }
+
+        function getSelectedProgressionPdfConfigurations() {
+            return [
+                {fontSize: 8, cellPadding: 1.8},
+                {fontSize: 7.1, cellPadding: 1.3},
+                {fontSize: 6.3, cellPadding: 0.95},
+                {fontSize: 5.5, cellPadding: 0.65}
+            ];
+        }
+
+        function createSelectedProgressionPdfDocument(jsPDF, gymnast, items, layout) {
+            const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+            if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
+            const rows = buildSelectedProgressionPdfRows(items);
+            const summary = calculateProgressionSummary(items);
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.setFillColor(126, 34, 206);
+            doc.rect(0, 0, pageWidth, 24, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(15);
+            doc.text('Progression - éléments sélectionnés', 11, 10);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 11, 18);
+            doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - 11, 18, {align: 'right'});
+
+            doc.setTextColor(55, 65, 81);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.text(
+                `Sélection : ${summary.total}  |  Non réalisé : ${summary.not_performed}  |  Étudié : ${summary.studied}  |  En cours : ${summary.in_progress}  |  Acquis : ${summary.acquired}`,
+                11,
+                31
+            );
+
+            doc.autoTable({
+                startY: 36,
+                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité']],
+                body: rows,
+                theme: 'grid',
+                showHead: 'everyPage',
+                styles: {
+                    fontSize: layout.fontSize,
+                    cellPadding: layout.cellPadding,
+                    valign: 'middle',
+                    overflow: 'linebreak',
+                    lineColor: [209, 213, 219],
+                    lineWidth: 0.18
+                },
+                headStyles: {
+                    fillColor: [126, 34, 206],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'left',
+                    fontSize: Math.max(layout.fontSize, 6.5)
+                },
+                alternateRowStyles: {fillColor: [250, 250, 252]},
+                columnStyles: {
+                    0: {cellWidth: 56, fontStyle: 'bold'},
+                    1: {cellWidth: 24},
+                    2: {cellWidth: 30, fontStyle: 'bold'},
+                    3: {cellWidth: 165}
+                },
+                margin: {left: 11, right: 11, top: 12, bottom: 13},
+                rowPageBreak: 'avoid'
+            });
+            return doc;
+        }
+
+        function exportSelectedProgressionPDF() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
+                return;
+            }
+            const gymnast = data.gymnastes.find(item => item.id === currentGymId);
+            if (!gymnast) return;
+            const items = getSelectedProgressionItems();
+            if (items.length === 0) {
+                alert("⚠️ Cochez au moins un élément dans le tableau avant de créer le PDF.");
+                return;
+            }
+            try {
+                const {jsPDF} = window.jspdf;
+                const layouts = getSelectedProgressionPdfConfigurations();
+                let doc = null;
+                for (const layout of layouts) {
+                    doc = createSelectedProgressionPdfDocument(jsPDF, gymnast, items, layout);
+                    if (doc.getNumberOfPages() === 1) break;
+                }
+                const pageCount = doc.getNumberOfPages();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                for (let page = 1; page <= pageCount; page++) {
+                    doc.setPage(page);
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.5);
+                    doc.text('Mâcon Gym Suivi - sélection de progression', 11, pageHeight - 5);
+                    doc.text(`Page ${page} / ${pageCount}`, pageWidth - 11, pageHeight - 5, {align: 'right'});
+                }
+                const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '') || 'Gymnaste';
+                doc.save(`Progression_selection_${safeName}.pdf`);
+            } catch (error) {
+                console.error('[GymSuivi] Erreur export sélection progression :', error);
+                alert(`❌ Impossible de créer le PDF : ${error.message}`);
+            }
         }
 
         function exportProgressionPDF() {
