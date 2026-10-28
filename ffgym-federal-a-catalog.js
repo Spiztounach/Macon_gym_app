@@ -6,6 +6,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SAU-01",
     "nom": "Saut de lapin",
     "img": "./assets/ffgym-federal-a/SAU-01.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SAU-01.png",
     "apparatuses": [
       "saut"
     ],
@@ -33,6 +34,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SAU-02",
     "nom": "Rondade",
     "img": "./assets/ffgym-federal-a/SAU-02.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SAU-02.png",
     "apparatuses": [
       "saut"
     ],
@@ -60,6 +62,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SAU-03",
     "nom": "Lune",
     "img": "./assets/ffgym-federal-a/SAU-03.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SAU-03.png",
     "apparatuses": [
       "saut"
     ],
@@ -87,6 +90,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SAU-04",
     "nom": "Petrick",
     "img": "./assets/ffgym-federal-a/SAU-04.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SAU-04.png",
     "apparatuses": [
       "saut"
     ],
@@ -114,6 +118,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-01",
     "nom": "Entré à l'appui",
     "img": "./assets/ffgym-federal-a/BAR-01.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-01.png",
     "apparatuses": [
       "barres"
     ],
@@ -136,6 +141,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-02",
     "nom": "Bascule engagé",
     "img": "./assets/ffgym-federal-a/BAR-02.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-02.png",
     "apparatuses": [
       "barres"
     ],
@@ -159,6 +165,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-03",
     "nom": "Oscillation engagée",
     "img": "./assets/ffgym-federal-a/BAR-03.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-03.png",
     "apparatuses": [
       "barres"
     ],
@@ -182,6 +189,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-04",
     "nom": "Bascule BI",
     "img": "./assets/ffgym-federal-a/BAR-04.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-04.png",
     "apparatuses": [
       "barres"
     ],
@@ -205,6 +213,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-05",
     "nom": "Bascule BS",
     "img": "./assets/ffgym-federal-a/BAR-05.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-05.png",
     "apparatuses": [
       "barres"
     ],
@@ -228,6 +237,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-06",
     "nom": "Bascule fixe",
     "img": "./assets/ffgym-federal-a/BAR-06.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-06.png",
     "apparatuses": [
       "barres"
     ],
@@ -251,6 +261,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-07",
     "nom": "Bascule coupée écart",
     "img": "./assets/ffgym-federal-a/BAR-07.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-07.png",
     "apparatuses": [
       "barres"
     ],
@@ -275,6 +286,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-08",
     "nom": "Sortie enroulé",
     "img": "./assets/ffgym-federal-a/BAR-08.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-08.png",
     "apparatuses": [
       "barres"
     ],
@@ -298,6 +310,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-09",
     "nom": "Sortie enroulé contrôlé",
     "img": "./assets/ffgym-federal-a/BAR-09.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-09.png",
     "apparatuses": [
       "barres"
     ],
@@ -321,6 +334,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-10",
     "nom": "Renversement",
     "img": "./assets/ffgym-federal-a/BAR-10.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-10.png",
     "apparatuses": [
       "barres"
     ],
@@ -343,6 +357,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-11",
     "nom": "Traction renversement",
     "img": "./assets/ffgym-federal-a/BAR-11.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-11.png",
     "apparatuses": [
       "barres"
     ],
@@ -365,6 +380,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-12",
     "nom": "Tour d'appui arrière",
     "img": "./assets/ffgym-federal-a/BAR-12.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-12.png",
     "apparatuses": [
       "barres"
     ],
@@ -387,6 +403,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-13",
     "nom": "Tour d'appui arrière libre",
     "img": "./assets/ffgym-federal-a/BAR-13.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-13.png",
     "apparatuses": [
       "barres"
     ],
@@ -410,6 +427,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-14",
     "nom": "Tour avant cavalier",
     "img": "./assets/ffgym-federal-a/BAR-14.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-14.png",
     "apparatuses": [
       "barres"
     ],
@@ -433,6 +451,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-15",
     "nom": "Filé avant",
     "img": "./assets/ffgym-federal-a/BAR-15.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-15.png",
     "apparatuses": [
       "barres"
     ],
@@ -456,6 +475,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-16",
     "nom": "Tour d'appui avant",
     "img": "./assets/ffgym-federal-a/BAR-16.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-16.png",
     "apparatuses": [
       "barres"
     ],
@@ -479,6 +499,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-17",
     "nom": "Sortie filé BI",
     "img": "./assets/ffgym-federal-a/BAR-17.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-17.png",
     "apparatuses": [
       "barres"
     ],
@@ -502,6 +523,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-18",
     "nom": "Sortie filé BS",
     "img": "./assets/ffgym-federal-a/BAR-18.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-18.png",
     "apparatuses": [
       "barres"
     ],
@@ -525,6 +547,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-19",
     "nom": "Contre volée demi-tour",
     "img": "./assets/ffgym-federal-a/BAR-19.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-19.png",
     "apparatuses": [
       "barres"
     ],
@@ -548,6 +571,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-20",
     "nom": "2xBalancé",
     "img": "./assets/ffgym-federal-a/BAR-20.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-20.png",
     "apparatuses": [
       "barres"
     ],
@@ -571,6 +595,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-21",
     "nom": "Petite culbute",
     "img": "./assets/ffgym-federal-a/BAR-21.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-21.png",
     "apparatuses": [
       "barres"
     ],
@@ -594,6 +619,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-22",
     "nom": "Grande culbute",
     "img": "./assets/ffgym-federal-a/BAR-22.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-22.png",
     "apparatuses": [
       "barres"
     ],
@@ -618,6 +644,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-23",
     "nom": "Contre volé demi-tour",
     "img": "./assets/ffgym-federal-a/BAR-23.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-23.png",
     "apparatuses": [
       "barres"
     ],
@@ -641,6 +668,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-24",
     "nom": "Grand réta",
     "img": "./assets/ffgym-federal-a/BAR-24.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-24.png",
     "apparatuses": [
       "barres"
     ],
@@ -665,6 +693,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-25",
     "nom": "Cavalier engagé",
     "img": "./assets/ffgym-federal-a/BAR-25.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-25.png",
     "apparatuses": [
       "barres"
     ],
@@ -688,6 +717,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-26",
     "nom": "Prise d'élan",
     "img": "./assets/ffgym-federal-a/BAR-26.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-26.png",
     "apparatuses": [
       "barres"
     ],
@@ -711,6 +741,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-27",
     "nom": "Pose de pieds",
     "img": "./assets/ffgym-federal-a/BAR-27.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-27.png",
     "apparatuses": [
       "barres"
     ],
@@ -733,6 +764,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-28",
     "nom": "Tour pied main arrière",
     "img": "./assets/ffgym-federal-a/BAR-28.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-28.png",
     "apparatuses": [
       "barres"
     ],
@@ -756,6 +788,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-29",
     "nom": "Crapahute",
     "img": "./assets/ffgym-federal-a/BAR-29.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-29.png",
     "apparatuses": [
       "barres"
     ],
@@ -778,6 +811,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-30",
     "nom": "Tour pied main avant",
     "img": "./assets/ffgym-federal-a/BAR-30.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-30.png",
     "apparatuses": [
       "barres"
     ],
@@ -801,6 +835,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "BAR-31",
     "nom": "Demi-tour cavalier",
     "img": "./assets/ffgym-federal-a/BAR-31.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/BAR-31.png",
     "apparatuses": [
       "barres"
     ],
@@ -824,6 +859,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-01",
     "nom": "Appui facial",
     "img": "./assets/ffgym-federal-a/POU-01.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-01.png",
     "apparatuses": [
       "poutre"
     ],
@@ -845,6 +881,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-02",
     "nom": "Saut appel 2 pieds",
     "img": "./assets/ffgym-federal-a/POU-02.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-02.png",
     "apparatuses": [
       "poutre"
     ],
@@ -867,6 +904,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-03",
     "nom": "Franchissement",
     "img": "./assets/ffgym-federal-a/POU-03.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-03.png",
     "apparatuses": [
       "poutre"
     ],
@@ -889,6 +927,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-04",
     "nom": "Appui latérale",
     "img": "./assets/ffgym-federal-a/POU-04.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-04.png",
     "apparatuses": [
       "poutre"
     ],
@@ -910,6 +949,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-05",
     "nom": "Appui écart",
     "img": "./assets/ffgym-federal-a/POU-05.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-05.png",
     "apparatuses": [
       "poutre"
     ],
@@ -932,6 +972,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-06",
     "nom": "Arabesque",
     "img": "./assets/ffgym-federal-a/POU-06.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-06.png",
     "apparatuses": [
       "poutre"
     ],
@@ -954,6 +995,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-07",
     "nom": "Roulade avant",
     "img": "./assets/ffgym-federal-a/POU-07.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-07.png",
     "apparatuses": [
       "poutre"
     ],
@@ -977,6 +1019,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-08",
     "nom": "Renversement avant",
     "img": "./assets/ffgym-federal-a/POU-08.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-08.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1000,6 +1043,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-09",
     "nom": "Roue",
     "img": "./assets/ffgym-federal-a/POU-09.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-09.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1023,6 +1067,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-10",
     "nom": "Saut droit",
     "img": "./assets/ffgym-federal-a/POU-10.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-10.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1045,6 +1090,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-11",
     "nom": "Saut droit demi-tour",
     "img": "./assets/ffgym-federal-a/POU-11.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-11.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1067,6 +1113,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-12",
     "nom": "Saut sissonne",
     "img": "./assets/ffgym-federal-a/POU-12.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-12.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1090,6 +1137,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-13",
     "nom": "Saut changement de jambe",
     "img": "./assets/ffgym-federal-a/POU-13.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-13.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1113,6 +1161,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-14",
     "nom": "Saut groupé",
     "img": "./assets/ffgym-federal-a/POU-14.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-14.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1135,6 +1184,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-15",
     "nom": "Saut groupé demi-tour",
     "img": "./assets/ffgym-federal-a/POU-15.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-15.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1157,6 +1207,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-16",
     "nom": "Saut de chat",
     "img": "./assets/ffgym-federal-a/POU-16.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-16.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1180,6 +1231,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-17",
     "nom": "Saut de chat demi-tour",
     "img": "./assets/ffgym-federal-a/POU-17.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-17.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1203,6 +1255,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-18",
     "nom": "Cabriole",
     "img": "./assets/ffgym-federal-a/POU-18.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-18.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1226,6 +1279,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-19",
     "nom": "Saut écart antéro-postérieur",
     "img": "./assets/ffgym-federal-a/POU-19.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-19.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1249,6 +1303,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-20",
     "nom": "Saut ciseaux avant",
     "img": "./assets/ffgym-federal-a/POU-20.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-20.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1272,6 +1327,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-21",
     "nom": "Grand jeté",
     "img": "./assets/ffgym-federal-a/POU-21.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-21.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1295,6 +1351,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-22",
     "nom": "Saut carpé serré",
     "img": "./assets/ffgym-federal-a/POU-22.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-22.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1318,6 +1375,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-23",
     "nom": "Saut cosaque",
     "img": "./assets/ffgym-federal-a/POU-23.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-23.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1341,6 +1399,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-24",
     "nom": "Saut carpé écarté",
     "img": "./assets/ffgym-federal-a/POU-24.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-24.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1364,6 +1423,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-25",
     "nom": "Demi-pivot",
     "img": "./assets/ffgym-federal-a/POU-25.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-25.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1385,6 +1445,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-26",
     "nom": "Demi-pivot détourné",
     "img": "./assets/ffgym-federal-a/POU-26.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-26.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1406,6 +1467,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-27",
     "nom": "Pivot",
     "img": "./assets/ffgym-federal-a/POU-27.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-27.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1427,6 +1489,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-28",
     "nom": "Demi-tour accroupi latéral",
     "img": "./assets/ffgym-federal-a/POU-28.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-28.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1449,6 +1512,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-29",
     "nom": "Tour accroupi",
     "img": "./assets/ffgym-federal-a/POU-29.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-29.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1471,6 +1535,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-30",
     "nom": "ATR",
     "img": "./assets/ffgym-federal-a/POU-30.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-30.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1494,6 +1559,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-31",
     "nom": "ATR maintenu",
     "img": "./assets/ffgym-federal-a/POU-31.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-31.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1517,6 +1583,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-32",
     "nom": "ATR latéral maintenu",
     "img": "./assets/ffgym-federal-a/POU-32.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-32.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1540,6 +1607,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-33",
     "nom": "ATR demi-valse",
     "img": "./assets/ffgym-federal-a/POU-33.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-33.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1563,6 +1631,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-34",
     "nom": "Roulade avant",
     "img": "./assets/ffgym-federal-a/POU-34.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-34.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1586,6 +1655,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-35",
     "nom": "Souplesse avant",
     "img": "./assets/ffgym-federal-a/POU-35.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-35.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1609,6 +1679,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-36",
     "nom": "Roulade avant sans appui",
     "img": "./assets/ffgym-federal-a/POU-36.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-36.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1633,6 +1704,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-37",
     "nom": "Roue",
     "img": "./assets/ffgym-federal-a/POU-37.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-37.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1655,6 +1727,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-38",
     "nom": "Rondade",
     "img": "./assets/ffgym-federal-a/POU-38.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-38.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1678,6 +1751,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-39",
     "nom": "Saut de mains",
     "img": "./assets/ffgym-federal-a/POU-39.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-39.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1701,6 +1775,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-40",
     "nom": "Tic-tac",
     "img": "./assets/ffgym-federal-a/POU-40.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-40.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1724,6 +1799,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-41",
     "nom": "Chandelle",
     "img": "./assets/ffgym-federal-a/POU-41.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-41.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1747,6 +1823,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-42",
     "nom": "Roulade arrière",
     "img": "./assets/ffgym-federal-a/POU-42.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-42.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1770,6 +1847,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-43",
     "nom": "Souplesse arrière",
     "img": "./assets/ffgym-federal-a/POU-43.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-43.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1793,6 +1871,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-44",
     "nom": "Flip jambes décalées",
     "img": "./assets/ffgym-federal-a/POU-44.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-44.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1816,6 +1895,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-45",
     "nom": "Équerre renversée",
     "img": "./assets/ffgym-federal-a/POU-45.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-45.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1839,6 +1919,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-46",
     "nom": "Roulade arrière piquée",
     "img": "./assets/ffgym-federal-a/POU-46.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-46.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1863,6 +1944,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-47",
     "nom": "Sortie rondade",
     "img": "./assets/ffgym-federal-a/POU-47.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-47.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1886,6 +1968,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-48",
     "nom": "Sortie salto costal",
     "img": "./assets/ffgym-federal-a/POU-48.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-48.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1908,6 +1991,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-49",
     "nom": "Sortie salto avant groupé",
     "img": "./assets/ffgym-federal-a/POU-49.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-49.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1931,6 +2015,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-50",
     "nom": "Sortie saut de mains",
     "img": "./assets/ffgym-federal-a/POU-50.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-50.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1954,6 +2039,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "POU-51",
     "nom": "Sortie salto arrière groupé",
     "img": "./assets/ffgym-federal-a/POU-51.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/POU-51.png",
     "apparatuses": [
       "poutre"
     ],
@@ -1977,6 +2063,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-01",
     "nom": "Saut droit demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-01.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-01.png",
     "apparatuses": [
       "sol"
     ],
@@ -1999,6 +2086,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-02",
     "nom": "Saut droit tour",
     "img": "./assets/ffgym-federal-a/SOL-02.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-02.png",
     "apparatuses": [
       "sol"
     ],
@@ -2021,6 +2109,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-03",
     "nom": "Saut enjambé",
     "img": "./assets/ffgym-federal-a/SOL-03.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-03.png",
     "apparatuses": [
       "sol"
     ],
@@ -2044,6 +2133,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-04",
     "nom": "Saut changement",
     "img": "./assets/ffgym-federal-a/SOL-04.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-04.png",
     "apparatuses": [
       "sol"
     ],
@@ -2067,6 +2157,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-05",
     "nom": "Saut groupé",
     "img": "./assets/ffgym-federal-a/SOL-05.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-05.png",
     "apparatuses": [
       "sol"
     ],
@@ -2089,6 +2180,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-06",
     "nom": "Saut groupé demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-06.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-06.png",
     "apparatuses": [
       "sol"
     ],
@@ -2111,6 +2203,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-07",
     "nom": "Saut groupé tour",
     "img": "./assets/ffgym-federal-a/SOL-07.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-07.png",
     "apparatuses": [
       "sol"
     ],
@@ -2133,6 +2226,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-08",
     "nom": "Saut ciseaux",
     "img": "./assets/ffgym-federal-a/SOL-08.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-08.png",
     "apparatuses": [
       "sol"
     ],
@@ -2156,6 +2250,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-09",
     "nom": "Saut cosaque",
     "img": "./assets/ffgym-federal-a/SOL-09.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-09.png",
     "apparatuses": [
       "sol"
     ],
@@ -2179,6 +2274,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-10",
     "nom": "Saut cosaque demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-10.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-10.png",
     "apparatuses": [
       "sol"
     ],
@@ -2202,6 +2298,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-11",
     "nom": "Saut cosaque tour",
     "img": "./assets/ffgym-federal-a/SOL-11.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-11.png",
     "apparatuses": [
       "sol"
     ],
@@ -2225,6 +2322,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-12",
     "nom": "Saut carpé écarté",
     "img": "./assets/ffgym-federal-a/SOL-12.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-12.png",
     "apparatuses": [
       "sol"
     ],
@@ -2248,6 +2346,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-13",
     "nom": "Saut carpé écarté demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-13.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-13.png",
     "apparatuses": [
       "sol"
     ],
@@ -2271,6 +2370,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-14",
     "nom": "Saut sissonne",
     "img": "./assets/ffgym-federal-a/SOL-14.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-14.png",
     "apparatuses": [
       "sol"
     ],
@@ -2294,6 +2394,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-15",
     "nom": "Saut écart antéro-postérieur",
     "img": "./assets/ffgym-federal-a/SOL-15.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-15.png",
     "apparatuses": [
       "sol"
     ],
@@ -2317,6 +2418,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-16",
     "nom": "Saut écart antéro-postérieur demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-16.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-16.png",
     "apparatuses": [
       "sol"
     ],
@@ -2340,6 +2442,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-17",
     "nom": "Saut de chat",
     "img": "./assets/ffgym-federal-a/SOL-17.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-17.png",
     "apparatuses": [
       "sol"
     ],
@@ -2363,6 +2466,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-18",
     "nom": "Saut de chat demi-tour",
     "img": "./assets/ffgym-federal-a/SOL-18.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-18.png",
     "apparatuses": [
       "sol"
     ],
@@ -2386,6 +2490,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-19",
     "nom": "Saut de chat tour",
     "img": "./assets/ffgym-federal-a/SOL-19.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-19.png",
     "apparatuses": [
       "sol"
     ],
@@ -2409,6 +2514,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-20",
     "nom": "Demi-pivot",
     "img": "./assets/ffgym-federal-a/SOL-20.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-20.png",
     "apparatuses": [
       "sol"
     ],
@@ -2430,6 +2536,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-21",
     "nom": "Pivot",
     "img": "./assets/ffgym-federal-a/SOL-21.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-21.png",
     "apparatuses": [
       "sol"
     ],
@@ -2451,6 +2558,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-22",
     "nom": "Pivot demi",
     "img": "./assets/ffgym-federal-a/SOL-22.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-22.png",
     "apparatuses": [
       "sol"
     ],
@@ -2472,6 +2580,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-23",
     "nom": "Pivot deux tours",
     "img": "./assets/ffgym-federal-a/SOL-23.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-23.png",
     "apparatuses": [
       "sol"
     ],
@@ -2493,6 +2602,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-24",
     "nom": "Demi-pivot jambe à l'horizontale",
     "img": "./assets/ffgym-federal-a/SOL-24.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-24.png",
     "apparatuses": [
       "sol"
     ],
@@ -2515,6 +2625,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-25",
     "nom": "Pivot jambe à l'horizontale",
     "img": "./assets/ffgym-federal-a/SOL-25.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-25.png",
     "apparatuses": [
       "sol"
     ],
@@ -2537,6 +2648,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-26",
     "nom": "Tour accroupi",
     "img": "./assets/ffgym-federal-a/SOL-26.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-26.png",
     "apparatuses": [
       "sol"
     ],
@@ -2559,6 +2671,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-27",
     "nom": "Roue",
     "img": "./assets/ffgym-federal-a/SOL-27.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-27.png",
     "apparatuses": [
       "sol"
     ],
@@ -2581,6 +2694,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-28",
     "nom": "Salto avant groupé",
     "img": "./assets/ffgym-federal-a/SOL-28.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-28.png",
     "apparatuses": [
       "sol"
     ],
@@ -2604,6 +2718,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-29",
     "nom": "Rondade rebond",
     "img": "./assets/ffgym-federal-a/SOL-29.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-29.png",
     "apparatuses": [
       "sol"
     ],
@@ -2627,6 +2742,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-30",
     "nom": "Saut de mains 1 pied",
     "img": "./assets/ffgym-federal-a/SOL-30.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-30.png",
     "apparatuses": [
       "sol"
     ],
@@ -2650,6 +2766,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-31",
     "nom": "Salto facial",
     "img": "./assets/ffgym-federal-a/SOL-31.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-31.png",
     "apparatuses": [
       "sol"
     ],
@@ -2673,6 +2790,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-32",
     "nom": "ATR-pont avant ou souplesse avant",
     "img": "./assets/ffgym-federal-a/SOL-32.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-32.png",
     "apparatuses": [
       "sol"
     ],
@@ -2697,6 +2815,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-33",
     "nom": "Saut de mains 2 pieds",
     "img": "./assets/ffgym-federal-a/SOL-33.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-33.png",
     "apparatuses": [
       "sol"
     ],
@@ -2720,6 +2839,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-34",
     "nom": "Tic-tac",
     "img": "./assets/ffgym-federal-a/SOL-34.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-34.png",
     "apparatuses": [
       "sol"
     ],
@@ -2743,6 +2863,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-35",
     "nom": "Salto costal",
     "img": "./assets/ffgym-federal-a/SOL-35.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-35.png",
     "apparatuses": [
       "sol"
     ],
@@ -2765,6 +2886,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-36",
     "nom": "ATR demi-valse",
     "img": "./assets/ffgym-federal-a/SOL-36.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-36.png",
     "apparatuses": [
       "sol"
     ],
@@ -2788,6 +2910,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-37",
     "nom": "ATR valse",
     "img": "./assets/ffgym-federal-a/SOL-37.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-37.png",
     "apparatuses": [
       "sol"
     ],
@@ -2811,6 +2934,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-38",
     "nom": "Souplesse arrière, demi-tour, souplesse avant",
     "img": "./assets/ffgym-federal-a/SOL-38.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-38.png",
     "apparatuses": [
       "sol"
     ],
@@ -2835,6 +2959,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-39",
     "nom": "Souplesse arrière",
     "img": "./assets/ffgym-federal-a/SOL-39.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-39.png",
     "apparatuses": [
       "sol"
     ],
@@ -2858,6 +2983,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-40",
     "nom": "Flip",
     "img": "./assets/ffgym-federal-a/SOL-40.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-40.png",
     "apparatuses": [
       "sol"
     ],
@@ -2881,6 +3007,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-41",
     "nom": "Salto arrière",
     "img": "./assets/ffgym-federal-a/SOL-41.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-41.png",
     "apparatuses": [
       "sol"
     ],
@@ -2904,6 +3031,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-42",
     "nom": "Salto arrière tendu",
     "img": "./assets/ffgym-federal-a/SOL-42.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-42.png",
     "apparatuses": [
       "sol"
     ],
@@ -2927,6 +3055,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-43",
     "nom": "Roulade arrière",
     "img": "./assets/ffgym-federal-a/SOL-43.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-43.png",
     "apparatuses": [
       "sol"
     ],
@@ -2950,6 +3079,7 @@ globalThis.FFGYM_FEDERAL_A_CATALOG = [
     "abrev": "SOL-44",
     "nom": "Roulade arrière piquée",
     "img": "./assets/ffgym-federal-a/SOL-44.png",
+    "brochureImg": "./assets/ffgym-federal-a-brochure/SOL-44.png",
     "apparatuses": [
       "sol"
     ],

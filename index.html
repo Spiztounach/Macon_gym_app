@@ -946,6 +946,17 @@
                             <p><strong class="text-red-700">Non réalisé :</strong> élément non effectué.</p>
                         </div>
                         <div id="progression-apparatus-tabs" class="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 sm:grid-cols-4" role="tablist" aria-label="Agrès du tableau de progression"></div>
+                        <div class="flex flex-col gap-2 rounded-xl border border-purple-200 bg-purple-50 p-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="text-[10px] text-purple-800">
+                                <strong id="progression-export-selection-count">0 élément sélectionné</strong>
+                                <span class="block text-[9px] text-purple-600">La sélection reste active lorsque vous changez d’agrès.</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1.5 sm:flex">
+                                <button type="button" onclick="selectAllVisibleProgressionForExport()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700">Tout l’agrès</button>
+                                <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
+                                <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">PDF sélection</button>
+                            </div>
+                        </div>
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
                             <table class="w-full border-collapse text-xs">
                                 <thead class="bg-gray-100 text-gray-700">
@@ -966,19 +977,7 @@
 
                     <!-- TAB : Mouvements -->
                     <div id="content-mouvements" data-ui-zone="tab-mouvements" class="ui-theme-zone tab-content space-y-3 p-2">
-                        <div class="grid grid-cols-1 gap-2 rounded-xl border border-pink-200 bg-pink-50 p-3 text-xs min-[390px]:grid-cols-2">
-                            <label class="font-bold text-pink-800">Agrès affiché
-                                <select id="movement-apparatus-filter" onchange="switchMvtAgres(this.value)" class="mt-1 w-full rounded-lg border border-pink-200 bg-white p-2 text-xs font-semibold text-gray-700">
-                                    <option value="Saut">Saut</option>
-                                    <option value="Barres">Barres</option>
-                                    <option value="Poutre">Poutre</option>
-                                    <option value="Sol">Sol</option>
-                                </select>
-                            </label>
-                            <label class="font-bold text-pink-800">Catégorie affichée
-                                <select id="movement-category-filter" onchange="setMovementCategoryFilter(this.value)" class="mt-1 w-full rounded-lg border border-pink-200 bg-white p-2 text-xs font-semibold text-gray-700"></select>
-                            </label>
-                        </div>
+                        <div id="movement-apparatus-tabs" class="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 sm:grid-cols-4" role="tablist" aria-label="Agrès de la bibliothèque des mouvements"></div>
                         <div>
                             <label
                                 class="block text-xs font-semibold text-gray-500 mb-1"
@@ -1025,19 +1024,8 @@
                                     onclick="openCustomSigleModal()"
                                     class="text-[10px] text-pink-600 font-bold bg-pink-50 px-2 py-0.5 rounded border border-pink-200 hover:bg-pink-100">➕ Gérer / Ajouter</button>
                             </div>
-                            <div class="flex flex-col gap-2 rounded-xl border border-purple-200 bg-purple-50 p-2.5 sm:flex-row sm:items-center sm:justify-between">
-                                <div class="text-[10px] text-purple-800">
-                                    <strong id="movement-pdf-selection-count">0 élément sélectionné</strong>
-                                    <span class="block text-[9px] text-purple-600">La sélection reste active lorsque vous changez d’agrès ou de catégorie.</span>
-                                </div>
-                                <div class="grid grid-cols-3 gap-1.5 sm:flex">
-                                    <button type="button" onclick="selectAllVisibleMovementForPdf()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700">Tout afficher</button>
-                                    <button type="button" onclick="clearMovementPdfSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
-                                    <button id="btn-export-selected-movements" type="button" onclick="exportSelectedMovementPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">PDF sélection</button>
-                                </div>
-                            </div>
                             <div class="space-y-3" id="keyboard-container"></div>
-                            <p id="sigle-palette-empty" class="hidden text-center text-[10px] text-gray-400 py-2">Aucun élément pour cet agrès et cette catégorie.</p>
+                            <p id="sigle-palette-empty" class="hidden text-center text-[10px] text-gray-400 py-2">Aucun élément pour cet agrès.</p>
                         </div>
                     </div>
 
@@ -1893,7 +1881,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.30.0';
+        const APP_VERSION = '1.31.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1949,7 +1937,7 @@
         const GYM_MUSIC_STORE_NAME = 'gymnast-music';
         const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
         const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
-        const MOVEMENT_CATEGORY_FILTER_KEY = 'gym_movement_category_filter_v1';
+        const MOVEMENT_COLLAPSED_CATEGORIES_KEY = 'gym_movement_collapsed_categories_v1';
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const GOOGLE_PICKER_API_KEY = 'AIzaSyB2GOfvBRHy-LrVzUQMB1B0YuRSTMZproc';
         const GOOGLE_PICKER_APP_ID = '759389909007';
@@ -2994,8 +2982,7 @@
         let editingCustomSigleIndex = null;
         let editingDefaultSigleIndex = null;
         let customSigleImageRemoved = false;
-        let movementCategoryFilter = localStorage.getItem(MOVEMENT_CATEGORY_FILTER_KEY) || 'all';
-        const movementPdfSelections = new Map();
+        const movementCollapsedCategories = new Set(loadMovementCollapsedCategoryKeys());
         let teamModalMemberSelection = new Set();
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
@@ -8365,7 +8352,7 @@
                 const name = document.createElement('p');
                 name.className = 'min-w-0 flex-1 font-bold text-gray-800 break-words';
                 name.textContent = item.name;
-                nameLine.append(name);
+                nameLine.append(createProgressionExportCheckbox(item), name);
                 const classifications = createProgressionClassificationBadges(item);
                 const actions = document.createElement('div');
                 actions.className = 'mt-1.5 flex flex-wrap items-center gap-2 text-[10px]';
@@ -8406,7 +8393,7 @@
                 const cardName = document.createElement('p');
                 cardName.className = 'min-w-0 flex-1 break-words text-xs font-black text-gray-800';
                 cardName.textContent = item.name;
-                cardNameGroup.append(cardName);
+                cardNameGroup.append(createProgressionExportCheckbox(item), cardName);
                 const orderButtons = document.createElement('div');
                 orderButtons.className = 'flex shrink-0 gap-1';
                 orderButtons.append(
@@ -8446,6 +8433,7 @@
                 card.append(cardHeader, cardClassifications, statusButtons, cardActions);
                 mobileList.appendChild(card);
             });
+            updateProgressionExportSelectionUI();
         }
 
         function renderProgressionStatusList(containerId, items, emptyText) {
@@ -8976,39 +8964,305 @@
             return doc;
         }
 
-        async function exportSelectedMovementPDF() {
+        function getMovementEntryForProgressionItem(item) {
+            if (!item) return null;
+            const itemId = String(item.id || '');
+            const code = String(item.code || '').trim().toUpperCase();
+            const name = String(item.name || '').trim().toLocaleLowerCase('fr');
+            const custom = (Array.isArray(data.customSigles) ? data.customSigles : [])
+                .map((candidate, index) => ({kind: 'custom', index, item: candidate}))
+                .find(entry =>
+                    String(entry.item.progressionElementId || '') === itemId ||
+                    code && String(entry.item.abrev || '').trim().toUpperCase() === code ||
+                    name && String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
+                );
+            if (custom) return custom;
+            const catalogCode = itemId.startsWith('PROG-FFGYM-')
+                ? itemId.slice('PROG-FFGYM-'.length).toUpperCase()
+                : '';
+            return getResolvedDefaultSigleEntries().find(entry => {
+                const identity = getDefaultSigleIdentity(entry.item).toUpperCase();
+                const resolvedCode = String(entry.item.abrev || '').trim().toUpperCase();
+                const baseCode = String(entry.baseItem && entry.baseItem.abrev || '').trim().toUpperCase();
+                const resolvedName = String(entry.item.nom || '').trim().toLocaleLowerCase('fr');
+                return catalogCode && [identity, resolvedCode, baseCode].includes(catalogCode) ||
+                    code && [identity, resolvedCode, baseCode].includes(code) ||
+                    name && resolvedName === name;
+            }) || null;
+        }
+
+        function getProgressionEvaluationPdfItems(items = getSelectedProgressionItems()) {
+            const apparatusOrder = new Map(PROGRESSION_APPARATUS.map((apparatus, index) => [apparatus.key, index]));
+            return [...(Array.isArray(items) ? items : [])]
+                .sort((left, right) =>
+                    (apparatusOrder.get(normalizeProgressionApparatus(left.apparatus)) ?? 99) -
+                    (apparatusOrder.get(normalizeProgressionApparatus(right.apparatus)) ?? 99) ||
+                    Number(left.catalogIndex || 0) - Number(right.catalogIndex || 0) ||
+                    String(left.name || '').localeCompare(String(right.name || ''), 'fr', {sensitivity: 'base'})
+                )
+                .map(item => {
+                    const entry = getMovementEntryForProgressionItem(item);
+                    const source = entry && entry.item || {};
+                    const apparatus = normalizeProgressionApparatus(item.apparatus);
+                    const scoring = entry
+                        ? entry.kind === 'default'
+                            ? getDefaultSigleScoring(source, apparatus)
+                            : getCustomSigleScoring(source, apparatus)
+                        : {movementValue: null, bonusValue: 0};
+                    return {
+                        key: getProgressionExportKey(item),
+                        name: String(item.name || source.nom || ''),
+                        code: String(source.abrev || item.code || ''),
+                        symbol: String(source.symbole || ''),
+                        symbolImage: String(source.img || ''),
+                        brochureImage: String(source.brochureImg || ''),
+                        apparatus,
+                        apparatusLabel: getProgressionApparatusLabel(apparatus),
+                        category: entry
+                            ? getMovementCategoryLabel(source.category, source.nom)
+                            : 'Élément personnalisé',
+                        movementValue: scoring.movementValue,
+                        bonusValue: scoring.bonusValue
+                    };
+                });
+        }
+
+        function loadProgressionPdfImage(source, canvasWidth, canvasHeight) {
+            const value = String(source || '').trim();
+            if (!value) return Promise.resolve(null);
+            return new Promise(resolve => {
+                const image = new Image();
+                image.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = canvasWidth;
+                        canvas.height = canvasHeight;
+                        const context = canvas.getContext('2d');
+                        context.fillStyle = '#ffffff';
+                        context.fillRect(0, 0, canvasWidth, canvasHeight);
+                        const ratio = Math.min(canvasWidth / image.naturalWidth, canvasHeight / image.naturalHeight);
+                        const width = image.naturalWidth * ratio;
+                        const height = image.naturalHeight * ratio;
+                        context.drawImage(image, (canvasWidth - width) / 2, (canvasHeight - height) / 2, width, height);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (error) {
+                        console.warn('[GymSuivi] Illustration PDF ignorée :', error);
+                        resolve(null);
+                    }
+                };
+                image.onerror = () => resolve(null);
+                if (!value.startsWith('data:')) image.crossOrigin = 'anonymous';
+                image.src = value;
+            });
+        }
+
+        async function prepareProgressionEvaluationPdfImages(items) {
+            const symbolSources = [...new Set((Array.isArray(items) ? items : [])
+                .map(item => String(item.symbolImage || '').trim()).filter(Boolean))];
+            const brochureSources = [...new Set((Array.isArray(items) ? items : [])
+                .map(item => String(item.brochureImage || '').trim()).filter(Boolean))];
+            const symbolMap = new Map(await Promise.all(symbolSources.map(async source => [
+                source,
+                await loadProgressionPdfImage(source, 180, 180)
+            ])));
+            const brochureMap = new Map(await Promise.all(brochureSources.map(async source => [
+                source,
+                await loadProgressionPdfImage(source, 360, 160)
+            ])));
+            return new Map((Array.isArray(items) ? items : []).map(item => [item.key, {
+                symbol: symbolMap.get(String(item.symbolImage || '').trim()) || null,
+                brochure: brochureMap.get(String(item.brochureImage || '').trim()) || null
+            }]));
+        }
+
+        function drawProgressionEvaluationVisual(doc, imageData, fallback, x, y, width, height) {
+            doc.setDrawColor(229, 231, 235);
+            doc.setFillColor(249, 250, 251);
+            doc.roundedRect(x, y, width, height, 0.8, 0.8, 'FD');
+            if (imageData) {
+                try {
+                    doc.addImage(imageData, 'PNG', x + 0.5, y + 0.5, width - 1, height - 1, undefined, 'FAST');
+                    return;
+                } catch (_) {
+                    imageData = null;
+                }
+            }
+            doc.setTextColor(156, 163, 175);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(width < 15 ? 5 : 4.5);
+            const lines = doc.splitTextToSize(String(fallback || 'Non disponible'), width - 2).slice(0, 2);
+            doc.text(lines, x + width / 2, y + height / 2, {align: 'center'});
+        }
+
+        function drawProgressionEvaluationCard(doc, item, visuals, x, y, width, height) {
+            doc.setDrawColor(209, 213, 219);
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(x, y, width, height, 1.5, 1.5, 'FD');
+
+            doc.setTextColor(107, 114, 128);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(4.4);
+            doc.text('SIGLE', x + 2, y + 3.2);
+            doc.text('IMAGE BROCHURE', x + 16, y + 3.2);
+            drawProgressionEvaluationVisual(
+                doc,
+                visuals && visuals.symbol,
+                item.symbol || item.code || 'Sigle',
+                x + 2,
+                y + 4,
+                12,
+                12
+            );
+            drawProgressionEvaluationVisual(
+                doc,
+                visuals && visuals.brochure,
+                item.brochureImage ? 'Illustration' : 'Non disponible',
+                x + 16,
+                y + 4,
+                25,
+                12
+            );
+
+            const textX = x + 43;
+            const textWidth = width - 45;
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.4);
+            const nameLines = doc.splitTextToSize(String(item.name || ''), textWidth).slice(0, 2);
+            doc.text(nameLines, textX, y + 5);
+            const detailY = y + (nameLines.length > 1 ? 11 : 9);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.3);
+            doc.setTextColor(107, 114, 128);
+            doc.text(doc.splitTextToSize(`${item.apparatusLabel} · ${item.category}`, textWidth).slice(0, 1), textX, detailY);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(107, 33, 168);
+            doc.setFontSize(5.8);
+            const value = item.movementValue === null ? '—' : formatMovementScoringValue(item.movementValue);
+            doc.text(`Valeur : ${value}   Bonus : ${formatMovementScoringValue(item.bonusValue)}`, textX, detailY + 3.8);
+
+            const statusY = y + height - 10;
+            const optionWidth = (width - 4) / 4;
+            [
+                ['NR', 'Non réalisé'],
+                ['ÉT', 'Étudié'],
+                ['EC', 'En cours'],
+                ['AC', 'Acquis']
+            ].forEach((status, index) => {
+                const optionX = x + 2 + index * optionWidth;
+                doc.setDrawColor(107, 114, 128);
+                doc.rect(optionX, statusY, 3, 3);
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.2);
+                doc.text(status[0], optionX + 4, statusY + 2.4);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(4.3);
+                doc.setTextColor(107, 114, 128);
+                doc.text(status[1], optionX, statusY + 6.1);
+            });
+            doc.setDrawColor(156, 163, 175);
+            doc.line(x + 21, y + height - 2.7, x + width - 2, y + height - 2.7);
+            doc.setTextColor(107, 114, 128);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5.2);
+            doc.text('Observation :', x + 2, y + height - 2.2);
+        }
+
+        function createSelectedProgressionEvaluationPdfDocument(jsPDF, gymnast, items, imageMap = new Map()) {
+            const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const perPage = 15;
+            const columns = 3;
+            const left = 9;
+            const right = 9;
+            const top = 34;
+            const bottom = 10;
+            const gapX = 2.5;
+            const gapY = 2;
+            const cardWidth = (pageWidth - left - right - gapX * (columns - 1)) / columns;
+            const chunks = [];
+            for (let index = 0; index < items.length; index += perPage)
+                chunks.push(items.slice(index, index + perPage));
+            chunks.forEach((chunk, pageIndex) => {
+                if (pageIndex > 0) doc.addPage('a4', 'landscape');
+                doc.setFillColor(126, 34, 206);
+                doc.rect(0, 0, pageWidth, 22, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(15);
+                doc.text("Fiche d'évaluation - progression", left, 9);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), left, 17);
+                doc.text('Date : ____________________', pageWidth - left, 10, {align: 'right'});
+                doc.text(`Page ${pageIndex + 1} / ${chunks.length}`, pageWidth - left, 17, {align: 'right'});
+                doc.setTextColor(55, 65, 81);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.text('Cochez un statut pour chaque élément et complétez la ligne d’observation.', left, 27);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(107, 114, 128);
+                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 27, {align: 'right'});
+
+                const rows = Math.max(1, Math.ceil(chunk.length / columns));
+                const availableHeight = pageHeight - top - bottom;
+                const cardHeight = Math.min(38, (availableHeight - gapY * (rows - 1)) / rows);
+                chunk.forEach((item, index) => {
+                    const column = index % columns;
+                    const row = Math.floor(index / columns);
+                    const x = left + column * (cardWidth + gapX);
+                    const y = top + row * (cardHeight + gapY);
+                    drawProgressionEvaluationCard(doc, item, imageMap.get(item.key), x, y, cardWidth, cardHeight);
+                });
+                doc.setTextColor(107, 114, 128);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.5);
+                doc.text('Mâcon Gym Suivi - fiche d’entraînement', left, pageHeight - 4);
+                doc.text(`${chunk.length} élément${chunk.length === 1 ? '' : 's'} sur cette feuille`, pageWidth - left, pageHeight - 4, {align: 'right'});
+            });
+            return doc;
+        }
+
+        async function exportSelectedProgressionEvaluationPDF() {
             if (!window.jspdf || !window.jspdf.jsPDF) {
                 alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
                 return;
             }
             const gymnast = data.gymnastes.find(item => item.id === currentGymId);
             if (!gymnast) return;
-            const items = getSelectedMovementPdfItems();
-            if (!items.length) {
-                alert('⚠️ Cochez au moins un élément dans la bibliothèque avant de créer le PDF.');
+            const selectedItems = getSelectedProgressionItems();
+            if (!selectedItems.length) {
+                alert('⚠️ Cochez au moins un élément dans Progression avant de créer le PDF.');
                 return;
             }
-            const button = document.getElementById('btn-export-selected-movements');
+            const button = document.getElementById('btn-export-selected-progression');
             if (button) {
                 button.disabled = true;
                 button.textContent = 'Préparation…';
             }
             try {
-                const imageMap = await prepareMovementPdfImages(items);
-                const doc = createMovementEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, imageMap);
+                const items = getProgressionEvaluationPdfItems(selectedItems);
+                const imageMap = await prepareProgressionEvaluationPdfImages(items);
+                const doc = createSelectedProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, imageMap);
                 const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^a-zA-Z0-9]+/g, '_')
                     .replace(/^_+|_+$/g, '') || 'Gymnaste';
-                doc.save(`Fiche_evaluation_${safeName}.pdf`);
+                doc.save(`Progression_evaluation_${safeName}.pdf`);
             } catch (error) {
-                console.error('[GymSuivi] Erreur fiche évaluation :', error);
+                console.error('[GymSuivi] Erreur fiche évaluation de progression :', error);
                 alert(`❌ Impossible de créer le PDF : ${error.message}`);
             } finally {
                 if (button) button.textContent = 'PDF sélection';
-                updateMovementPdfSelectionUI();
+                updateProgressionExportSelectionUI();
             }
+        }
+
+        async function exportSelectedMovementPDF() {
+            return exportSelectedProgressionEvaluationPDF();
         }
 
         function exportProgressionPDF() {
@@ -9477,6 +9731,56 @@
             return MOVEMENT_APPARATUS_KEYS[currentMvtAgres] || 'saut';
         }
 
+        function loadMovementCollapsedCategoryKeys() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(MOVEMENT_COLLAPSED_CATEGORIES_KEY) || '[]');
+                return Array.isArray(saved) ? saved.filter(value => typeof value === 'string') : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function saveMovementCollapsedCategoryKeys() {
+            localStorage.setItem(MOVEMENT_COLLAPSED_CATEGORIES_KEY, JSON.stringify([...movementCollapsedCategories]));
+        }
+
+        function getMovementCategoryCollapseKey(categoryKey, apparatus = getCurrentMovementApparatusKey()) {
+            return `${normalizeProgressionApparatus(apparatus)}:${String(categoryKey || '')}`;
+        }
+
+        function isMovementCategoryCollapsed(categoryKey, apparatus = getCurrentMovementApparatusKey()) {
+            return movementCollapsedCategories.has(getMovementCategoryCollapseKey(categoryKey, apparatus));
+        }
+
+        function toggleMovementCategorySection(categoryKey) {
+            const key = getMovementCategoryCollapseKey(categoryKey);
+            if (movementCollapsedCategories.has(key)) movementCollapsedCategories.delete(key);
+            else movementCollapsedCategories.add(key);
+            saveMovementCollapsedCategoryKeys();
+            renderSiglesPalette();
+            return movementCollapsedCategories.has(key);
+        }
+
+        function renderMovementApparatusTabs() {
+            const container = document.getElementById('movement-apparatus-tabs');
+            if (!container) return;
+            container.innerHTML = '';
+            PROGRESSION_APPARATUS.forEach(definition => {
+                const active = definition.label === currentMvtAgres;
+                const count = getMovementEntriesForApparatus(definition.key).length;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.role = 'tab';
+                button.setAttribute('aria-selected', active ? 'true' : 'false');
+                button.className = active
+                    ? 'min-h-10 rounded-lg bg-white px-2 py-2 text-[10px] font-black text-pink-700 shadow-sm'
+                    : 'min-h-10 rounded-lg px-2 py-2 text-[10px] font-bold text-gray-500 hover:bg-white/70';
+                button.textContent = `${definition.label} (${count})`;
+                button.onclick = () => switchMvtAgres(definition.label);
+                container.appendChild(button);
+            });
+        }
+
         function getDefaultSigleToken(item) {
             return item && item.catalogId
                 ? `[${item.abrev}]`
@@ -9901,15 +10205,6 @@
 
         function refreshMovementCategoryControls(selectedElementCategory = undefined) {
             const categories = getMovementCategoryDefinitions();
-            if (movementCategoryFilter !== 'all' && !categories.some(category => category.key === movementCategoryFilter))
-                movementCategoryFilter = 'all';
-            const filter = document.getElementById('movement-category-filter');
-            if (filter) {
-                filter.innerHTML = `<option value="all">Toutes les catégories</option>` + categories.map(category =>
-                    `<option value="${escapeHtml(category.key)}">${escapeHtml(`${category.icon || ''} ${category.label}`.trim())}</option>`
-                ).join('');
-                filter.value = movementCategoryFilter;
-            }
             const categoryInput = document.getElementById('sigle-category-input');
             if (categoryInput) {
                 const previous = selectedElementCategory === undefined ? categoryInput.value : selectedElementCategory;
@@ -9919,16 +10214,6 @@
                 categoryInput.value = categories.some(category => category.key === previous) ? previous : 'auto';
             }
             return categories;
-        }
-
-        function setMovementCategoryFilter(value) {
-            const categories = getMovementCategoryDefinitions();
-            movementCategoryFilter = value === 'all' || categories.some(category => category.key === value)
-                ? value
-                : 'all';
-            localStorage.setItem(MOVEMENT_CATEGORY_FILTER_KEY, movementCategoryFilter);
-            renderSiglesPalette();
-            renderCustomSiglesManager();
         }
 
         function createMovementCategoryFromForm() {
@@ -10054,8 +10339,6 @@
                 alert("La catégorie n'a pas pu être supprimée.");
                 return false;
             }
-            if (movementCategoryFilter === category.key) movementCategoryFilter = 'all';
-            localStorage.setItem(MOVEMENT_CATEGORY_FILTER_KEY, movementCategoryFilter);
             refreshMovementCategoryControls();
             renderMovementCategoriesManager();
             renderSiglesPalette();
@@ -10099,93 +10382,7 @@
         }
 
         function getVisibleMovementEntries() {
-            return getMovementEntriesForApparatus().filter(entry =>
-                movementCategoryFilter === 'all' || getMovementCategoryKey(entry.item) === movementCategoryFilter
-            );
-        }
-
-        function getMovementPdfSelection(gymId = currentGymId) {
-            const key = String(gymId || '');
-            if (!movementPdfSelections.has(key)) movementPdfSelections.set(key, new Set());
-            return movementPdfSelections.get(key);
-        }
-
-        function getMovementPdfEntryKey(entry, apparatus = getCurrentMovementApparatusKey()) {
-            if (!entry || !entry.item) return '';
-            const sourceId = entry.kind === 'default'
-                ? getDefaultSigleIdentity(entry.item)
-                : String(entry.item.progressionElementId || entry.item.abrev || entry.index);
-            return `${entry.kind}:${sourceId}:${normalizeProgressionApparatus(apparatus)}`;
-        }
-
-        function getAllMovementPdfItems() {
-            return PROGRESSION_APPARATUS.flatMap(apparatus =>
-                getMovementEntriesForApparatus(apparatus.key).map(entry => {
-                    const scoring = entry.kind === 'default'
-                        ? getDefaultSigleScoring(entry.item, apparatus.key)
-                        : getCustomSigleScoring(entry.item, apparatus.key);
-                    return {
-                        key: getMovementPdfEntryKey(entry, apparatus.key),
-                        kind: entry.kind,
-                        sourceIndex: entry.index,
-                        name: String(entry.item.nom || entry.item.abrev || ''),
-                        code: String(entry.item.abrev || ''),
-                        image: String(entry.item.img || ''),
-                        symbol: String(entry.item.symbole || ''),
-                        apparatus: apparatus.key,
-                        apparatusLabel: apparatus.label,
-                        category: getMovementCategoryLabel(entry.item.category, entry.item.nom),
-                        families: getProgressionFamilyLabels(entry.item.families),
-                        movementValue: scoring.movementValue,
-                        bonusValue: scoring.bonusValue
-                    };
-                })
-            );
-        }
-
-        function getSelectedMovementPdfItems(gymId = currentGymId) {
-            const selection = getMovementPdfSelection(gymId);
-            const allItems = getAllMovementPdfItems();
-            const validKeys = new Set(allItems.map(item => item.key));
-            [...selection].forEach(key => {
-                if (!validKeys.has(key)) selection.delete(key);
-            });
-            return allItems.filter(item => selection.has(item.key));
-        }
-
-        function updateMovementPdfSelectionUI() {
-            const count = getSelectedMovementPdfItems().length;
-            const label = document.getElementById('movement-pdf-selection-count');
-            const button = document.getElementById('btn-export-selected-movements');
-            if (label) label.textContent = `${count} élément${count === 1 ? '' : 's'} sélectionné${count === 1 ? '' : 's'}`;
-            if (button) button.disabled = count === 0;
-            return count;
-        }
-
-        function toggleMovementEntryPdfSelection(kind, index, selected) {
-            const entry = kind === 'default'
-                ? getResolvedDefaultSigleEntries().find(candidate => candidate.index === Number(index))
-                : {kind: 'custom', index: Number(index), item: data.customSigles[Number(index)]};
-            const key = getMovementPdfEntryKey(entry);
-            if (!key) return false;
-            const selection = getMovementPdfSelection();
-            if (selected) selection.add(key);
-            else selection.delete(key);
-            renderSiglesPalette();
-            return selection.has(key);
-        }
-
-        function selectAllVisibleMovementForPdf() {
-            const selection = getMovementPdfSelection();
-            getVisibleMovementEntries().forEach(entry => selection.add(getMovementPdfEntryKey(entry)));
-            renderSiglesPalette();
-            return selection.size;
-        }
-
-        function clearMovementPdfSelection() {
-            getMovementPdfSelection().clear();
-            renderSiglesPalette();
-            return 0;
+            return getMovementEntriesForApparatus();
         }
 
         function insertDefaultSigleToken(index) {
@@ -10196,8 +10393,6 @@
         function renderMovementPaletteEntry(entry) {
             const item = entry.item;
             const categoryLabel = getMovementCategoryLabel(item.category, item.nom);
-            const selectionKey = getMovementPdfEntryKey(entry);
-            const checked = getMovementPdfSelection().has(selectionKey) ? ' checked' : '';
             const insertAction = entry.kind === 'custom'
                 ? `insertCustomSigleToken(${entry.index})`
                 : `insertDefaultSigleToken(${entry.index})`;
@@ -10206,9 +10401,6 @@
                 ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nom)}" class="h-12 w-12 object-contain">`
                 : `<span class="flex h-12 w-12 items-center justify-center text-2xl">${escapeHtml(item.symbole || '🖼️')}</span>`;
             return `<article class="relative min-h-32 rounded-xl border border-gray-200 bg-white p-1.5 text-center shadow-sm transition hover:border-pink-300">
-                <label class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-purple-200 bg-white shadow-sm" title="Sélectionner pour la fiche PDF">
-                    <input type="checkbox" class="h-4 w-4 accent-purple-700" aria-label="Sélectionner ${escapeHtml(item.nom)} pour le PDF" onchange="toggleMovementEntryPdfSelection('${entry.kind}', ${entry.index}, this.checked)"${checked}>
-                </label>
                 <button type="button" onclick="${insertAction}" title="Ajouter ${escapeHtml(item.nom)} à la composition" class="flex min-h-28 w-full flex-col items-center justify-center rounded-lg px-1 hover:bg-pink-50">
                     ${image}
                     <span class="mt-1 block min-h-7 w-full text-[9px] font-black leading-tight text-gray-800">${escapeHtml(item.nom)}</span>
@@ -10223,21 +10415,25 @@
             const empty = document.getElementById('sigle-palette-empty');
             if (!kbd || !empty) return;
             refreshMovementCategoryControls();
-            const apparatusSelect = document.getElementById('movement-apparatus-filter');
-            if (apparatusSelect) apparatusSelect.value = currentMvtAgres;
+            renderMovementApparatusTabs();
             const paletteEntries = getVisibleMovementEntries();
-            kbd.innerHTML = groupMovementEntriesByCategory(paletteEntries).map(group => `
+            kbd.innerHTML = groupMovementEntriesByCategory(paletteEntries).map(group => {
+                const collapsed = isMovementCategoryCollapsed(group.key);
+                return `
                 <section class="overflow-hidden rounded-xl border bg-gray-50/70" style="border-color:${escapeHtml(group.accent || '#d1d5db')}55">
-                    <div class="flex items-center justify-between border-b bg-white px-2.5 py-1.5" style="border-color:${escapeHtml(group.accent || '#d1d5db')}55">
-                        <h4 class="text-[10px] font-black uppercase tracking-wider" style="color:${escapeHtml(group.accent || '#4b5563')}">${escapeHtml(`${group.icon || ''} ${group.label}`.trim())}</h4>
-                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[8px] font-bold text-gray-500">${group.entries.length}</span>
-                    </div>
-                    <div class="movement-category-grid grid grid-cols-2 gap-2 p-2 min-[390px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
+                    <button type="button" onclick="toggleMovementCategorySection('${escapeHtml(group.key)}')" aria-expanded="${collapsed ? 'false' : 'true'}" class="flex min-h-11 w-full items-center justify-between gap-2 border-b bg-white px-2.5 py-2 text-left" style="border-color:${escapeHtml(group.accent || '#d1d5db')}55">
+                        <span class="text-[10px] font-black uppercase tracking-wider" style="color:${escapeHtml(group.accent || '#4b5563')}">${escapeHtml(`${group.icon || ''} ${group.label}`.trim())}</span>
+                        <span class="flex items-center gap-2">
+                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[8px] font-bold text-gray-500">${group.entries.length}</span>
+                            <span class="text-sm font-black text-gray-500" aria-hidden="true">${collapsed ? '＋' : '−'}</span>
+                        </span>
+                    </button>
+                    <div class="movement-category-grid ${collapsed ? 'hidden' : 'grid'} grid-cols-2 gap-2 p-2 min-[390px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
                         ${group.entries.map(renderMovementPaletteEntry).join('')}
                     </div>
-                </section>`).join('');
+                </section>`;
+            }).join('');
             empty.classList.toggle('hidden', paletteEntries.length > 0);
-            updateMovementPdfSelectionUI();
         }
 
         function getSigleProgressionApparatusInputs() {
@@ -11042,19 +11238,9 @@
 
         function switchMvtAgres(agres) {
             currentMvtAgres = ['Saut', 'Barres', 'Poutre', 'Sol'].includes(agres) ? agres : 'Saut';
-            ['Saut', 'Barres', 'Poutre', 'Sol'].forEach(a => {
-                const btn = document.getElementById(`btn-mvt-${a.toLowerCase()}`);
-                if (btn) 
-                    btn.className = (a === agres)
-                        ? 'flex-1 py-1 rounded text-center bg-white shadow-sm font-semibold text-gray-800'
-                        : 'flex-1 py-1 rounded text-center text-gray-500';
-                }
-            );
             document
                 .getElementById('lbl-mvt-title')
                 .innerText = `Composition — ${currentMvtAgres} :`;
-            const apparatusSelect = document.getElementById('movement-apparatus-filter');
-            if (apparatusSelect) apparatusSelect.value = currentMvtAgres;
             document
                 .getElementById('txt-mouvement-content')
                 .value = (

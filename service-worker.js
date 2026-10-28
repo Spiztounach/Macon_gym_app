@@ -1,15 +1,19 @@
-const CACHE_NAME = 'gymsuivi-v47';
+const CACHE_NAME = 'gymsuivi-v48';
 const BIRTHDAY_STATE_URL = new URL('./__birthday_state__', self.registration.scope).href;
 const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
 
-const catalogAssetRange = (prefix, count) => Array.from({length: count}, (_, index) =>
-  `./assets/ffgym-federal-a/${prefix}-${String(index + 1).padStart(2, '0')}.png`
+const catalogAssetRange = (folder, prefix, count) => Array.from({length: count}, (_, index) =>
+  `./assets/${folder}/${prefix}-${String(index + 1).padStart(2, '0')}.png`
 );
 const FFGYM_FEDERAL_A_ASSETS = [
-  ...catalogAssetRange('SAU', 4),
-  ...catalogAssetRange('BAR', 31),
-  ...catalogAssetRange('POU', 51),
-  ...catalogAssetRange('SOL', 44)
+  ...catalogAssetRange('ffgym-federal-a', 'SAU', 4),
+  ...catalogAssetRange('ffgym-federal-a', 'BAR', 31),
+  ...catalogAssetRange('ffgym-federal-a', 'POU', 51),
+  ...catalogAssetRange('ffgym-federal-a', 'SOL', 44),
+  ...catalogAssetRange('ffgym-federal-a-brochure', 'SAU', 4),
+  ...catalogAssetRange('ffgym-federal-a-brochure', 'BAR', 31),
+  ...catalogAssetRange('ffgym-federal-a-brochure', 'POU', 51),
+  ...catalogAssetRange('ffgym-federal-a-brochure', 'SOL', 44)
 ];
 
 const URLS_TO_CACHE = [
