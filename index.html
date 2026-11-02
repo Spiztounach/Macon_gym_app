@@ -1278,7 +1278,7 @@
                         <span id="planning-bulk-selection-help" class="block text-[9px] text-indigo-600">Cochez les cartes à modifier ensemble.</span>
                     </div>
                     <div class="grid grid-cols-2 gap-1.5 sm:flex">
-                        <button id="btn-open-planning-bulk-calendar" type="button" onclick="openPlanningBulkCalendar()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">📅 Calendrier</button>
+                        <button id="btn-open-planning-bulk-calendar" type="button" onclick="openPlanningBulkCalendar()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">📅 Calendrier</button>
                         <button type="button" onclick="selectAllVisiblePlanningEntities()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">Tout sélectionner</button>
                         <button type="button" onclick="clearPlanningBulkSelection()" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
                         <button id="btn-open-planning-bulk-editor" type="button" onclick="openPlanningBulkEditor()" disabled class="rounded-lg bg-indigo-700 px-3 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Modifier en masse</button>
@@ -1482,6 +1482,13 @@
                     <p class="font-bold text-amber-900">2. Agrès à inclure</p>
                     <div id="level-progression-apparatus-list" class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"></div>
                 </section>
+                <section class="rounded-xl border border-blue-100 bg-blue-50 p-3">
+                    <p class="font-bold text-blue-900">3. Format du document</p>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="complete" checked onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version complète</strong><span class="mt-1 block text-[9px] text-gray-500">Synthèse, diagrammes radar, qualité technique et tableau détaillé.</span></span></label>
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version allégée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom et statut actuel coché pour gagner de la place.</span></span></label>
+                    </div>
+                </section>
                 <p id="level-progression-export-summary" class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-semibold text-gray-600">Sélectionnez au moins une gymnaste et un agrès.</p>
                 <p id="level-progression-export-status" class="hidden rounded-lg border border-purple-200 bg-purple-50 p-2 text-[10px] font-semibold text-purple-700"></p>
             </div>
@@ -1532,7 +1539,7 @@
     <div id="modal-planning-bulk-calendar" role="dialog" aria-modal="true" aria-labelledby="planning-bulk-calendar-title" class="hidden fixed inset-0 z-[76] flex items-center justify-center bg-black/55 p-2 backdrop-blur-sm sm:p-4">
         <div class="flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
             <div class="flex shrink-0 items-center justify-between gap-3 bg-indigo-700 p-4 font-bold text-white">
-                <div><span id="planning-bulk-calendar-title" class="block">Sélectionner les séances dans le calendrier</span><span class="mt-0.5 block text-[9px] font-normal text-indigo-100">Cochez une séance, une journée ou le mois entier avant la modification en masse.</span></div>
+                <div><span id="planning-bulk-calendar-title" class="block">Sélectionner dans le calendrier</span><span id="planning-bulk-calendar-subtitle" class="mt-0.5 block text-[9px] font-normal text-indigo-100">Cochez les éléments à modifier ensemble.</span></div>
                 <button type="button" onclick="closePlanningBulkCalendar()" class="text-white" aria-label="Fermer">✕</button>
             </div>
             <div class="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
@@ -1985,7 +1992,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.37.0';
+        const APP_VERSION = '1.38.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -5121,6 +5128,7 @@
         let planningApparatusWorkloadChart = null;
         let planningProfileWorkloadChart = null;
         let planningBulkCalendarMonth = '';
+        let planningBulkCalendarType = 'session';
         let currentAttendanceLevelId = '';
         let currentAttendanceSessionKey = '';
         let attendanceDraftEntries = {};
@@ -5868,11 +5876,18 @@
             const count = document.getElementById('planning-bulk-selection-count');
             const help = document.getElementById('planning-bulk-selection-help');
             const editButton = document.getElementById('btn-open-planning-bulk-editor');
+            const calendarButton = document.getElementById('btn-open-planning-bulk-calendar');
             if (count) count.textContent = `${selection.size} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}${selection.size === 1 ? '' : 's'} sélectionné${selection.size === 1 ? '' : 's'}`;
             if (help) help.textContent = planningVisibleEntityIds[type].length
                 ? `${planningVisibleEntityIds[type].length} carte${planningVisibleEntityIds[type].length === 1 ? '' : 's'} visible${planningVisibleEntityIds[type].length === 1 ? '' : 's'} · la sélection est conservée avec les filtres.`
                 : 'Aucune carte visible avec les filtres actuels.';
             if (editButton) editButton.disabled = selection.size === 0;
+            if (calendarButton) {
+                calendarButton.disabled = type === 'macrocycle';
+                calendarButton.title = type === 'macrocycle'
+                    ? 'Le calendrier est disponible pour les mésocycles, microcycles et séances.'
+                    : `Sélectionner les ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}s dans le calendrier`;
+            }
             document.querySelectorAll(`[data-planning-bulk-type="${type}"]`).forEach(input => {
                 input.checked = selection.has(input.dataset.planningBulkId);
             });
@@ -5897,7 +5912,20 @@
             updatePlanningBulkToolbar();
         }
 
-        function getPlanningBulkCalendarModel(monthValue, sessions = getPlanningCollection('session')) {
+        function getPlanningBulkCalendarItemRange(item, type = planningBulkCalendarType) {
+            const start = type === 'session' ? String(item && item.date || '') : String(item && item.startDate || '');
+            const end = type === 'session' ? start : String(item && item.endDate || start);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return null;
+            return {start, end: /^\d{4}-\d{2}-\d{2}$/.test(end) && end >= start ? end : start};
+        }
+
+        function getPlanningBulkCalendarItemText(item, type = planningBulkCalendarType) {
+            if (type === 'session') return `${item.startTime || '—'} ${item.type || 'Séance'}`;
+            if (type === 'mesocycle') return `${item.phase || ''}${item.code ? ` · ${item.code}` : ''}${item.name ? ` · ${item.name}` : ''}`.replace(/^\s*·\s*/, '').trim();
+            return String(item && item.name || getPlanningTypeLabel(type));
+        }
+
+        function getPlanningBulkCalendarModel(monthValue, items = getPlanningCollection(planningBulkCalendarType), type = planningBulkCalendarType) {
             const now = new Date();
             const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             const monthKey = /^\d{4}-\d{2}$/.test(String(monthValue || '')) ? String(monthValue) : fallback;
@@ -5905,37 +5933,51 @@
             const monthIndex = monthNumber - 1;
             const leadingDays = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
             const dayCount = new Date(year, monthIndex + 1, 0).getDate();
-            const byDate = new Map();
-            (Array.isArray(sessions) ? sessions : []).forEach(session => {
-                if (!session || !String(session.date || '').startsWith(`${monthKey}-`)) return;
-                const date = String(session.date);
-                if (!byDate.has(date)) byDate.set(date, []);
-                byDate.get(date).push(session);
-            });
-            byDate.forEach(items => items.sort((left, right) =>
-                String(left.startTime || '').localeCompare(String(right.startTime || '')) ||
-                String(left.type || '').localeCompare(String(right.type || ''), 'fr')
-            ));
             const days = Array.from({length: dayCount}, (_, index) => {
                 const day = index + 1;
                 const date = `${monthKey}-${String(day).padStart(2, '0')}`;
-                return {day, date, sessions: byDate.get(date) || []};
+                const entries = (Array.isArray(items) ? items : []).filter(item => {
+                    const range = getPlanningBulkCalendarItemRange(item, type);
+                    return range && date >= range.start && date <= range.end;
+                }).sort((left, right) => {
+                    if (type === 'session') return String(left.startTime || '').localeCompare(String(right.startTime || '')) || String(left.type || '').localeCompare(String(right.type || ''), 'fr');
+                    return String(left.startDate || '').localeCompare(String(right.startDate || '')) || String(left.name || '').localeCompare(String(right.name || ''), 'fr');
+                });
+                return {day, date, entries};
             });
-            return {monthKey, year, monthIndex, leadingDays, dayCount, days};
+            return {monthKey, year, monthIndex, leadingDays, dayCount, days, type};
         }
 
         function openPlanningBulkCalendar() {
-            if (currentPlanningTab !== 'session') switchPlanningTab('session');
-            prunePlanningBulkSelection('session');
-            const sessions = getPlanningCollection('session');
-            const selected = planningBulkSelections.session;
+            const type = getCurrentPlanningBulkType();
+            if (type === 'macrocycle') {
+                alert('ℹ️ Le calendrier de sélection est disponible dans les onglets Mésocycles, Microcycles et Séances.');
+                return;
+            }
+            planningBulkCalendarType = type;
+            prunePlanningBulkSelection(type);
+            const items = getPlanningCollection(type);
+            const selected = planningBulkSelections[type];
             const today = new Date();
             const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const seed = sessions.find(item => selected.has(item.id)) ||
-                sessions.find(item => String(item.date || '') >= todayKey) || sessions[0];
-            planningBulkCalendarMonth = seed && /^\d{4}-\d{2}/.test(String(seed.date || ''))
-                ? String(seed.date).slice(0, 7)
+            const itemDate = item => {
+                const range = getPlanningBulkCalendarItemRange(item, type);
+                return range ? range.start : '';
+            };
+            const seed = items.find(item => selected.has(item.id)) ||
+                items.find(item => {
+                    const range = getPlanningBulkCalendarItemRange(item, type);
+                    return range && range.end >= todayKey;
+                }) || items[0];
+            const seedDate = itemDate(seed);
+            planningBulkCalendarMonth = /^\d{4}-\d{2}/.test(seedDate)
+                ? seedDate.slice(0, 7)
                 : todayKey.slice(0, 7);
+            const label = getPlanningTypeLabel(type).toLocaleLowerCase('fr');
+            document.getElementById('planning-bulk-calendar-title').textContent = `Sélectionner les ${label}s dans le calendrier`;
+            document.getElementById('planning-bulk-calendar-subtitle').textContent = type === 'session'
+                ? 'Cochez une séance, une journée ou le mois entier avant la modification en masse.'
+                : `Les ${label}s apparaissent sur toute leur période : cochez une carte, une journée ou le mois entier.`;
             renderPlanningBulkCalendar();
             document.getElementById('modal-planning-bulk-calendar').classList.remove('hidden');
         }
@@ -5946,7 +5988,7 @@
         }
 
         function shiftPlanningBulkCalendarMonth(delta) {
-            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, []);
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, [], planningBulkCalendarType);
             const next = new Date(model.year, model.monthIndex + Math.trunc(Number(delta) || 0), 1);
             planningBulkCalendarMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
             renderPlanningBulkCalendar();
@@ -5959,32 +6001,34 @@
         }
 
         function selectPlanningBulkCalendarMonth(selected) {
-            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth);
-            model.days.flatMap(day => day.sessions).forEach(session => {
-                if (selected) planningBulkSelections.session.add(session.id);
-                else planningBulkSelections.session.delete(session.id);
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, getPlanningCollection(planningBulkCalendarType), planningBulkCalendarType);
+            model.days.flatMap(day => day.entries).forEach(item => {
+                if (selected) planningBulkSelections[planningBulkCalendarType].add(item.id);
+                else planningBulkSelections[planningBulkCalendarType].delete(item.id);
             });
             renderPlanningBulkCalendar();
         }
 
         function togglePlanningBulkCalendarDay(date) {
-            const sessions = getPlanningCollection('session').filter(item => item.date === date);
-            const allSelected = sessions.length > 0 && sessions.every(item => planningBulkSelections.session.has(item.id));
-            sessions.forEach(item => {
-                if (allSelected) planningBulkSelections.session.delete(item.id);
-                else planningBulkSelections.session.add(item.id);
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, getPlanningCollection(planningBulkCalendarType), planningBulkCalendarType);
+            const entries = (model.days.find(day => day.date === date) || {}).entries || [];
+            const selection = planningBulkSelections[planningBulkCalendarType];
+            const allSelected = entries.length > 0 && entries.every(item => selection.has(item.id));
+            entries.forEach(item => {
+                if (allSelected) selection.delete(item.id);
+                else selection.add(item.id);
             });
             renderPlanningBulkCalendar();
         }
 
-        function togglePlanningBulkCalendarSession(id, selected) {
-            if (selected) planningBulkSelections.session.add(id);
-            else planningBulkSelections.session.delete(id);
+        function togglePlanningBulkCalendarItem(id, selected) {
+            if (selected) planningBulkSelections[planningBulkCalendarType].add(id);
+            else planningBulkSelections[planningBulkCalendarType].delete(id);
             renderPlanningBulkCalendar();
         }
 
         function clearPlanningBulkCalendarSelection() {
-            planningBulkSelections.session.clear();
+            planningBulkSelections[planningBulkCalendarType].clear();
             renderPlanningBulkCalendar();
         }
 
@@ -5993,9 +6037,9 @@
             const monthLabel = document.getElementById('planning-bulk-calendar-month');
             const count = document.getElementById('planning-bulk-calendar-count');
             if (!grid || !monthLabel || !count) return;
-            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth);
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, getPlanningCollection(planningBulkCalendarType), planningBulkCalendarType);
             planningBulkCalendarMonth = model.monthKey;
-            const selection = planningBulkSelections.session;
+            const selection = planningBulkSelections[planningBulkCalendarType];
             const today = new Date();
             const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             monthLabel.textContent = new Date(model.year, model.monthIndex, 1)
@@ -6016,30 +6060,30 @@
                 number.className = day.date === todayKey ? 'text-indigo-700' : 'text-gray-700';
                 number.textContent = String(day.day);
                 heading.appendChild(number);
-                if (day.sessions.length) {
-                    const allSelected = day.sessions.every(session => selection.has(session.id));
+                if (day.entries.length) {
+                    const allSelected = day.entries.every(item => selection.has(item.id));
                     const dayButton = document.createElement('button');
                     dayButton.type = 'button';
                     dayButton.className = `rounded px-1.5 py-1 text-[8px] font-bold ${allSelected ? 'bg-indigo-700 text-white' : 'bg-indigo-50 text-indigo-700'}`;
                     dayButton.textContent = allSelected ? 'Effacer' : 'Tout';
-                    dayButton.setAttribute('aria-label', `${allSelected ? 'Désélectionner' : 'Sélectionner'} toutes les séances du ${formatPlanningDate(day.date)}`);
+                    dayButton.setAttribute('aria-label', `${allSelected ? 'Désélectionner' : 'Sélectionner'} tous les éléments du ${formatPlanningDate(day.date)}`);
                     dayButton.onclick = () => togglePlanningBulkCalendarDay(day.date);
                     heading.appendChild(dayButton);
                 }
                 cell.appendChild(heading);
                 const list = document.createElement('div');
                 list.className = 'space-y-1';
-                day.sessions.forEach(session => {
+                day.entries.forEach(item => {
                     const label = document.createElement('label');
-                    label.className = `flex cursor-pointer items-start gap-1 rounded border p-1 text-[8px] leading-tight ${selection.has(session.id) ? 'border-indigo-300 bg-indigo-50 text-indigo-900' : 'border-gray-100 bg-gray-50 text-gray-600'}`;
+                    label.className = `flex cursor-pointer items-start gap-1 rounded border p-1 text-[8px] leading-tight ${selection.has(item.id) ? 'border-indigo-300 bg-indigo-50 text-indigo-900' : 'border-gray-100 bg-gray-50 text-gray-600'}`;
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.checked = selection.has(session.id);
+                    checkbox.checked = selection.has(item.id);
                     checkbox.className = 'mt-0.5 h-3.5 w-3.5 shrink-0 accent-indigo-700';
-                    checkbox.onchange = () => togglePlanningBulkCalendarSession(session.id, checkbox.checked);
+                    checkbox.onchange = () => togglePlanningBulkCalendarItem(item.id, checkbox.checked);
                     const text = document.createElement('span');
                     text.className = 'min-w-0 break-words';
-                    text.textContent = `${session.startTime || '—'} ${session.type || 'Séance'}`;
+                    text.textContent = getPlanningBulkCalendarItemText(item, planningBulkCalendarType);
                     label.append(checkbox, text);
                     list.appendChild(label);
                 });
@@ -6054,8 +6098,9 @@
                 blank.setAttribute('aria-hidden', 'true');
                 grid.appendChild(blank);
             }
-            const monthSelected = model.days.flatMap(day => day.sessions).filter(session => selection.has(session.id)).length;
-            count.textContent = `${selection.size} séance${selection.size === 1 ? '' : 's'} sélectionnée${selection.size === 1 ? '' : 's'} au total · ${monthSelected} dans ce mois`;
+            const monthSelected = new Set(model.days.flatMap(day => day.entries).filter(item => selection.has(item.id)).map(item => item.id)).size;
+            const label = getPlanningTypeLabel(planningBulkCalendarType).toLocaleLowerCase('fr');
+            count.textContent = `${selection.size} ${label}${selection.size === 1 ? '' : 's'} sélectionné${selection.size === 1 ? '' : 's'} au total · ${monthSelected} dans ce mois`;
             updatePlanningBulkToolbar();
         }
 
@@ -10143,6 +10188,7 @@
                         brochureImage: String(source.brochureImg || ''),
                         apparatus,
                         apparatusLabel: getProgressionApparatusLabel(apparatus),
+                        status: normalizeProgressionStatus(item.status),
                         categoryKey: categoryDefinition.key,
                         category: categoryDefinition.label,
                         categoryIcon: categoryDefinition.icon || '',
@@ -10542,7 +10588,7 @@
             ]));
         }
 
-        function drawCompactProgressionEvaluationRow(doc, item, symbolImage, x, y, width, height) {
+        function drawCompactProgressionEvaluationRow(doc, item, symbolImage, x, y, width, height, markCurrentStatus = false) {
             doc.setDrawColor(203, 213, 225);
             doc.setFillColor(255, 255, 255);
             doc.roundedRect(x, y, width, height, 0.8, 0.8, 'FD');
@@ -10568,23 +10614,42 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.6);
             doc.text(fitProgressionPdfText(doc, item.name, width - 46.5), x + 8, y + 4.6);
-            const statuses = ['NR', 'ÉT', 'EC', 'AC'];
+            const statuses = [
+                {key: 'not_performed', label: 'NR'},
+                {key: 'studied', label: 'ÉT'},
+                {key: 'in_progress', label: 'EC'},
+                {key: 'acquired', label: 'AC'}
+            ];
             const statusStart = x + width - 35;
-            statuses.forEach((label, index) => {
+            statuses.forEach((status, index) => {
                 const optionX = statusStart + index * 8.5;
-                doc.setDrawColor(71, 85, 105);
-                doc.rect(optionX, y + 2, 3.2, 3.2);
-                doc.setTextColor(71, 85, 105);
+                const active = markCurrentStatus && normalizeProgressionStatus(item.status) === status.key;
+                doc.setDrawColor(active ? 126 : 71, active ? 34 : 85, active ? 206 : 105);
+                if (active) {
+                    doc.setFillColor(126, 34, 206);
+                    doc.rect(optionX, y + 2, 3.2, 3.2, 'FD');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(3.8);
+                    doc.text('X', optionX + 1.6, y + 4.5, {align: 'center'});
+                    doc.setTextColor(126, 34, 206);
+                } else {
+                    doc.rect(optionX, y + 2, 3.2, 3.2);
+                    doc.setTextColor(71, 85, 105);
+                }
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(5.2);
-                doc.text(label, optionX + 4, y + 4.5);
+                doc.text(status.label, optionX + 4, y + 4.5);
             });
         }
 
-        function createCompactProgressionEvaluationPdfDocument(jsPDF, gymnast, items, symbolMap = new Map()) {
+        function createCompactProgressionEvaluationPdfDocument(jsPDF, gymnast, items, symbolMap = new Map(), options) {
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             const bounds = getPdfPrintSafeBounds(doc);
             const pages = buildCompactProgressionEvaluationPdfPages(items);
+            const settings = options && typeof options === 'object' ? options : {};
+            const markCurrentStatus = Boolean(settings.markCurrentStatus);
+            const title = String(settings.title || 'Évaluation de progression - version allégée');
             const columns = 2;
             const gapX = 3;
             const rowHeight = 7.2;
@@ -10599,11 +10664,11 @@
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(14);
-                doc.text("Évaluation de progression — version allégée", bounds.left + 4, bounds.top + 8);
+                doc.text(title, bounds.left + 4, bounds.top + 8);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8.5);
                 doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), bounds.left + 4, bounds.top + 15);
-                doc.text('Date : ____________________', bounds.right - 4, bounds.top + 8, {align: 'right'});
+                doc.text(markCurrentStatus ? `Export du ${new Date().toLocaleDateString('fr-FR')}` : 'Date : ____________________', bounds.right - 4, bounds.top + 8, {align: 'right'});
                 doc.text(`Page ${pageIndex + 1} / ${pages.length}`, bounds.right - 4, bounds.top + 15, {align: 'right'});
                 doc.setTextColor(71, 85, 105);
                 doc.setFont('helvetica', 'normal');
@@ -10617,7 +10682,7 @@
                     block.rows.forEach(row => {
                         row.forEach((item, column) => {
                             const x = bounds.left + column * (columnWidth + gapX);
-                            drawCompactProgressionEvaluationRow(doc, item, symbolMap.get(item.key), x, y, columnWidth, rowHeight);
+                            drawCompactProgressionEvaluationRow(doc, item, symbolMap.get(item.key), x, y, columnWidth, rowHeight, markCurrentStatus);
                         });
                         y += rowHeight + rowGap;
                     });
@@ -10878,13 +10943,15 @@
         function updateLevelProgressionExportSelection() {
             const gymnastCount = document.querySelectorAll('[data-level-progression-gymnast-id]:checked').length;
             const apparatusCount = document.querySelectorAll('[data-level-progression-apparatus]:checked').length;
+            const format = (document.querySelector('input[name="level-progression-pdf-format"]:checked') || {}).value === 'compact' ? 'compact' : 'complete';
+            const formatLabel = format === 'compact' ? 'version allégée' : 'version complète';
             const summary = document.getElementById('level-progression-export-summary');
             const button = document.getElementById('btn-export-level-progressions');
             summary.textContent = gymnastCount && apparatusCount
-                ? `${gymnastCount} gymnaste${gymnastCount === 1 ? '' : 's'} · ${apparatusCount} agrès · ${gymnastCount} fichier${gymnastCount === 1 ? '' : 's'} PDF distinct${gymnastCount === 1 ? '' : 's'}`
+                ? `${gymnastCount} gymnaste${gymnastCount === 1 ? '' : 's'} · ${apparatusCount} agrès · ${formatLabel} · ${gymnastCount} fichier${gymnastCount === 1 ? '' : 's'} PDF distinct${gymnastCount === 1 ? '' : 's'}`
                 : 'Sélectionnez au moins une gymnaste et un agrès.';
             button.disabled = gymnastCount === 0 || apparatusCount === 0;
-            return {gymnastCount, apparatusCount};
+            return {gymnastCount, apparatusCount, format};
         }
 
         async function exportLevelProgressionPDFs() {
@@ -10894,6 +10961,7 @@
             }
             const gymnastIds = new Set(Array.from(document.querySelectorAll('[data-level-progression-gymnast-id]:checked')).map(input => input.dataset.levelProgressionGymnastId));
             const apparatuses = Array.from(document.querySelectorAll('[data-level-progression-apparatus]:checked')).map(input => input.value);
+            const format = (document.querySelector('input[name="level-progression-pdf-format"]:checked') || {}).value === 'compact' ? 'compact' : 'complete';
             const gymnasts = getLevelProgressionExportGymnasts().filter(gymnast => gymnastIds.has(gymnast.id));
             if (!gymnasts.length || !apparatuses.length) {
                 alert('⚠️ Sélectionnez au moins une gymnaste et un agrès.');
@@ -10903,11 +10971,17 @@
             const button = document.getElementById('btn-export-level-progressions');
             const status = document.getElementById('level-progression-export-status');
             const labels = apparatuses.map(key => (PROGRESSION_APPARATUS.find(item => item.key === key) || {}).label).filter(Boolean);
-            const suffix = apparatuses.length === PROGRESSION_APPARATUS.length ? 'Tous_agres' : apparatuses.join('_');
+            const apparatusSuffix = apparatuses.length === PROGRESSION_APPARATUS.length ? 'Tous_agres' : apparatuses.join('_');
+            const formatSuffix = format === 'compact' ? 'Allegee' : 'Complete';
             button.disabled = true;
             status.classList.remove('hidden');
             let created = 0;
             try {
+                let compactSymbolMap = new Map();
+                if (format === 'compact') {
+                    const sampleItems = getLevelProgressionPdfItems(gymnasts[0].id, apparatuses);
+                    compactSymbolMap = await prepareCompactProgressionPdfSymbols(getProgressionEvaluationPdfItems(sampleItems));
+                }
                 for (let index = 0; index < gymnasts.length; index += 1) {
                     const gymnast = gymnasts[index];
                     status.textContent = `Création ${index + 1} / ${gymnasts.length} : ${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim();
@@ -10915,8 +10989,20 @@
                     await new Promise(resolve => setTimeout(resolve, 0));
                     const items = getLevelProgressionPdfItems(gymnast.id, apparatuses);
                     if (!items.length) continue;
-                    const doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels);
-                    doc.save(`Progression_${getSafeGymnastPdfName(gymnast)}_${suffix}.pdf`);
+                    let doc;
+                    if (format === 'compact') {
+                        const compactItems = getProgressionEvaluationPdfItems(items);
+                        doc = createCompactProgressionEvaluationPdfDocument(
+                            window.jspdf.jsPDF,
+                            gymnast,
+                            compactItems,
+                            compactSymbolMap,
+                            {markCurrentStatus: true, title: 'Progression - version allégée'}
+                        );
+                    } else {
+                        doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels);
+                    }
+                    doc.save(`Progression_${formatSuffix}_${getSafeGymnastPdfName(gymnast)}_${apparatusSuffix}.pdf`);
                     created += 1;
                     await new Promise(resolve => setTimeout(resolve, 180));
                 }

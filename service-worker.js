@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymsuivi-v55';
+const CACHE_NAME = 'gymsuivi-v56';
 const BIRTHDAY_STATE_URL = new URL('./__birthday_state__', self.registration.scope).href;
 const BIRTHDAY_PERIODIC_SYNC_TAG = 'gym-birthday-check';
 
