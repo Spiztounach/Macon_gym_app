@@ -372,7 +372,7 @@
                         <p>Une copie de sécurité est conservée avant le remplacement. Les autres sauvegardes Drive ne sont pas supprimées.</p>
                     </div>
                     <button id="btn-drive-local-backup" onclick="exportDriveLocalBackup()" class="hidden w-full border rounded p-2 text-xs">📦 Exporter la copie locale avant synchronisation</button>
-                    <p id="drive-auto-login-note" class="text-[10px] text-gray-500">Après la première connexion, l’application conserve la session. À son expiration, le prochain appui dans l’application renouvelle l’accès sans bouton supplémentaire tant que la session Google reste active. Les musiques restent propres à l'appareil.</p>
+                    <p id="drive-auto-login-note" class="text-[10px] text-gray-500">Après la première connexion, l’application conserve la session. À son expiration, le prochain appui renouvelle l’accès. Les données et les musiques sont synchronisées séparément afin de rester disponibles sur téléphone, tablette et ordinateur.</p>
                     <div
                         id="sync-indicator"
                         class="hidden text-xs text-green-600 italic text-center">🔄 Synchronisation en cours...</div>
@@ -651,7 +651,7 @@
                             <div>
                                 <span class="block text-[10px] uppercase font-semibold text-purple-500">Musique de la gymnaste</span>
                                 <p id="gym-music-name" class="text-xs font-bold text-gray-700 mt-0.5">Aucune musique enregistrée</p>
-                                <p id="gym-music-status" class="text-[10px] text-gray-500 mt-0.5">La musique reste disponible hors connexion sur cet appareil.</p>
+                                <p id="gym-music-status" class="text-[10px] text-gray-500 mt-0.5">La musique est mise en cache sur cet appareil et synchronisée avec Google Drive.</p>
                             </div>
                             <div id="gym-music-player-home" class="w-full">
                                 <audio id="gym-music-player" class="hidden w-full" controls preload="metadata"></audio>
@@ -672,7 +672,7 @@
                                     onclick="deleteGymnastMusic()"
                                     class="hidden col-span-2 bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition">🗑️ Supprimer</button>
                             </div>
-                            <p class="text-[9px] leading-relaxed text-purple-500">Google Drive ouvre le sélecteur officiel et n’autorise que le morceau choisi. Celui-ci est ensuite copié sur l’appareil pour rester disponible hors connexion.</p>
+                            <p class="text-[9px] leading-relaxed text-purple-500">Une copie sécurisée est enregistrée dans l’espace privé de l’application sur Google Drive, puis téléchargée automatiquement sur chaque appareil lors de la première lecture.</p>
                         </div>
                         <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2.5">
                             <div class="flex items-start justify-between gap-2">
@@ -951,10 +951,14 @@
                                 <strong id="progression-export-selection-count">0 élément sélectionné</strong>
                                 <span class="block text-[9px] text-purple-600">La sélection reste active lorsque vous changez d’agrès.</span>
                             </div>
-                            <div class="grid grid-cols-3 gap-1.5 sm:flex">
+                            <div class="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:justify-end">
                                 <button type="button" onclick="selectAllVisibleProgressionForExport()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700">Tout l’agrès</button>
                                 <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
-                                <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">PDF sélection</button>
+                                <select id="progression-pdf-format" onchange="saveProgressionPdfModePreference()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700" aria-label="Format du PDF de progression">
+                                    <option value="complete">PDF complet</option>
+                                    <option value="compact">PDF allégé</option>
+                                </select>
+                                <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Exporter</button>
                             </div>
                         </div>
                         <div class="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block">
@@ -1261,6 +1265,18 @@
                     <button id="btn-planning-tab-session" type="button" onclick="switchPlanningTab('session')" class="rounded-lg py-2 font-bold text-gray-500">Séances</button>
                 </div>
 
+                <div id="planning-bulk-toolbar" class="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-indigo-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="text-[10px] text-indigo-800">
+                        <strong id="planning-bulk-selection-count">0 élément sélectionné</strong>
+                        <span id="planning-bulk-selection-help" class="block text-[9px] text-indigo-600">Cochez les cartes à modifier ensemble.</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 sm:flex">
+                        <button type="button" onclick="selectAllVisiblePlanningEntities()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">Tout sélectionner</button>
+                        <button type="button" onclick="clearPlanningBulkSelection()" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
+                        <button id="btn-open-planning-bulk-editor" type="button" onclick="openPlanningBulkEditor()" disabled class="rounded-lg bg-indigo-700 px-3 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Modifier en masse</button>
+                    </div>
+                </div>
+
                 <div id="planning-tab-macro" data-ui-zone="planning-macro" class="ui-theme-zone space-y-3 p-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
@@ -1453,6 +1469,24 @@
                 <div class="flex gap-2 border-t border-gray-100 pt-3">
                     <button type="button" onclick="closePlanningEditor()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
                     <button type="submit" class="flex-1 rounded-lg bg-teal-700 py-2 font-bold text-white">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-planning-bulk-editor" class="hidden fixed inset-0 z-[74] flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4">
+        <div class="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 bg-indigo-700 p-4 font-bold text-white">
+                <div><span id="planning-bulk-editor-title" class="block">Modification en masse</span><span id="planning-bulk-editor-subtitle" class="mt-0.5 block text-[9px] font-normal text-indigo-100"></span></div>
+                <button type="button" onclick="closePlanningBulkEditor()" class="text-white">✕</button>
+            </div>
+            <form id="planning-bulk-editor-form" onsubmit="savePlanningBulkEditor(event)" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+                <input id="planning-bulk-editor-type" type="hidden">
+                <div id="planning-bulk-editor-fields" class="space-y-3"></div>
+                <p class="rounded-lg border border-amber-200 bg-amber-50 p-2 text-[9px] leading-relaxed text-amber-800">Seuls les champs activés seront modifiés. Les autres informations de chaque carte resteront intactes.</p>
+                <div class="sticky bottom-0 flex gap-2 border-t border-gray-100 bg-white pt-3">
+                    <button type="button" onclick="closePlanningBulkEditor()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                    <button type="submit" class="flex-[2] rounded-lg bg-indigo-700 py-2 font-bold text-white">Appliquer aux éléments sélectionnés</button>
                 </div>
             </form>
         </div>
@@ -1881,7 +1915,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.34.0';
+        const APP_VERSION = '1.35.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -1937,10 +1971,12 @@
         const GYM_MUSIC_STORE_NAME = 'gymnast-music';
         const GYM_LICENCE_STORE_NAME = 'gymnast-licence';
         const UI_FILTER_STORAGE_KEY = 'gym_ui_filters_v1';
+        const PROGRESSION_PDF_MODE_STORAGE_KEY = 'gym_progression_pdf_mode_v1';
         const MOVEMENT_COLLAPSED_CATEGORIES_KEY = 'gym_movement_collapsed_categories_v1';
         const PROGRESSION_COLLAPSED_CATEGORIES_KEY = 'gym_progression_collapsed_categories_v1';
         const PDF_PRINT_SAFE_MARGIN_MM = 10;
         const PDF_PRINT_TABLE_BOTTOM_MARGIN_MM = 16;
+        const COMPACT_PROGRESSION_ITEMS_PER_PAGE_TARGET = 36;
         const MAX_GYM_MUSIC_SIZE_BYTES = 80 * 1024 * 1024;
         const GOOGLE_PICKER_API_KEY = 'AIzaSyB2GOfvBRHy-LrVzUQMB1B0YuRSTMZproc';
         const GOOGLE_PICKER_APP_ID = '759389909007';
@@ -1948,6 +1984,7 @@
         const DRIVE_MUSIC_TOKEN_KEY = 'drive_music_access_token_v1';
         const DRIVE_MUSIC_TOKEN_EXPIRY_KEY = 'drive_music_access_token_expires_v1';
         const DRIVE_MUSIC_GRANTED_KEY = 'drive_music_scope_granted_v1';
+        const DRIVE_MUSIC_FILE_PREFIX = 'gymsuivi_music_v1_';
         const MAX_GYM_LICENCE_SIZE_BYTES = 25 * 1024 * 1024;
 
         function getPdfPrintSafeBounds(doc) {
@@ -3010,6 +3047,7 @@
             deletedDefaultSigles: [],
             planning: createDefaultPlanningData(),
             attendanceSheets: [],
+            musicFiles: {},
             uiTheme: cloneDefaultUiTheme(),
             appName: "GymSuivi",
             appLogo: "",
@@ -3019,6 +3057,7 @@
         normalizeProgressionData(data);
         normalizePlanningData(data);
         normalizeAttendanceData(data);
+        normalizeGymMusicSyncData(data);
         normalizeUiTheme(data);
         const INITIAL_GYM_DATA = JSON.parse(JSON.stringify(data));
         let birthdayCheckIntervalId = null;
@@ -3031,6 +3070,7 @@
         let gymMusicDbPromise = null;
         let gymMusicObjectUrl = null;
         let gymMusicRenderToken = 0;
+        let gymMusicSyncTask = null;
         let gymLicenceObjectUrl = null;
         let gymLicenceRenderToken = 0;
         let pendingLevelDeletionId = null;
@@ -3040,9 +3080,38 @@
         let sigleDrawingTool = 'draw';
         let sigleDrawingHistory = [];
         let sigleDrawingHasContent = false;
+        const planningBulkSelections = {
+            macrocycle: new Set(), mesocycle: new Set(), microcycle: new Set(), session: new Set()
+        };
+        const planningVisibleEntityIds = {
+            macrocycle: [], mesocycle: [], microcycle: [], session: []
+        };
 
         function normalizeLevelName(value) {
             return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+        }
+
+        function normalizeGymMusicSyncData(target) {
+            const source = target && target.musicFiles && typeof target.musicFiles === 'object' && !Array.isArray(target.musicFiles)
+                ? target.musicFiles : {};
+            const normalized = {};
+            Object.entries(source).forEach(([rawGymId, rawMetadata]) => {
+                const gymId = String(rawGymId || '').trim().slice(0, 120);
+                if (!gymId || !rawMetadata || typeof rawMetadata !== 'object' || Array.isArray(rawMetadata)) return;
+                const pendingAction = ['upload', 'delete'].includes(rawMetadata.pendingAction) ? rawMetadata.pendingAction : '';
+                const deleted = rawMetadata.deleted === true || pendingAction === 'delete';
+                normalized[gymId] = {
+                    driveFileId: String(rawMetadata.driveFileId || '').trim().slice(0, 200),
+                    name: String(rawMetadata.name || '').trim().slice(0, 240),
+                    type: String(rawMetadata.type || 'audio/mpeg').trim().slice(0, 120),
+                    size: Math.max(0, Number(rawMetadata.size) || 0),
+                    updatedAt: String(rawMetadata.updatedAt || '').trim().slice(0, 50),
+                    pendingAction,
+                    deleted
+                };
+            });
+            target.musicFiles = normalized;
+            return target;
         }
 
         function normalizeLevelCollection(target) {
@@ -3616,6 +3685,7 @@
                 normalizeProgressionData(data);
                 normalizePlanningData(data);
                 normalizeAttendanceData(data);
+                normalizeGymMusicSyncData(data);
                 normalizeUiTheme(data);
                 }
             catch (e) {
@@ -3623,18 +3693,24 @@
             }
         })();
 
-        function saveAllData() {
+        function persistAllDataLocally() {
             normalizeLevelCollection(data);
             normalizeProgressionData(data);
             normalizePlanningData(data);
             normalizeAttendanceData(data);
+            normalizeGymMusicSyncData(data);
             normalizeUiTheme(data);
             localStorage.setItem('gym_master_data_v3', JSON.stringify(data));
+            return true;
+        }
+
+        function saveAllData() {
+            persistAllDataLocally();
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller)
                 syncBirthdayStateWithServiceWorker(false).catch(() => {});
             if (googleAccessToken) 
                 uploadDataToDrive();
-            }
+        }
 
         // Préférences d'affichage locales : elles ne modifient pas les données métier.
         function normalizeUiFilterPreferences(value) {
@@ -3710,6 +3786,24 @@
             setSelect('planning-workload-period', preferences.workloadPeriod);
             setSelect('planning-workload-metric', preferences.workloadMetric);
             return preferences;
+        }
+
+        function getProgressionPdfModePreference() {
+            return localStorage.getItem(PROGRESSION_PDF_MODE_STORAGE_KEY) === 'compact' ? 'compact' : 'complete';
+        }
+
+        function saveProgressionPdfModePreference() {
+            const select = document.getElementById('progression-pdf-format');
+            const mode = select && select.value === 'compact' ? 'compact' : 'complete';
+            localStorage.setItem(PROGRESSION_PDF_MODE_STORAGE_KEY, mode);
+            return mode;
+        }
+
+        function restoreProgressionPdfModePreference() {
+            const select = document.getElementById('progression-pdf-format');
+            const mode = getProgressionPdfModePreference();
+            if (select) select.value = mode;
+            return mode;
         }
         
         // ────────────────────────────────────────────────────────────── IDENTITÉ APP
@@ -3821,6 +3915,7 @@
                         normalizeProgressionData(data);
                         normalizePlanningData(data);
                         normalizeAttendanceData(data);
+                        normalizeGymMusicSyncData(data);
                         normalizeUiTheme(data);
                         saveAllData();
                         renderLevels();
@@ -4166,7 +4261,7 @@
                 throw driveDataError('Sauvegarde invalide (référentiel de progression) : aucune donnée remplacée.');
             if (!result.planning || typeof result.planning !== 'object' || Array.isArray(result.planning))
                 throw driveDataError('Sauvegarde invalide (planification) : aucune donnée remplacée.');
-            return normalizeUiTheme(normalizeAttendanceData(normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result)))));
+            return normalizeUiTheme(normalizeGymMusicSyncData(normalizeAttendanceData(normalizePlanningData(normalizeProgressionData(normalizeLevelCollection(result))))));
         }
 
         function hasDriveContent(snapshot) {
@@ -4180,6 +4275,7 @@
                     statuses && typeof statuses === 'object' && Object.keys(statuses).length > 0
                 ) ||
                 JSON.stringify(snapshot.planning) !== JSON.stringify(INITIAL_GYM_DATA.planning) ||
+                Object.keys(snapshot.musicFiles || {}).length > 0 ||
                 JSON.stringify(snapshot.uiTheme) !== JSON.stringify(INITIAL_GYM_DATA.uiTheme) ||
                 !!snapshot.appLogo || (snapshot.appName && snapshot.appName !== INITIAL_GYM_DATA.appName) ||
                 JSON.stringify(snapshot.levels) !== JSON.stringify(INITIAL_GYM_DATA.levels);
@@ -4278,7 +4374,10 @@
             }
             if (!document.getElementById('screen-planning').classList.contains('hidden')) renderPlanning();
             if (!document.getElementById('screen-attendance').classList.contains('hidden')) renderAttendanceScreen();
-            if (!document.getElementById('screen-fiche').classList.contains('hidden')) renderGymnastAttendanceSummary();
+            if (!document.getElementById('screen-fiche').classList.contains('hidden')) {
+                renderGymnastAttendanceSummary();
+                renderGymnastMusic();
+            }
             applyCustomAppIdentity();
             applyCustomColors();
             updateBirthdayNotificationUI();
@@ -4401,7 +4500,16 @@
                     do {
                         driveSyncQueued = false;
                         updateDriveStatusUI(true, '🔄 Connecté — synchronisation en cours…');
+                        try {
+                            await adoptLegacyGymnastMusicRecords();
+                        } catch (musicMigrationError) {
+                            console.warn('[GymSuivi] Migration audio locale différée', musicMigrationError.message || 'IndexedDB');
+                        }
                         success = await performDriveSync();
+                        if (success) {
+                            const musicMetadataChanged = await flushPendingGymnastMusicSync();
+                            if (musicMetadataChanged) driveSyncQueued = true;
+                        }
                     } while (success && driveSyncQueued && googleAccessToken);
                     return success;
                 } catch (err) {
@@ -5659,7 +5767,259 @@
             return summarizePlanningSessions(sessions);
         }
 
+        function getCurrentPlanningBulkType() {
+            return currentPlanningTab === 'meso' ? 'mesocycle'
+                : currentPlanningTab === 'micro' ? 'microcycle'
+                : currentPlanningTab === 'session' ? 'session'
+                : 'macrocycle';
+        }
+
+        function prunePlanningBulkSelection(type) {
+            const validIds = new Set(getPlanningCollection(type).map(item => item.id));
+            [...planningBulkSelections[type]].forEach(id => {
+                if (!validIds.has(id)) planningBulkSelections[type].delete(id);
+            });
+        }
+
+        function updatePlanningBulkToolbar() {
+            const type = getCurrentPlanningBulkType();
+            prunePlanningBulkSelection(type);
+            const selection = planningBulkSelections[type];
+            const count = document.getElementById('planning-bulk-selection-count');
+            const help = document.getElementById('planning-bulk-selection-help');
+            const editButton = document.getElementById('btn-open-planning-bulk-editor');
+            if (count) count.textContent = `${selection.size} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}${selection.size === 1 ? '' : 's'} sélectionné${selection.size === 1 ? '' : 's'}`;
+            if (help) help.textContent = planningVisibleEntityIds[type].length
+                ? `${planningVisibleEntityIds[type].length} carte${planningVisibleEntityIds[type].length === 1 ? '' : 's'} visible${planningVisibleEntityIds[type].length === 1 ? '' : 's'} · la sélection est conservée avec les filtres.`
+                : 'Aucune carte visible avec les filtres actuels.';
+            if (editButton) editButton.disabled = selection.size === 0;
+            document.querySelectorAll(`[data-planning-bulk-type="${type}"]`).forEach(input => {
+                input.checked = selection.has(input.dataset.planningBulkId);
+            });
+        }
+
+        function togglePlanningBulkSelection(type, id, checked) {
+            if (!planningBulkSelections[type] || !id) return;
+            if (checked) planningBulkSelections[type].add(id);
+            else planningBulkSelections[type].delete(id);
+            updatePlanningBulkToolbar();
+        }
+
+        function selectAllVisiblePlanningEntities() {
+            const type = getCurrentPlanningBulkType();
+            planningVisibleEntityIds[type].forEach(id => planningBulkSelections[type].add(id));
+            updatePlanningBulkToolbar();
+        }
+
+        function clearPlanningBulkSelection() {
+            const type = getCurrentPlanningBulkType();
+            planningBulkSelections[type].clear();
+            updatePlanningBulkToolbar();
+        }
+
+        function setPlanningBulkFieldEnabled(input) {
+            const block = input && input.closest('[data-planning-bulk-block]');
+            const controls = block && block.querySelector('[data-planning-bulk-controls]');
+            if (!controls) return;
+            controls.classList.toggle('opacity-45', !input.checked);
+            controls.querySelectorAll('input, select, textarea').forEach(control => {
+                control.disabled = !input.checked;
+            });
+        }
+
+        function planningBulkBlock(key, label, body) {
+            return `<section data-planning-bulk-block class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                <label class="flex cursor-pointer items-center gap-2 text-[10px] font-bold text-indigo-800">
+                    <input type="checkbox" name="enable_${escapeHtml(key)}" value="1" onchange="setPlanningBulkFieldEnabled(this)" class="h-4 w-4 accent-indigo-700">
+                    <span>Modifier ${escapeHtml(label)}</span>
+                </label>
+                <div data-planning-bulk-controls class="mt-2 opacity-45" aria-label="${escapeHtml(label)}">${body}</div>
+            </section>`;
+        }
+
+        function planningBulkCheckboxOptions(name, definitions) {
+            return `<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">${definitions.map(item => `
+                <label class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white p-2 text-[9px] font-semibold text-gray-700">
+                    <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(item.key)}" class="h-4 w-4 accent-indigo-700">
+                    <span>${escapeHtml(item.label)}</span>
+                </label>`).join('')}</div>`;
+        }
+
+        function openPlanningBulkEditor() {
+            const type = getCurrentPlanningBulkType();
+            prunePlanningBulkSelection(type);
+            const selection = planningBulkSelections[type];
+            if (!selection.size) return;
+            const fields = document.getElementById('planning-bulk-editor-fields');
+            const statuses = ['Planifié', 'En cours', 'Terminé', 'Reporté', 'Annulé'];
+            const statusOptions = statuses.map(status => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`).join('');
+            const common = [
+                planningBulkBlock('status', 'le statut', `<select name="bulk_status" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">${statusOptions}</select>`),
+                planningBulkBlock('date_shift', 'les dates', '<div class="grid grid-cols-[1fr_auto] items-center gap-2"><input name="bulk_date_shift" type="number" step="1" value="0" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><span class="text-[9px] text-gray-500">jour(s), négatif pour avancer</span></div>'),
+                planningBulkBlock('notes', 'les notes', '<div class="space-y-2"><select name="bulk_notes_mode" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="append">Ajouter à la suite</option><option value="replace">Remplacer</option></select><textarea name="bulk_notes" rows="3" maxlength="3000" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Texte à appliquer"></textarea></div>')
+            ];
+            if (type === 'macrocycle') {
+                common.push(planningBulkBlock('sessions_per_week', 'le nombre de séances de référence', '<input name="bulk_sessions_per_week" type="number" min="0" step="1" value="0" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
+            } else if (type === 'mesocycle') {
+                const phases = PLANNING_MESOCYCLE_PHASES.map(phase => `<option value="${phase.code}">${escapeHtml(`${phase.code} — ${phase.label}`)}</option>`).join('');
+                common.push(planningBulkBlock('phase', 'le type de mésocycle', `<select name="bulk_phase" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">${phases}</select>`));
+                common.push(planningBulkBlock('load', 'la charge cible', '<input name="bulk_load" type="text" maxlength="120" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Ex. progressive, élevée…">'));
+            } else if (type === 'microcycle') {
+                const mesocycles = getPlanningCollection('mesocycle').map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(`${item.phase || 'PPS'} · ${item.code || item.name} — ${item.name}`)}</option>`).join('');
+                common.push(planningBulkBlock('intensity', 'l’intensité / charge', '<input name="bulk_intensity" type="text" maxlength="120" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
+                common.push(planningBulkBlock('mesocycle', 'le mésocycle lié', `<select name="bulk_mesocycle_id" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="">Non rattaché</option>${mesocycles}</select>`));
+            } else if (type === 'session') {
+                const microcycles = getPlanningCollection('microcycle').map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(`${formatPlanningPeriod(item.startDate, item.endDate)} — ${item.name}`)}</option>`).join('');
+                common.push(planningBulkBlock('session_type', 'le type de séance', '<input name="bulk_session_type" type="text" maxlength="60" value="Entraînement" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
+                common.push(planningBulkBlock('times', 'les horaires', '<div class="grid grid-cols-2 gap-2"><label class="text-[9px] font-bold text-gray-500">Début<input name="bulk_start_time" type="time" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"></label><label class="text-[9px] font-bold text-gray-500">Fin<input name="bulk_end_time" type="time" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"></label></div>'));
+                common.push(planningBulkBlock('microcycle', 'le microcycle lié', `<select name="bulk_microcycle_id" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">${microcycles}</select>`));
+                common.push(planningBulkBlock('apparatuses', 'les agrès travaillés', `<select name="bulk_apparatus_mode" class="mb-2 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="replace">Remplacer la sélection</option><option value="add">Ajouter à l’existant</option><option value="remove">Retirer de l’existant</option></select>${planningBulkCheckboxOptions('bulk_apparatuses', PROGRESSION_APPARATUS)}`));
+                common.push(planningBulkBlock('profiles', 'les profils techniques', `<select name="bulk_profile_mode" class="mb-2 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="replace">Remplacer la sélection</option><option value="add">Ajouter à l’existant</option><option value="remove">Retirer de l’existant</option></select>${planningBulkCheckboxOptions('bulk_profiles', PROGRESSION_FAMILIES)}`));
+            }
+            document.getElementById('planning-bulk-editor-type').value = type;
+            document.getElementById('planning-bulk-editor-title').textContent = `Modifier ${selection.size} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}${selection.size === 1 ? '' : 's'}`;
+            document.getElementById('planning-bulk-editor-subtitle').textContent = 'Activez uniquement les changements à appliquer à toute la sélection.';
+            fields.innerHTML = common.join('');
+            fields.querySelectorAll('[data-planning-bulk-controls] input, [data-planning-bulk-controls] select, [data-planning-bulk-controls] textarea')
+                .forEach(control => { control.disabled = true; });
+            document.getElementById('modal-planning-bulk-editor').classList.remove('hidden');
+        }
+
+        function closePlanningBulkEditor() {
+            document.getElementById('modal-planning-bulk-editor').classList.add('hidden');
+        }
+
+        function applyPlanningBulkTagMode(current, selected, mode, definitions) {
+            const base = normalizePlanningWorkTags(current, definitions);
+            const next = normalizePlanningWorkTags(selected, definitions);
+            if (mode === 'add') return normalizePlanningWorkTags([...base, ...next], definitions);
+            if (mode === 'remove') {
+                const removed = new Set(next);
+                return base.filter(value => !removed.has(value));
+            }
+            return next;
+        }
+
+        function appendPlanningBulkNotes(current, addition, mode, limit) {
+            const text = normalizePlanningText(addition, limit);
+            if (mode === 'replace') return text;
+            return normalizePlanningText([current, text].filter(Boolean).join('\n'), limit);
+        }
+
+        function savePlanningBulkEditor(event) {
+            event.preventDefault();
+            const type = document.getElementById('planning-bulk-editor-type').value;
+            const selectedIds = new Set(planningBulkSelections[type] || []);
+            if (!selectedIds.size) return closePlanningBulkEditor();
+            const enabled = new Set(Array.from(event.currentTarget.querySelectorAll('input[name^="enable_"]:checked'))
+                .map(input => input.name.replace('enable_', '')));
+            if (!enabled.size) {
+                alert('Activez au moins un champ à modifier.');
+                return;
+            }
+            const form = new FormData(event.currentTarget);
+            const dateShift = enabled.has('date_shift') ? Math.trunc(Number(form.get('bulk_date_shift')) || 0) : 0;
+            const applyCommon = item => {
+                if (enabled.has('status')) item.status = normalizePlanningText(form.get('bulk_status') || 'Planifié', 60);
+                if (enabled.has('notes')) item.notes = appendPlanningBulkNotes(item.notes, form.get('bulk_notes'), form.get('bulk_notes_mode'), type === 'session' ? 1000 : 3000);
+                if (enabled.has('date_shift') && dateShift) {
+                    if (type === 'session') item.date = addPlanningDays(item.date, dateShift);
+                    else {
+                        item.startDate = addPlanningDays(item.startDate, dateShift);
+                        item.endDate = addPlanningDays(item.endDate, dateShift);
+                    }
+                }
+            };
+            if (type === 'session') {
+                const updates = [];
+                for (const key of selectedIds) {
+                    const location = findPlanningSessionLocation(key);
+                    if (!location) continue;
+                    const original = location.session;
+                    const next = {...original};
+                    applyCommon(next);
+                    if (enabled.has('session_type')) next.type = normalizePlanningText(form.get('bulk_session_type') || 'Entraînement', 60);
+                    if (enabled.has('times')) {
+                        next.startTime = normalizePlanningText(form.get('bulk_start_time'), 5);
+                        next.endTime = normalizePlanningText(form.get('bulk_end_time'), 5);
+                        if ((next.startTime && !next.endTime) || (!next.startTime && next.endTime)) {
+                            alert('Indiquez les deux horaires, ou laissez les deux vides.');
+                            return;
+                        }
+                    }
+                    if (enabled.has('apparatuses')) next.apparatuses = applyPlanningBulkTagMode(
+                        original.apparatuses, form.getAll('bulk_apparatuses'), form.get('bulk_apparatus_mode'), PROGRESSION_APPARATUS
+                    );
+                    if (enabled.has('profiles')) next.technicalProfiles = applyPlanningBulkTagMode(
+                        original.technicalProfiles, form.getAll('bulk_profiles'), form.get('bulk_profile_mode'), PROGRESSION_FAMILIES
+                    );
+                    const targetId = enabled.has('microcycle') ? String(form.get('bulk_microcycle_id') || '') : location.microcycle.id;
+                    const target = data.planning.microcycles.find(item => item.id === targetId);
+                    if (!target) {
+                        alert('Le microcycle cible est introuvable.');
+                        return;
+                    }
+                    const generated = ['generated_regular', 'generated_holiday', 'event', 'legacy'].includes(original.source);
+                    next.source = 'manual';
+                    next.replacesGenerated = original.replacesGenerated === true || generated;
+                    next.generatedReferenceDate = original.generatedReferenceDate || (generated ? original.date : '');
+                    next.generatedReferenceType = original.generatedReferenceType || (generated ? original.type : '');
+                    next.generatedReferenceStartTime = original.generatedReferenceStartTime || (generated ? original.startTime : '');
+                    next.mesocycleId = target.mesocycleId || '';
+                    updates.push({key, target, next: normalizePlanningSession(next, original.id)});
+                }
+                data.planning.microcycles.forEach(microcycle => {
+                    microcycle.sessions = (microcycle.sessions || []).filter(session =>
+                        !selectedIds.has(makePlanningSessionKey(microcycle.id, session.id))
+                    );
+                });
+                updates.forEach(update => update.target.sessions.push(update.next));
+                data.planning.microcycles.forEach(microcycle => {
+                    microcycle.sessions.sort((left, right) => left.date.localeCompare(right.date) || left.startTime.localeCompare(right.startTime));
+                    microcycle.updatedAt = new Date().toISOString();
+                });
+            } else {
+                getPlanningCollection(type).forEach(item => {
+                    if (!selectedIds.has(item.id)) return;
+                    applyCommon(item);
+                    if (type === 'macrocycle' && enabled.has('sessions_per_week'))
+                        item.sessionsPerWeek = Math.max(0, Math.trunc(Number(form.get('bulk_sessions_per_week')) || 0));
+                    if (type === 'mesocycle') {
+                        if (enabled.has('phase')) item.phase = normalizePlanningMesocyclePhase(form.get('bulk_phase'), item);
+                        if (enabled.has('load')) item.load = normalizePlanningText(form.get('bulk_load'), 120);
+                    }
+                    if (type === 'microcycle') {
+                        if (enabled.has('intensity')) item.intensity = normalizePlanningText(form.get('bulk_intensity'), 120);
+                        if (enabled.has('mesocycle')) item.mesocycleId = normalizePlanningText(form.get('bulk_mesocycle_id'), 100);
+                    }
+                    item.updatedAt = new Date().toISOString();
+                });
+            }
+            normalizePlanningData(data);
+            persistAllDataLocally();
+            if (googleAccessToken) syncWithDrive();
+            planningBulkSelections[type].clear();
+            closePlanningBulkEditor();
+            renderPlanning();
+            alert(`✅ ${selectedIds.size} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}${selectedIds.size === 1 ? '' : 's'} modifié${selectedIds.size === 1 ? '' : 's'}.`);
+        }
+
         function createPlanningCard(type, item) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'min-w-0';
+            const selection = document.createElement('label');
+            selection.className = 'mb-1 flex cursor-pointer items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-2 py-1.5 text-[9px] font-bold text-indigo-700';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'h-4 w-4 shrink-0 accent-indigo-700';
+            checkbox.dataset.planningBulkType = type;
+            checkbox.dataset.planningBulkId = item.id;
+            checkbox.checked = planningBulkSelections[type].has(item.id);
+            checkbox.setAttribute('aria-label', `Sélectionner ${item.name || getPlanningTypeLabel(type)}`);
+            checkbox.onchange = () => togglePlanningBulkSelection(type, item.id, checkbox.checked);
+            const selectionText = document.createElement('span');
+            selectionText.textContent = 'Sélectionner pour modifier en masse';
+            selection.append(checkbox, selectionText);
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500';
@@ -5711,7 +6071,8 @@
                     <span class="text-[10px] font-bold text-teal-700">Ouvrir la carte →</span>
                 </div>`;
             button.onclick = () => openPlanningDetail(type, item.id);
-            return button;
+            wrapper.append(selection, button);
+            return wrapper;
         }
 
         function renderPlanningSummary() {
@@ -5737,11 +6098,14 @@
             if (!container) return;
             container.innerHTML = '';
             const items = [...getPlanningCollection('macrocycle')].sort((a, b) => a.startDate.localeCompare(b.startDate));
+            planningVisibleEntityIds.macrocycle = items.map(item => item.id);
             if (!items.length) {
                 container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun macrocycle. Appuyez sur « Ajouter ».</p>';
+                updatePlanningBulkToolbar();
                 return;
             }
             items.forEach(item => container.appendChild(createPlanningCard('macrocycle', item)));
+            updatePlanningBulkToolbar();
         }
 
         function renderPlanningMesocycles() {
@@ -5749,11 +6113,14 @@
             if (!container) return;
             container.innerHTML = '';
             const items = [...getPlanningCollection('mesocycle')].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.code.localeCompare(b.code));
+            planningVisibleEntityIds.mesocycle = items.map(item => item.id);
             if (!items.length) {
                 container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun mésocycle. Appuyez sur « Ajouter ».</p>';
+                updatePlanningBulkToolbar();
                 return;
             }
             items.forEach(item => container.appendChild(createPlanningCard('mesocycle', item)));
+            updatePlanningBulkToolbar();
         }
 
         function renderPlanningMicrocycleFilter() {
@@ -5791,14 +6158,17 @@
                     return haystack.includes(search);
                 })
                 .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name, 'fr'));
+            planningVisibleEntityIds.microcycle = items.map(item => item.id);
             container.innerHTML = '';
             const count = document.getElementById('planning-micro-count');
             if (count) count.textContent = `${items.length} microcycle${items.length === 1 ? '' : 's'} affiché${items.length === 1 ? '' : 's'}`;
             if (!items.length) {
                 container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucun microcycle ne correspond aux filtres.</p>';
+                updatePlanningBulkToolbar();
                 return;
             }
             items.forEach(item => container.appendChild(createPlanningCard('microcycle', item)));
+            updatePlanningBulkToolbar();
         }
 
         function renderPlanningSessionFilter() {
@@ -5838,15 +6208,18 @@
                     return haystack.includes(search);
                 })
                 .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime) || a.type.localeCompare(b.type, 'fr'));
+            planningVisibleEntityIds.session = items.map(item => item.id);
             container.innerHTML = '';
             const count = document.getElementById('planning-session-count');
             if (count) count.textContent = `${items.length} séance${items.length === 1 ? '' : 's'} affichée${items.length === 1 ? '' : 's'}`;
             if (!items.length) {
                 container.innerHTML = '<p class="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-center text-xs text-gray-400">Aucune séance ne correspond aux filtres.</p>';
+                updatePlanningBulkToolbar();
                 renderPlanningWorkloadCharts();
                 return;
             }
             items.forEach(item => container.appendChild(createPlanningCard('session', item)));
+            updatePlanningBulkToolbar();
             renderPlanningWorkloadCharts();
         }
 
@@ -6006,6 +6379,7 @@
                 }
             });
             renderPlanning();
+            updatePlanningBulkToolbar();
         }
 
         // ────────────────────────────────────────────────────────────── FEUILLE D'APPEL
@@ -7030,15 +7404,27 @@
             });
         }
 
-        async function storeGymnastMusic(gymId, file) {
+        async function listGymnastMusicRecords() {
+            if (!('indexedDB' in window)) return [];
+            const db = await openGymMusicDatabase();
+            return new Promise((resolve, reject) => {
+                const request = db.transaction(GYM_MUSIC_STORE_NAME, 'readonly')
+                    .objectStore(GYM_MUSIC_STORE_NAME).getAll();
+                request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+                request.onerror = () => reject(request.error || new Error('Inventaire des musiques impossible.'));
+            });
+        }
+
+        async function storeGymnastMusic(gymId, file, options = {}) {
             const db = await openGymMusicDatabase();
             const record = {
                 gymId,
-                name: file.name || 'Musique',
-                type: file.type || 'audio/mpeg',
+                name: options.name || file.name || 'Musique',
+                type: options.type || file.type || 'audio/mpeg',
                 size: file.size,
-                updatedAt: new Date().toISOString(),
-                blob: file.slice(0, file.size, file.type || 'audio/mpeg')
+                updatedAt: options.updatedAt || new Date().toISOString(),
+                driveFileId: options.driveFileId || '',
+                blob: file.slice(0, file.size, options.type || file.type || 'audio/mpeg')
             };
             await new Promise((resolve, reject) => {
                 const transaction = db.transaction(GYM_MUSIC_STORE_NAME, 'readwrite');
@@ -7049,6 +7435,7 @@
             });
             if (navigator.storage && typeof navigator.storage.persist === 'function')
                 navigator.storage.persist().catch(() => {});
+            return record;
         }
 
         async function removeGymnastMusic(gymId) {
@@ -7062,6 +7449,191 @@
                 transaction.onerror = () => reject(transaction.error || new Error('Suppression audio impossible.'));
                 transaction.onabort = () => reject(transaction.error || new Error('Suppression audio annulée.'));
             });
+        }
+
+        function getGymnastMusicSyncMetadata(gymId) {
+            normalizeGymMusicSyncData(data);
+            return data.musicFiles[String(gymId || '')] || null;
+        }
+
+        function markGymnastMusicForUpload(gymId, record) {
+            if (!gymId || !record) return null;
+            normalizeGymMusicSyncData(data);
+            const previous = data.musicFiles[gymId] || {};
+            data.musicFiles[gymId] = {
+                driveFileId: previous.driveFileId || record.driveFileId || '',
+                name: String(record.name || 'Musique').slice(0, 240),
+                type: String(record.type || 'audio/mpeg').slice(0, 120),
+                size: Math.max(0, Number(record.size) || 0),
+                updatedAt: record.updatedAt || new Date().toISOString(),
+                pendingAction: 'upload',
+                deleted: false
+            };
+            return data.musicFiles[gymId];
+        }
+
+        function markGymnastMusicForDeletion(gymId) {
+            if (!gymId) return null;
+            normalizeGymMusicSyncData(data);
+            const previous = data.musicFiles[gymId] || {};
+            data.musicFiles[gymId] = {
+                driveFileId: previous.driveFileId || '',
+                name: previous.name || '',
+                type: previous.type || 'audio/mpeg',
+                size: Math.max(0, Number(previous.size) || 0),
+                updatedAt: new Date().toISOString(),
+                pendingAction: 'delete',
+                deleted: true
+            };
+            return data.musicFiles[gymId];
+        }
+
+        async function adoptLegacyGymnastMusicRecords() {
+            const records = await listGymnastMusicRecords();
+            const existingGymIds = new Set((Array.isArray(data.gymnastes) ? data.gymnastes : []).map(item => item.id));
+            let changed = false;
+            for (const record of records) {
+                if (!record || !record.gymId || !existingGymIds.has(record.gymId)) continue;
+                const metadata = getGymnastMusicSyncMetadata(record.gymId);
+                if (metadata && metadata.deleted) {
+                    await removeGymnastMusic(record.gymId);
+                    continue;
+                }
+                if (!metadata) {
+                    markGymnastMusicForUpload(record.gymId, record);
+                    changed = true;
+                }
+            }
+            if (changed) persistAllDataLocally();
+            return changed;
+        }
+
+        function createGymnastMusicDriveMultipartBody(gymId, record, includeParent) {
+            const boundary = `gymsuivi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const metadata = {
+                name: `${DRIVE_MUSIC_FILE_PREFIX}${gymId}`,
+                mimeType: record.type || 'audio/mpeg',
+                appProperties: {kind: 'gymnast-music', gymId: String(gymId)}
+            };
+            if (includeParent) metadata.parents = ['appDataFolder'];
+            const body = new Blob([
+                `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+                JSON.stringify(metadata),
+                `\r\n--${boundary}\r\nContent-Type: ${record.type || 'audio/mpeg'}\r\n\r\n`,
+                record.blob,
+                `\r\n--${boundary}--`
+            ], {type: `multipart/related; boundary=${boundary}`});
+            return {body, boundary};
+        }
+
+        async function uploadGymnastMusicToDrive(gymId, record, existingFileId = '') {
+            if (!googleAccessToken) throw driveDataError('Connecte-toi à Google avant de synchroniser la musique.');
+            if (!record || !record.blob) throw driveDataError('Le fichier audio local est introuvable.');
+            if (record.blob.size > MAX_GYM_MUSIC_SIZE_BYTES) throw driveDataError('Le fichier audio dépasse la limite de 80 Mo.');
+            const send = async fileId => {
+                const multipart = createGymnastMusicDriveMultipartBody(gymId, record, !fileId);
+                const url = fileId
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=multipart&fields=id,name,mimeType,size,modifiedTime`
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,size,modifiedTime';
+                const response = await fetch(url, {
+                    method: fileId ? 'PATCH' : 'POST',
+                    headers: {
+                        Authorization: `Bearer ${googleAccessToken}`,
+                        'Content-Type': `multipart/related; boundary=${multipart.boundary}`
+                    },
+                    body: multipart.body,
+                    cache: 'no-store'
+                });
+                return {response, fileId};
+            };
+            let result = await send(existingFileId);
+            if (result.response.status === 404 && existingFileId) result = await send('');
+            if (!result.response.ok) {
+                const error = driveDataError(`Synchronisation de la musique refusée par Google Drive (erreur ${result.response.status}).`);
+                error.status = result.response.status;
+                throw error;
+            }
+            const metadata = await result.response.json();
+            if (!metadata.id) throw driveDataError('Google Drive n’a pas confirmé la sauvegarde de la musique.');
+            return metadata;
+        }
+
+        async function deleteGymnastMusicFromDrive(fileId) {
+            if (!fileId) return true;
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`, {
+                method: 'DELETE',
+                headers: {Authorization: `Bearer ${googleAccessToken}`},
+                cache: 'no-store'
+            });
+            if (response.status === 404) return true;
+            if (!response.ok) {
+                const error = driveDataError(`Suppression de la musique refusée par Google Drive (erreur ${response.status}).`);
+                error.status = response.status;
+                throw error;
+            }
+            return true;
+        }
+
+        async function downloadGymnastMusicFromDrive(gymId, metadata) {
+            if (!googleAccessToken || !metadata || !metadata.driveFileId) return null;
+            const response = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(metadata.driveFileId)}?alt=media`,
+                {headers: {Authorization: `Bearer ${googleAccessToken}`}, cache: 'no-store'}
+            );
+            if (!response.ok) {
+                const error = driveDataError(`Téléchargement de la musique impossible (erreur ${response.status}).`);
+                error.status = response.status;
+                throw error;
+            }
+            const blob = await response.blob();
+            if (blob.size > MAX_GYM_MUSIC_SIZE_BYTES) throw driveDataError('Le fichier audio synchronisé dépasse la limite de 80 Mo.');
+            return storeGymnastMusic(gymId, blob, {
+                name: metadata.name || 'Musique',
+                type: metadata.type || blob.type || 'audio/mpeg',
+                updatedAt: metadata.updatedAt || new Date().toISOString(),
+                driveFileId: metadata.driveFileId
+            });
+        }
+
+        async function flushPendingGymnastMusicSync() {
+            if (!googleAccessToken) return false;
+            if (gymMusicSyncTask) return gymMusicSyncTask;
+            gymMusicSyncTask = (async () => {
+                normalizeGymMusicSyncData(data);
+                let changed = false;
+                for (const [gymId, metadata] of Object.entries(data.musicFiles)) {
+                    if (metadata.pendingAction === 'upload' && !metadata.deleted) {
+                        const record = await getGymnastMusic(gymId);
+                        if (!record || !record.blob) continue;
+                        const remote = await uploadGymnastMusicToDrive(gymId, record, metadata.driveFileId);
+                        data.musicFiles[gymId] = {
+                            driveFileId: remote.id,
+                            name: record.name || metadata.name,
+                            type: record.type || metadata.type,
+                            size: Number(record.size || record.blob.size || 0),
+                            updatedAt: record.updatedAt || metadata.updatedAt || new Date().toISOString(),
+                            pendingAction: '',
+                            deleted: false
+                        };
+                        changed = true;
+                    } else if (metadata.pendingAction === 'delete') {
+                        await deleteGymnastMusicFromDrive(metadata.driveFileId);
+                        data.musicFiles[gymId] = {
+                            driveFileId: '', name: '', type: 'audio/mpeg', size: 0,
+                            updatedAt: metadata.updatedAt || new Date().toISOString(),
+                            pendingAction: '', deleted: true
+                        };
+                        changed = true;
+                    }
+                }
+                if (changed) persistAllDataLocally();
+                return changed;
+            })();
+            try {
+                return await gymMusicSyncTask;
+            } finally {
+                gymMusicSyncTask = null;
+            }
         }
 
         function clearGymMusicObjectUrl() {
@@ -7233,7 +7805,10 @@
                 if (blob.size > MAX_GYM_MUSIC_SIZE_BYTES)
                     throw new Error('Le fichier audio dépasse la limite de 80 Mo.');
                 const file = new File([blob], name, {type: mimeType || blob.type || 'audio/mpeg'});
-                await storeGymnastMusic(gymId, file);
+                const record = await storeGymnastMusic(gymId, file);
+                markGymnastMusicForUpload(gymId, record);
+                saveAllData();
+                if (googleAccessToken) await syncWithDrive();
                 if (currentGymId === gymId) await renderGymnastMusic();
                 return true;
             } catch (error) {
@@ -7290,17 +7865,50 @@
             deleteButton.classList.add('hidden');
             if (largeButton) largeButton.classList.add('hidden');
             name.innerText = 'Chargement de la musique…';
-            status.innerText = 'Recherche du fichier enregistré sur cet appareil.';
+            status.innerText = 'Recherche du fichier local ou synchronisé.';
             if (fileInput)
                 fileInput.value = '';
             clearGymMusicObjectUrl();
             try {
-                const record = await getGymnastMusic(requestedGymId);
+                let record = await getGymnastMusic(requestedGymId);
+                let metadata = getGymnastMusicSyncMetadata(requestedGymId);
+                if (token !== gymMusicRenderToken || currentGymId !== requestedGymId)
+                    return;
+                if (metadata && metadata.deleted) {
+                    if (record) await removeGymnastMusic(requestedGymId);
+                    name.innerText = 'Aucune musique enregistrée';
+                    status.innerText = 'Ajoutez une musique : elle sera synchronisée sur vos appareils.';
+                    return;
+                }
+                if (record && !metadata) {
+                    metadata = markGymnastMusicForUpload(requestedGymId, record);
+                    persistAllDataLocally();
+                    if (googleAccessToken) syncWithDrive().catch(() => {});
+                }
+                const remoteIsNewer = record && metadata && metadata.driveFileId && !metadata.pendingAction &&
+                    metadata.updatedAt && record.updatedAt && metadata.updatedAt !== record.updatedAt;
+                if ((!record || remoteIsNewer) && metadata && metadata.driveFileId) {
+                    if (googleAccessToken && navigator.onLine !== false) {
+                        status.innerText = 'Téléchargement de la musique synchronisée…';
+                        try {
+                            record = await downloadGymnastMusicFromDrive(requestedGymId, metadata);
+                        } catch (downloadError) {
+                            if (!record) throw downloadError;
+                            console.warn('[GymSuivi] Mise à jour audio différée', downloadError.message || 'Drive');
+                        }
+                    } else if (!record) {
+                        name.innerText = metadata.name || 'Musique synchronisée';
+                        status.innerText = 'Disponible sur Google Drive. Reconnectez-vous pour la télécharger sur cet appareil.';
+                        return;
+                    }
+                }
                 if (token !== gymMusicRenderToken || currentGymId !== requestedGymId)
                     return;
                 if (!record || !record.blob) {
                     name.innerText = 'Aucune musique enregistrée';
-                    status.innerText = 'La musique restera disponible hors connexion sur cet appareil.';
+                    status.innerText = metadata && metadata.pendingAction === 'upload'
+                        ? 'Synchronisation en attente : le fichier local est introuvable.'
+                        : 'Ajoutez une musique : elle sera synchronisée sur vos appareils.';
                     return;
                 }
                 gymMusicObjectUrl = URL.createObjectURL(record.blob);
@@ -7311,7 +7919,11 @@
                 if (largeButton) largeButton.classList.remove('hidden');
                 name.innerText = record.name || 'Musique de la gymnaste';
                 const sizeMb = Number(record.size || record.blob.size || 0) / (1024 * 1024);
-                status.innerText = `Enregistrée sur cet appareil${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''}.`;
+                status.innerText = metadata && metadata.pendingAction === 'upload'
+                    ? `Disponible hors connexion${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''} · synchronisation en attente.`
+                    : metadata && metadata.driveFileId
+                        ? `Synchronisée avec Google Drive et disponible hors connexion${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''}.`
+                        : `Disponible hors connexion${sizeMb > 0 ? ` - ${sizeMb.toFixed(1)} Mo` : ''}.`;
             } catch (error) {
                 if (token !== gymMusicRenderToken || currentGymId !== requestedGymId)
                     return;
@@ -7341,7 +7953,10 @@
             const status = document.getElementById('gym-music-status');
             status.innerText = source === 'drive' ? 'Copie de la musique depuis Google Drive…' : 'Enregistrement de la musique…';
             try {
-                await storeGymnastMusic(gymId, file);
+                const record = await storeGymnastMusic(gymId, file);
+                markGymnastMusicForUpload(gymId, record);
+                saveAllData();
+                if (googleAccessToken) await syncWithDrive();
                 if (currentGymId === gymId)
                     await renderGymnastMusic();
             } catch (error) {
@@ -7360,7 +7975,10 @@
             if (!gymId || !confirm('Supprimer la musique enregistrée pour cette gymnaste ?'))
                 return;
             try {
+                markGymnastMusicForDeletion(gymId);
                 await removeGymnastMusic(gymId);
+                saveAllData();
+                if (googleAccessToken) await syncWithDrive();
                 if (currentGymId === gymId)
                     await renderGymnastMusic();
             } catch (error) {
@@ -9513,6 +10131,140 @@
             return doc;
         }
 
+        function buildCompactProgressionEvaluationPdfPages(items) {
+            const columns = 2;
+            const usableHeight = 154;
+            const categoryHeaderHeight = 6.5;
+            const categoryHeaderGap = 1;
+            const rowHeight = 7.2;
+            const rowGap = 0.65;
+            const pages = [{blocks: [], usedHeight: 0, itemCount: 0}];
+            let page = pages[0];
+            groupProgressionEvaluationPdfItems(items).forEach(group => {
+                const rows = [];
+                for (let index = 0; index < group.items.length; index += columns)
+                    rows.push(group.items.slice(index, index + columns));
+                let rowIndex = 0;
+                let continued = false;
+                while (rowIndex < rows.length) {
+                    let available = usableHeight - page.usedHeight;
+                    const minimumHeight = categoryHeaderHeight + categoryHeaderGap + rowHeight;
+                    const nextRowSize = rows[rowIndex].length;
+                    const pageCapacity = COMPACT_PROGRESSION_ITEMS_PER_PAGE_TARGET - page.itemCount;
+                    if (page.blocks.length && (available < minimumHeight || pageCapacity < nextRowSize)) {
+                        page = {blocks: [], usedHeight: 0, itemCount: 0};
+                        pages.push(page);
+                        available = usableHeight;
+                    }
+                    const heightCapacity = Math.max(1, Math.floor(
+                        (available - categoryHeaderHeight - categoryHeaderGap + rowGap) /
+                        (rowHeight + rowGap)
+                    ));
+                    const itemCapacity = COMPACT_PROGRESSION_ITEMS_PER_PAGE_TARGET - page.itemCount;
+                    let rowsThatFit = 0;
+                    let itemCount = 0;
+                    while (rowIndex + rowsThatFit < rows.length && rowsThatFit < heightCapacity) {
+                        const rowSize = rows[rowIndex + rowsThatFit].length;
+                        if (itemCount + rowSize > itemCapacity) break;
+                        itemCount += rowSize;
+                        rowsThatFit += 1;
+                    }
+                    if (!rowsThatFit) {
+                        page = {blocks: [], usedHeight: 0, itemCount: 0};
+                        pages.push(page);
+                        continued = true;
+                        continue;
+                    }
+                    const blockRows = rows.slice(rowIndex, rowIndex + rowsThatFit);
+                    page.blocks.push({...group, continued, rows: blockRows, pageItemCount: itemCount});
+                    page.usedHeight += categoryHeaderHeight + categoryHeaderGap + rowsThatFit * (rowHeight + rowGap);
+                    page.itemCount += itemCount;
+                    rowIndex += rowsThatFit;
+                    if (rowIndex < rows.length) {
+                        page = {blocks: [], usedHeight: 0, itemCount: 0};
+                        pages.push(page);
+                        continued = true;
+                    }
+                }
+            });
+            return pages.filter(currentPage => currentPage.blocks.length > 0);
+        }
+
+        function fitProgressionPdfText(doc, value, maxWidth) {
+            const source = String(value || 'Élément sans nom');
+            if (doc.getTextWidth(source) <= maxWidth) return source;
+            let shortened = source;
+            while (shortened.length > 1 && doc.getTextWidth(`${shortened}…`) > maxWidth)
+                shortened = shortened.slice(0, -1);
+            return `${shortened.trimEnd()}…`;
+        }
+
+        function drawCompactProgressionEvaluationRow(doc, item, x, y, width, height) {
+            doc.setDrawColor(203, 213, 225);
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(x, y, width, height, 0.8, 0.8, 'FD');
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.6);
+            doc.text(fitProgressionPdfText(doc, item.name, width - 39), x + 2, y + 4.6);
+            const statuses = ['NR', 'ÉT', 'EC', 'AC'];
+            const statusStart = x + width - 35;
+            statuses.forEach((label, index) => {
+                const optionX = statusStart + index * 8.5;
+                doc.setDrawColor(71, 85, 105);
+                doc.rect(optionX, y + 2, 3.2, 3.2);
+                doc.setTextColor(71, 85, 105);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.2);
+                doc.text(label, optionX + 4, y + 4.5);
+            });
+        }
+
+        function createCompactProgressionEvaluationPdfDocument(jsPDF, gymnast, items) {
+            const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+            const bounds = getPdfPrintSafeBounds(doc);
+            const pages = buildCompactProgressionEvaluationPdfPages(items);
+            const columns = 2;
+            const gapX = 3;
+            const rowHeight = 7.2;
+            const rowGap = 0.65;
+            const headerHeight = 6.5;
+            const headerGap = 1;
+            const columnWidth = (bounds.width - gapX) / columns;
+            pages.forEach((page, pageIndex) => {
+                if (pageIndex > 0) doc.addPage('a4', 'landscape');
+                doc.setFillColor(126, 34, 206);
+                doc.roundedRect(bounds.left, bounds.top, bounds.width, 19, 1.5, 1.5, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text("Évaluation de progression — version allégée", bounds.left + 4, bounds.top + 8);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8.5);
+                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), bounds.left + 4, bounds.top + 15);
+                doc.text('Date : ____________________', bounds.right - 4, bounds.top + 8, {align: 'right'});
+                doc.text(`Page ${pageIndex + 1} / ${pages.length}`, bounds.right - 4, bounds.top + 15, {align: 'right'});
+                doc.setTextColor(71, 85, 105);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6.3);
+                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', bounds.left, 34);
+
+                let y = 39;
+                page.blocks.forEach(block => {
+                    drawProgressionEvaluationCategoryHeader(doc, block, bounds.left, y, bounds.width, headerHeight);
+                    y += headerHeight + headerGap;
+                    block.rows.forEach(row => {
+                        row.forEach((item, column) => {
+                            const x = bounds.left + column * (columnWidth + gapX);
+                            drawCompactProgressionEvaluationRow(doc, item, x, y, columnWidth, rowHeight);
+                        });
+                        y += rowHeight + rowGap;
+                    });
+                });
+            });
+            return doc;
+        }
+
         async function exportSelectedProgressionEvaluationPDF() {
             if (!window.jspdf || !window.jspdf.jsPDF) {
                 alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
@@ -9532,19 +10284,25 @@
             }
             try {
                 const items = getProgressionEvaluationPdfItems(selectedItems);
-                const imageMap = await prepareProgressionEvaluationPdfImages(items);
-                const doc = createSelectedProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, imageMap);
+                const mode = saveProgressionPdfModePreference();
+                let doc;
+                if (mode === 'compact') {
+                    doc = createCompactProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items);
+                } else {
+                    const imageMap = await prepareProgressionEvaluationPdfImages(items);
+                    doc = createSelectedProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, imageMap);
+                }
                 const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^a-zA-Z0-9]+/g, '_')
                     .replace(/^_+|_+$/g, '') || 'Gymnaste';
-                doc.save(`Progression_evaluation_${safeName}.pdf`);
+                doc.save(`Progression_evaluation_${mode === 'compact' ? 'allegee_' : ''}${safeName}.pdf`);
             } catch (error) {
                 console.error('[GymSuivi] Erreur fiche évaluation de progression :', error);
                 alert(`❌ Impossible de créer le PDF : ${error.message}`);
             } finally {
-                if (button) button.textContent = 'PDF sélection';
+                if (button) button.textContent = 'Exporter';
                 updateProgressionExportSelectionUI();
             }
         }
@@ -11795,7 +12553,8 @@
                     delete data.progressions[currentGymId];
                 }
 
-                // 3b. Suppression de sa musique locale sans bloquer le reste de la fiche
+                // 3b. Suppression de sa musique locale et distante sans bloquer le reste de la fiche
+                markGymnastMusicForDeletion(deletedGymId);
                 removeGymnastMusic(deletedGymId).catch(error =>
                     console.warn('[GymSuivi] Musique locale non supprimée :', error)
                 );
@@ -13702,7 +14461,7 @@
                 "Êtes-vous sûr ? Toutes les fiches, équipes et personnalisations seront effacée" +
                 "s."
             )) {
-                ['gym_master_data_v3', 'gym_colors_v3', UI_FILTER_STORAGE_KEY, 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY,
+                ['gym_master_data_v3', 'gym_colors_v3', UI_FILTER_STORAGE_KEY, PROGRESSION_PDF_MODE_STORAGE_KEY, 'drive_access_token_v3', DRIVE_TOKEN_EXPIRY_KEY,
                     DRIVE_AUTO_LOGIN_KEY, DRIVE_BASELINE_KEY, DRIVE_MUSIC_TOKEN_KEY, DRIVE_MUSIC_TOKEN_EXPIRY_KEY, DRIVE_MUSIC_GRANTED_KEY]
                     .forEach(key => localStorage.removeItem(key));
                 window
@@ -13714,6 +14473,7 @@
         // ────────────────────────────────────────────────────────────── INITIALISATION
         // ──────────────────────────────────────────────────────────────
         restoreUiFilterPreferences();
+        restoreProgressionPdfModePreference();
         renderLevels();
         renderAppVersion();
         applyCustomColors();
