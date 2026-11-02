@@ -484,16 +484,23 @@
             <section id="screen-gymnastes" data-ui-zone="category" class="ui-theme-zone hidden space-y-4 p-2 sm:p-3">
                 <h2 id="gymnastes-title" class="text-lg font-semibold text-gray-700">Gymnastes</h2>
                 <div id="level-statistics-actions" class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p class="text-xs font-bold text-gray-700">Statistiques globales</p>
                             <p class="text-[10px] text-gray-400">Moyennes, meilleures notes et évolution de toutes les gymnastes.</p>
                         </div>
-                        <button
-                            id="btn-export-level-stats-pdf"
-                            type="button"
-                            onclick="exportLevelStatsPDF()"
-                            class="shrink-0 bg-teal-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold shadow hover:bg-teal-700 disabled:opacity-50 disabled:cursor-wait">📄 Exporter PDF</button>
+                        <div class="grid shrink-0 grid-cols-2 gap-2">
+                            <button
+                                id="btn-export-level-stats-pdf"
+                                type="button"
+                                onclick="exportLevelStatsPDF()"
+                                class="bg-teal-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold shadow hover:bg-teal-700 disabled:opacity-50 disabled:cursor-wait">📊 Statistiques PDF</button>
+                            <button
+                                id="btn-open-level-progression-export"
+                                type="button"
+                                onclick="openLevelProgressionExportModal()"
+                                class="bg-purple-700 text-white px-3 py-2 rounded-lg text-[10px] font-bold shadow hover:bg-purple-800">🎯 Progressions PDF</button>
+                        </div>
                     </div>
                     <p id="level-stats-pdf-status" class="hidden text-[10px] font-semibold text-teal-700"></p>
                 </div>
@@ -1270,7 +1277,8 @@
                         <strong id="planning-bulk-selection-count">0 élément sélectionné</strong>
                         <span id="planning-bulk-selection-help" class="block text-[9px] text-indigo-600">Cochez les cartes à modifier ensemble.</span>
                     </div>
-                    <div class="grid grid-cols-3 gap-1.5 sm:flex">
+                    <div class="grid grid-cols-2 gap-1.5 sm:flex">
+                        <button id="btn-open-planning-bulk-calendar" type="button" onclick="openPlanningBulkCalendar()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">📅 Calendrier</button>
                         <button type="button" onclick="selectAllVisiblePlanningEntities()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">Tout sélectionner</button>
                         <button type="button" onclick="clearPlanningBulkSelection()" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
                         <button id="btn-open-planning-bulk-editor" type="button" onclick="openPlanningBulkEditor()" disabled class="rounded-lg bg-indigo-700 px-3 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Modifier en masse</button>
@@ -1455,6 +1463,35 @@
         </div>
     </div>
 
+    <!-- ═════════════════════════════ EXPORT PROGRESSIONS PAR CATÉGORIE ═══ -->
+    <div id="modal-level-progression-export" role="dialog" aria-modal="true" aria-labelledby="level-progression-export-title" class="hidden fixed inset-0 z-[91] flex items-center justify-center bg-black/60 p-2 backdrop-blur-sm sm:p-4">
+        <div class="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white text-xs shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 bg-purple-700 p-4 font-bold text-white">
+                <div><span id="level-progression-export-title" class="block">Exporter les progressions</span><span id="level-progression-export-level" class="mt-0.5 block text-[9px] font-normal text-purple-100"></span></div>
+                <button type="button" onclick="closeLevelProgressionExportModal()" class="text-white" aria-label="Fermer">✕</button>
+            </div>
+            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+                <section class="rounded-xl border border-purple-100 bg-purple-50 p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div><p class="font-bold text-purple-900">1. Gymnastes</p><p class="text-[9px] text-purple-600">Chaque gymnaste recevra son propre fichier PDF.</p></div>
+                        <div class="flex gap-1.5"><button type="button" onclick="setAllLevelProgressionGymnasts(true)" class="rounded-lg border border-purple-200 bg-white px-2 py-1.5 text-[9px] font-bold text-purple-700">Toutes</button><button type="button" onclick="setAllLevelProgressionGymnasts(false)" class="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[9px] font-bold text-gray-600">Aucune</button></div>
+                    </div>
+                    <div id="level-progression-gymnast-list" class="mt-3 grid gap-2 sm:grid-cols-2"></div>
+                </section>
+                <section class="rounded-xl border border-amber-100 bg-amber-50 p-3">
+                    <p class="font-bold text-amber-900">2. Agrès à inclure</p>
+                    <div id="level-progression-apparatus-list" class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"></div>
+                </section>
+                <p id="level-progression-export-summary" class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-semibold text-gray-600">Sélectionnez au moins une gymnaste et un agrès.</p>
+                <p id="level-progression-export-status" class="hidden rounded-lg border border-purple-200 bg-purple-50 p-2 text-[10px] font-semibold text-purple-700"></p>
+            </div>
+            <div class="flex shrink-0 gap-2 border-t border-gray-100 bg-white p-4">
+                <button type="button" onclick="closeLevelProgressionExportModal()" class="flex-1 rounded-lg border border-gray-200 bg-gray-100 py-2 font-semibold text-gray-600">Annuler</button>
+                <button id="btn-export-level-progressions" type="button" onclick="exportLevelProgressionPDFs()" disabled class="flex-[2] rounded-lg bg-purple-700 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Créer les PDF séparés</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════════════════════════════════ MODAL PLANIFICATION ═══ -->
     <div id="modal-planning-editor" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
         <div class="w-full max-w-2xl overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
@@ -1489,6 +1526,39 @@
                     <button type="submit" class="flex-[2] rounded-lg bg-indigo-700 py-2 font-bold text-white">Appliquer aux éléments sélectionnés</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="modal-planning-bulk-calendar" role="dialog" aria-modal="true" aria-labelledby="planning-bulk-calendar-title" class="hidden fixed inset-0 z-[76] flex items-center justify-center bg-black/55 p-2 backdrop-blur-sm sm:p-4">
+        <div class="flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white text-xs shadow-2xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 bg-indigo-700 p-4 font-bold text-white">
+                <div><span id="planning-bulk-calendar-title" class="block">Sélectionner les séances dans le calendrier</span><span class="mt-0.5 block text-[9px] font-normal text-indigo-100">Cochez une séance, une journée ou le mois entier avant la modification en masse.</span></div>
+                <button type="button" onclick="closePlanningBulkCalendar()" class="text-white" aria-label="Fermer">✕</button>
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50 p-2">
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="shiftPlanningBulkCalendarMonth(-1)" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 font-bold text-indigo-700" aria-label="Mois précédent">←</button>
+                        <button type="button" onclick="setPlanningBulkCalendarToCurrentMonth()" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[9px] font-bold text-indigo-700">Ce mois</button>
+                        <button type="button" onclick="shiftPlanningBulkCalendarMonth(1)" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 font-bold text-indigo-700" aria-label="Mois suivant">→</button>
+                    </div>
+                    <strong id="planning-bulk-calendar-month" class="text-sm capitalize text-indigo-900"></strong>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="selectPlanningBulkCalendarMonth(true)" class="rounded-lg border border-indigo-200 bg-white px-2 py-2 text-[9px] font-bold text-indigo-700">Tout le mois</button>
+                        <button type="button" onclick="selectPlanningBulkCalendarMonth(false)" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer le mois</button>
+                    </div>
+                </div>
+                <div class="mt-3 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50">
+                    <div class="min-w-[760px]">
+                        <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-100 text-center text-[9px] font-bold uppercase tracking-wider text-gray-500"><span class="p-2">Lun.</span><span class="p-2">Mar.</span><span class="p-2">Mer.</span><span class="p-2">Jeu.</span><span class="p-2">Ven.</span><span class="p-2">Sam.</span><span class="p-2">Dim.</span></div>
+                        <div id="planning-bulk-calendar-grid" class="grid grid-cols-7 bg-gray-200 gap-px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex shrink-0 flex-col gap-2 border-t border-gray-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p id="planning-bulk-calendar-count" class="text-[10px] font-bold text-indigo-700">0 séance sélectionnée</p>
+                <div class="flex gap-2"><button type="button" onclick="clearPlanningBulkCalendarSelection()" class="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 font-semibold text-gray-600">Tout effacer</button><button type="button" onclick="closePlanningBulkCalendar()" class="rounded-lg bg-indigo-700 px-4 py-2 font-bold text-white">Valider la sélection</button></div>
+            </div>
         </div>
     </div>
 
@@ -1915,7 +1985,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.36.1';
+        const APP_VERSION = '1.37.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -5050,6 +5120,7 @@
         let planningSessionEditorCounter = 0;
         let planningApparatusWorkloadChart = null;
         let planningProfileWorkloadChart = null;
+        let planningBulkCalendarMonth = '';
         let currentAttendanceLevelId = '';
         let currentAttendanceSessionKey = '';
         let attendanceDraftEntries = {};
@@ -5823,6 +5894,168 @@
         function clearPlanningBulkSelection() {
             const type = getCurrentPlanningBulkType();
             planningBulkSelections[type].clear();
+            updatePlanningBulkToolbar();
+        }
+
+        function getPlanningBulkCalendarModel(monthValue, sessions = getPlanningCollection('session')) {
+            const now = new Date();
+            const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthKey = /^\d{4}-\d{2}$/.test(String(monthValue || '')) ? String(monthValue) : fallback;
+            const [year, monthNumber] = monthKey.split('-').map(Number);
+            const monthIndex = monthNumber - 1;
+            const leadingDays = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+            const dayCount = new Date(year, monthIndex + 1, 0).getDate();
+            const byDate = new Map();
+            (Array.isArray(sessions) ? sessions : []).forEach(session => {
+                if (!session || !String(session.date || '').startsWith(`${monthKey}-`)) return;
+                const date = String(session.date);
+                if (!byDate.has(date)) byDate.set(date, []);
+                byDate.get(date).push(session);
+            });
+            byDate.forEach(items => items.sort((left, right) =>
+                String(left.startTime || '').localeCompare(String(right.startTime || '')) ||
+                String(left.type || '').localeCompare(String(right.type || ''), 'fr')
+            ));
+            const days = Array.from({length: dayCount}, (_, index) => {
+                const day = index + 1;
+                const date = `${monthKey}-${String(day).padStart(2, '0')}`;
+                return {day, date, sessions: byDate.get(date) || []};
+            });
+            return {monthKey, year, monthIndex, leadingDays, dayCount, days};
+        }
+
+        function openPlanningBulkCalendar() {
+            if (currentPlanningTab !== 'session') switchPlanningTab('session');
+            prunePlanningBulkSelection('session');
+            const sessions = getPlanningCollection('session');
+            const selected = planningBulkSelections.session;
+            const today = new Date();
+            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const seed = sessions.find(item => selected.has(item.id)) ||
+                sessions.find(item => String(item.date || '') >= todayKey) || sessions[0];
+            planningBulkCalendarMonth = seed && /^\d{4}-\d{2}/.test(String(seed.date || ''))
+                ? String(seed.date).slice(0, 7)
+                : todayKey.slice(0, 7);
+            renderPlanningBulkCalendar();
+            document.getElementById('modal-planning-bulk-calendar').classList.remove('hidden');
+        }
+
+        function closePlanningBulkCalendar() {
+            document.getElementById('modal-planning-bulk-calendar').classList.add('hidden');
+            updatePlanningBulkToolbar();
+        }
+
+        function shiftPlanningBulkCalendarMonth(delta) {
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth, []);
+            const next = new Date(model.year, model.monthIndex + Math.trunc(Number(delta) || 0), 1);
+            planningBulkCalendarMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+            renderPlanningBulkCalendar();
+        }
+
+        function setPlanningBulkCalendarToCurrentMonth() {
+            const now = new Date();
+            planningBulkCalendarMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            renderPlanningBulkCalendar();
+        }
+
+        function selectPlanningBulkCalendarMonth(selected) {
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth);
+            model.days.flatMap(day => day.sessions).forEach(session => {
+                if (selected) planningBulkSelections.session.add(session.id);
+                else planningBulkSelections.session.delete(session.id);
+            });
+            renderPlanningBulkCalendar();
+        }
+
+        function togglePlanningBulkCalendarDay(date) {
+            const sessions = getPlanningCollection('session').filter(item => item.date === date);
+            const allSelected = sessions.length > 0 && sessions.every(item => planningBulkSelections.session.has(item.id));
+            sessions.forEach(item => {
+                if (allSelected) planningBulkSelections.session.delete(item.id);
+                else planningBulkSelections.session.add(item.id);
+            });
+            renderPlanningBulkCalendar();
+        }
+
+        function togglePlanningBulkCalendarSession(id, selected) {
+            if (selected) planningBulkSelections.session.add(id);
+            else planningBulkSelections.session.delete(id);
+            renderPlanningBulkCalendar();
+        }
+
+        function clearPlanningBulkCalendarSelection() {
+            planningBulkSelections.session.clear();
+            renderPlanningBulkCalendar();
+        }
+
+        function renderPlanningBulkCalendar() {
+            const grid = document.getElementById('planning-bulk-calendar-grid');
+            const monthLabel = document.getElementById('planning-bulk-calendar-month');
+            const count = document.getElementById('planning-bulk-calendar-count');
+            if (!grid || !monthLabel || !count) return;
+            const model = getPlanningBulkCalendarModel(planningBulkCalendarMonth);
+            planningBulkCalendarMonth = model.monthKey;
+            const selection = planningBulkSelections.session;
+            const today = new Date();
+            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            monthLabel.textContent = new Date(model.year, model.monthIndex, 1)
+                .toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+            grid.innerHTML = '';
+            for (let index = 0; index < model.leadingDays; index += 1) {
+                const blank = document.createElement('div');
+                blank.className = 'min-h-28 bg-gray-50';
+                blank.setAttribute('aria-hidden', 'true');
+                grid.appendChild(blank);
+            }
+            model.days.forEach(day => {
+                const cell = document.createElement('div');
+                cell.className = `min-h-28 bg-white p-1.5 ${day.date === todayKey ? 'ring-2 ring-inset ring-indigo-400' : ''}`;
+                const heading = document.createElement('div');
+                heading.className = 'mb-1 flex items-center justify-between gap-1';
+                const number = document.createElement('strong');
+                number.className = day.date === todayKey ? 'text-indigo-700' : 'text-gray-700';
+                number.textContent = String(day.day);
+                heading.appendChild(number);
+                if (day.sessions.length) {
+                    const allSelected = day.sessions.every(session => selection.has(session.id));
+                    const dayButton = document.createElement('button');
+                    dayButton.type = 'button';
+                    dayButton.className = `rounded px-1.5 py-1 text-[8px] font-bold ${allSelected ? 'bg-indigo-700 text-white' : 'bg-indigo-50 text-indigo-700'}`;
+                    dayButton.textContent = allSelected ? 'Effacer' : 'Tout';
+                    dayButton.setAttribute('aria-label', `${allSelected ? 'Désélectionner' : 'Sélectionner'} toutes les séances du ${formatPlanningDate(day.date)}`);
+                    dayButton.onclick = () => togglePlanningBulkCalendarDay(day.date);
+                    heading.appendChild(dayButton);
+                }
+                cell.appendChild(heading);
+                const list = document.createElement('div');
+                list.className = 'space-y-1';
+                day.sessions.forEach(session => {
+                    const label = document.createElement('label');
+                    label.className = `flex cursor-pointer items-start gap-1 rounded border p-1 text-[8px] leading-tight ${selection.has(session.id) ? 'border-indigo-300 bg-indigo-50 text-indigo-900' : 'border-gray-100 bg-gray-50 text-gray-600'}`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = selection.has(session.id);
+                    checkbox.className = 'mt-0.5 h-3.5 w-3.5 shrink-0 accent-indigo-700';
+                    checkbox.onchange = () => togglePlanningBulkCalendarSession(session.id, checkbox.checked);
+                    const text = document.createElement('span');
+                    text.className = 'min-w-0 break-words';
+                    text.textContent = `${session.startTime || '—'} ${session.type || 'Séance'}`;
+                    label.append(checkbox, text);
+                    list.appendChild(label);
+                });
+                cell.appendChild(list);
+                grid.appendChild(cell);
+            });
+            const usedCells = model.leadingDays + model.dayCount;
+            const trailingDays = (7 - (usedCells % 7)) % 7;
+            for (let index = 0; index < trailingDays; index += 1) {
+                const blank = document.createElement('div');
+                blank.className = 'min-h-28 bg-gray-50';
+                blank.setAttribute('aria-hidden', 'true');
+                grid.appendChild(blank);
+            }
+            const monthSelected = model.days.flatMap(day => day.sessions).filter(session => selection.has(session.id)).length;
+            count.textContent = `${selection.size} séance${selection.size === 1 ? '' : 's'} sélectionnée${selection.size === 1 ? '' : 's'} au total · ${monthSelected} dans ce mois`;
             updatePlanningBulkToolbar();
         }
 
@@ -10484,6 +10717,97 @@
             return rows;
         }
 
+        function getSafeGymnastPdfName(gymnast) {
+            return `${gymnast && gymnast.nom || ''}_${gymnast && gymnast.prenom || ''}`
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '') || 'Gymnaste';
+        }
+
+        function createProgressionOverviewPdfDocument(jsPDF, gymnast, items, selectedApparatusLabels = []) {
+            const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
+            if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
+            const summary = calculateProgressionSummary(items);
+            const apparatusLabels = Array.isArray(selectedApparatusLabels) ? selectedApparatusLabels.filter(Boolean) : [];
+            const title = apparatusLabels.length && apparatusLabels.length < PROGRESSION_APPARATUS.length
+                ? `Progression - ${apparatusLabels.join(', ')}`
+                : 'Tableau de progression';
+            doc.setFillColor(126, 34, 206);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(17);
+            doc.text(title, 14, 17);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 25);
+            doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 25, {align: 'right'});
+
+            doc.setTextColor(55, 65, 81);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.text(`Évaluations : ${summary.total}`, 14, 39);
+            doc.text(`Non réalisé : ${summary.not_performed}`, 50, 39);
+            doc.text(`Étudié : ${summary.studied}`, 91, 39);
+            doc.text(`En cours : ${summary.in_progress}`, 122, 39);
+            doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 158, 39);
+
+            doc.setTextColor(55, 65, 81);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('Profils de progression', 14, 49);
+            doc.setFontSize(8);
+            doc.setTextColor(107, 33, 168);
+            doc.text('Qualité technique', 57, 57, {align: 'center'});
+            doc.setTextColor(29, 78, 216);
+            doc.text('Acquisition par agrès', 153, 57, {align: 'center'});
+            const familyRadar = drawProgressionRadarPDF(doc, items, 57, 84, 19, 'family');
+            const apparatusRadar = drawProgressionRadarPDF(doc, items, 153, 84, 19, 'apparatus');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.text('Technique : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé', 105, 111, {align: 'center'});
+            doc.text('Agrès : 0 % non réalisé · 35 % étudié · 70 % en cours · 100 % acquis', 105, 115, {align: 'center'});
+            const classificationWarnings = [];
+            if (familyRadar.unclassifiedCount)
+                classificationWarnings.push(`${familyRadar.unclassifiedCount} sans famille`);
+            if (apparatusRadar.unclassifiedCount)
+                classificationWarnings.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
+            if (familyRadar.unevaluatedCount)
+                classificationWarnings.push(`${familyRadar.unevaluatedCount} avec qualité incomplète`);
+            if (classificationWarnings.length)
+                doc.text(`À compléter : ${classificationWarnings.join(' · ')}`, 105, 120, {align: 'center'});
+
+            doc.autoTable({
+                startY: classificationWarnings.length ? 126 : 121,
+                head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
+                body: buildGroupedProgressionPdfTableRows(items),
+                theme: 'grid',
+                styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
+                headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
+                columnStyles: {
+                    0: {cellWidth: 36, halign: 'left', fontStyle: 'bold'},
+                    1: {cellWidth: 19, halign: 'left'},
+                    2: {cellWidth: 45, halign: 'left'},
+                    3: {cellWidth: 22, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                    4: {cellWidth: 22, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                    5: {cellWidth: 22, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                    6: {cellWidth: 22, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                },
+                margin: getPdfPrintSafeTableMargins(),
+                showHead: 'everyPage',
+                rowPageBreak: 'avoid'
+            });
+            addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - progression des éléments');
+            return doc;
+        }
+
+        function getLevelProgressionPdfItems(gymId, apparatuses) {
+            const selected = new Set(normalizePlanningWorkTags(apparatuses, PROGRESSION_APPARATUS));
+            return getGymnastProgression(gymId).filter(item => selected.has(normalizeProgressionApparatus(item.apparatus)));
+        }
+
         function exportProgressionPDF() {
             if (!window.jspdf || !window.jspdf.jsPDF) {
                 alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
@@ -10497,87 +10821,114 @@
                 return;
             }
             try {
-                const {jsPDF} = window.jspdf;
-                const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
-                if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
-                const summary = calculateProgressionSummary(items);
-                doc.setFillColor(126, 34, 206);
-                doc.rect(0, 0, 210, 30, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(17);
-                doc.text('Tableau de progression', 14, 17);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 25);
-                doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 25, {align: 'right'});
-
-                doc.setTextColor(55, 65, 81);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8.5);
-                doc.text(`Évaluations : ${summary.total}`, 14, 39);
-                doc.text(`Non réalisé : ${summary.not_performed}`, 50, 39);
-                doc.text(`Étudié : ${summary.studied}`, 91, 39);
-                doc.text(`En cours : ${summary.in_progress}`, 122, 39);
-                doc.text(`Acquis : ${summary.acquired} (${summary.acquiredPercent} %)`, 158, 39);
-
-                doc.setTextColor(55, 65, 81);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(9);
-                doc.text('Profils de progression', 14, 49);
-                doc.setFontSize(8);
-                doc.setTextColor(107, 33, 168);
-                doc.text('Qualité technique', 57, 57, {align: 'center'});
-                doc.setTextColor(29, 78, 216);
-                doc.text('Acquisition par agrès', 153, 57, {align: 'center'});
-                const familyRadar = drawProgressionRadarPDF(doc, items, 57, 84, 19, 'family');
-                const apparatusRadar = drawProgressionRadarPDF(doc, items, 153, 84, 19, 'apparatus');
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7);
-                doc.setTextColor(107, 114, 128);
-                doc.text('Technique : 25 % à corriger · 50 % fragile · 75 % correct · 100 % maîtrisé', 105, 111, {align: 'center'});
-                doc.text('Agrès : 0 % non réalisé · 35 % étudié · 70 % en cours · 100 % acquis', 105, 115, {align: 'center'});
-                const classificationWarnings = [];
-                if (familyRadar.unclassifiedCount)
-                    classificationWarnings.push(`${familyRadar.unclassifiedCount} sans famille`);
-                if (apparatusRadar.unclassifiedCount)
-                    classificationWarnings.push(`${apparatusRadar.unclassifiedCount} sans agrès`);
-                if (familyRadar.unevaluatedCount)
-                    classificationWarnings.push(`${familyRadar.unevaluatedCount} avec qualité incomplète`);
-                if (classificationWarnings.length)
-                    doc.text(`À compléter : ${classificationWarnings.join(' · ')}`, 105, 120, {align: 'center'});
-
-                doc.autoTable({
-                    startY: classificationWarnings.length ? 126 : 121,
-                    head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
-                    body: buildGroupedProgressionPdfTableRows(items),
-                    theme: 'grid',
-                    styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
-                    headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
-                    columnStyles: {
-                        0: {cellWidth: 36, halign: 'left', fontStyle: 'bold'},
-                        1: {cellWidth: 19, halign: 'left'},
-                        2: {cellWidth: 45, halign: 'left'},
-                        3: {cellWidth: 22, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                        4: {cellWidth: 22, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
-                        5: {cellWidth: 22, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                        6: {cellWidth: 22, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
-                    },
-                    margin: getPdfPrintSafeTableMargins(),
-                    showHead: 'everyPage',
-                    rowPageBreak: 'avoid'
-                });
-
-                addPdfPrintSafeFooters(doc, 'Mâcon Gym Suivi - progression des éléments');
-                const safeName = `${gymnast.nom || ''}_${gymnast.prenom || ''}`
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-zA-Z0-9]+/g, '_')
-                    .replace(/^_+|_+$/g, '') || 'Gymnaste';
-                doc.save(`Progression_${safeName}.pdf`);
+                const doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items);
+                doc.save(`Progression_${getSafeGymnastPdfName(gymnast)}.pdf`);
             } catch (error) {
                 console.error('[GymSuivi] Erreur export progression :', error);
                 alert(`❌ Impossible de créer le PDF : ${error.message}`);
+            }
+        }
+
+        function getLevelProgressionExportGymnasts(levelId = currentLevelId) {
+            return (Array.isArray(data.gymnastes) ? data.gymnastes : [])
+                .filter(gymnast => gymnast.niveauId === levelId)
+                .sort((left, right) =>
+                    String(left.nom || '').localeCompare(String(right.nom || ''), 'fr', {sensitivity: 'base'}) ||
+                    String(left.prenom || '').localeCompare(String(right.prenom || ''), 'fr', {sensitivity: 'base'})
+                );
+        }
+
+        function openLevelProgressionExportModal() {
+            const level = getLevelById(currentLevelId);
+            if (!level || PROTECTED_LEVEL_IDS.includes(level.id)) {
+                alert("⚠️ Ouvrez d'abord une catégorie de gymnastes.");
+                return;
+            }
+            const gymnasts = getLevelProgressionExportGymnasts(level.id);
+            if (!gymnasts.length) {
+                alert('⚠️ Cette catégorie ne contient aucune gymnaste.');
+                return;
+            }
+            const list = document.getElementById('level-progression-gymnast-list');
+            const apparatusList = document.getElementById('level-progression-apparatus-list');
+            document.getElementById('level-progression-export-level').textContent = `${level.name} · ${gymnasts.length} gymnaste${gymnasts.length === 1 ? '' : 's'}`;
+            list.innerHTML = gymnasts.map(gymnast => {
+                const name = `${gymnast.nom || ''} ${gymnast.prenom || ''}`.trim() || 'Gymnaste sans nom';
+                return `<label class="flex cursor-pointer items-center gap-2 rounded-lg border border-purple-100 bg-white p-2 text-[10px] font-semibold text-gray-700"><input type="checkbox" data-level-progression-gymnast-id="${escapeHtml(gymnast.id)}" checked onchange="updateLevelProgressionExportSelection()" class="h-4 w-4 shrink-0 accent-purple-700"><span class="min-w-0 break-words">${escapeHtml(name)}</span></label>`;
+            }).join('');
+            apparatusList.innerHTML = PROGRESSION_APPARATUS.map(apparatus => `<label class="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-100 bg-white p-2 text-[10px] font-bold text-amber-800"><input type="checkbox" data-level-progression-apparatus value="${escapeHtml(apparatus.key)}" checked onchange="updateLevelProgressionExportSelection()" class="h-4 w-4 shrink-0 accent-amber-600"><span>${escapeHtml(apparatus.label)}</span></label>`).join('');
+            const status = document.getElementById('level-progression-export-status');
+            status.classList.add('hidden');
+            status.textContent = '';
+            document.getElementById('modal-level-progression-export').classList.remove('hidden');
+            updateLevelProgressionExportSelection();
+        }
+
+        function closeLevelProgressionExportModal() {
+            document.getElementById('modal-level-progression-export').classList.add('hidden');
+        }
+
+        function setAllLevelProgressionGymnasts(selected) {
+            document.querySelectorAll('[data-level-progression-gymnast-id]').forEach(input => {
+                input.checked = Boolean(selected);
+            });
+            updateLevelProgressionExportSelection();
+        }
+
+        function updateLevelProgressionExportSelection() {
+            const gymnastCount = document.querySelectorAll('[data-level-progression-gymnast-id]:checked').length;
+            const apparatusCount = document.querySelectorAll('[data-level-progression-apparatus]:checked').length;
+            const summary = document.getElementById('level-progression-export-summary');
+            const button = document.getElementById('btn-export-level-progressions');
+            summary.textContent = gymnastCount && apparatusCount
+                ? `${gymnastCount} gymnaste${gymnastCount === 1 ? '' : 's'} · ${apparatusCount} agrès · ${gymnastCount} fichier${gymnastCount === 1 ? '' : 's'} PDF distinct${gymnastCount === 1 ? '' : 's'}`
+                : 'Sélectionnez au moins une gymnaste et un agrès.';
+            button.disabled = gymnastCount === 0 || apparatusCount === 0;
+            return {gymnastCount, apparatusCount};
+        }
+
+        async function exportLevelProgressionPDFs() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("❌ Le module PDF n'est pas encore chargé. Vérifiez votre connexion puis rechargez la page.");
+                return;
+            }
+            const gymnastIds = new Set(Array.from(document.querySelectorAll('[data-level-progression-gymnast-id]:checked')).map(input => input.dataset.levelProgressionGymnastId));
+            const apparatuses = Array.from(document.querySelectorAll('[data-level-progression-apparatus]:checked')).map(input => input.value);
+            const gymnasts = getLevelProgressionExportGymnasts().filter(gymnast => gymnastIds.has(gymnast.id));
+            if (!gymnasts.length || !apparatuses.length) {
+                alert('⚠️ Sélectionnez au moins une gymnaste et un agrès.');
+                return;
+            }
+            if (gymnasts.length > 1 && !confirm(`Créer ${gymnasts.length} fichiers PDF séparés ?\n\nChrome pourra demander d'autoriser les téléchargements multiples pour cette application.`)) return;
+            const button = document.getElementById('btn-export-level-progressions');
+            const status = document.getElementById('level-progression-export-status');
+            const labels = apparatuses.map(key => (PROGRESSION_APPARATUS.find(item => item.key === key) || {}).label).filter(Boolean);
+            const suffix = apparatuses.length === PROGRESSION_APPARATUS.length ? 'Tous_agres' : apparatuses.join('_');
+            button.disabled = true;
+            status.classList.remove('hidden');
+            let created = 0;
+            try {
+                for (let index = 0; index < gymnasts.length; index += 1) {
+                    const gymnast = gymnasts[index];
+                    status.textContent = `Création ${index + 1} / ${gymnasts.length} : ${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim();
+                    button.textContent = `Création ${index + 1} / ${gymnasts.length}…`;
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    const items = getLevelProgressionPdfItems(gymnast.id, apparatuses);
+                    if (!items.length) continue;
+                    const doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels);
+                    doc.save(`Progression_${getSafeGymnastPdfName(gymnast)}_${suffix}.pdf`);
+                    created += 1;
+                    await new Promise(resolve => setTimeout(resolve, 180));
+                }
+                if (!created) throw new Error('Aucun élément ne correspond aux agrès choisis.');
+                status.textContent = `${created} fichier${created === 1 ? '' : 's'} PDF téléchargé${created === 1 ? '' : 's'} séparément ✓${created > 1 ? ' Autorisez les téléchargements multiples si Chrome le demande.' : ''}`;
+            } catch (error) {
+                console.error('[GymSuivi] Erreur export progressions catégorie :', error);
+                status.textContent = 'Échec de l’export';
+                alert(`❌ Impossible de créer les PDF : ${error.message}`);
+            } finally {
+                button.textContent = 'Créer les PDF séparés';
+                updateLevelProgressionExportSelection();
             }
         }
 
