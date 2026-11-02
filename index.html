@@ -956,7 +956,7 @@
                                 <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
                                 <select id="progression-pdf-format" onchange="saveProgressionPdfModePreference()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700" aria-label="Format du PDF de progression">
                                     <option value="complete">PDF complet</option>
-                                    <option value="compact">PDF allégé</option>
+                                    <option value="compact">PDF allégé + sigles</option>
                                 </select>
                                 <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Exporter</button>
                             </div>
@@ -1915,7 +1915,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.35.0';
+        const APP_VERSION = '1.36.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -2560,16 +2560,25 @@
         }
 
         function normalizePlanningWorkTags(value, definitions) {
-            const valid = new Set((Array.isArray(definitions) ? definitions : []).map(item => item.key));
-            const aliases = {balance: 'motor_control', coordination: 'motor_control', proprioception: 'motor_control'};
+            const safeDefinitions = Array.isArray(definitions) ? definitions : [];
+            const valid = new Set(safeDefinitions.map(item => item.key));
+            const simplify = input => String(input || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase('fr').replace(/[^a-z0-9]+/g, ' ').trim();
+            const aliases = new Map([
+                ['balance', 'motor_control'], ['coordination', 'motor_control'], ['proprioception', 'motor_control']
+            ]);
+            safeDefinitions.forEach(item => {
+                aliases.set(simplify(item.key), item.key);
+                aliases.set(simplify(item.label), item.key);
+            });
             const source = Array.isArray(value)
                 ? value
                 : value === undefined || value === null || value === ''
                     ? []
-                    : String(value).split(',');
+                    : String(value).split(/[,;|/]+/);
             return [...new Set(source
                 .map(item => String(item || '').trim())
-                .map(item => valid.has(item) ? item : aliases[item])
+                .map(item => valid.has(item) ? item : aliases.get(simplify(item)))
                 .filter(item => valid.has(item)))];
         }
 
@@ -2662,7 +2671,7 @@
                     mesocycleId: validMesoIds.has(String(item.mesocycleId || '')) ? String(item.mesocycleId) : '',
                     intensity: normalizePlanningText(item.intensity, 100),
                     objective: normalizePlanningText(item.objective, 2000),
-                    apparatuses: normalizePlanningText(item.apparatuses, 300),
+                    apparatuses: normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS),
                     status: normalizePlanningText(item.status || 'Planifié', 60),
                     sessions: (Array.isArray(item.sessions) ? item.sessions : []).map((session, sessionIndex) =>
                         normalizePlanningSession(session, `SESSION-${id}-${sessionIndex + 1}`)
@@ -5853,21 +5862,38 @@
             const fields = document.getElementById('planning-bulk-editor-fields');
             const statuses = ['Planifié', 'En cours', 'Terminé', 'Reporté', 'Annulé'];
             const statusOptions = statuses.map(status => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`).join('');
-            const common = [
+            const common = [];
+            if (type !== 'session')
+                common.push(planningBulkBlock('name', 'le nom', '<input name="bulk_name" type="text" maxlength="120" required class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Nouveau nom commun">'));
+            if (type === 'session') {
+                common.push(planningBulkBlock('date', 'la date', '<input name="bulk_date" type="date" required class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
+            } else {
+                common.push(planningBulkBlock('period', 'la période', '<div class="grid grid-cols-2 gap-2"><label class="text-[9px] font-bold text-gray-500">Début<input name="bulk_start_date" type="date" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"></label><label class="text-[9px] font-bold text-gray-500">Fin<input name="bulk_end_date" type="date" class="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"></label></div>'));
+                common.push(planningBulkBlock('objective', 'l’objectif', '<textarea name="bulk_objective" rows="3" maxlength="2000" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Nouvel objectif commun"></textarea>'));
+            }
+            common.push(
                 planningBulkBlock('status', 'le statut', `<select name="bulk_status" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">${statusOptions}</select>`),
-                planningBulkBlock('date_shift', 'les dates', '<div class="grid grid-cols-[1fr_auto] items-center gap-2"><input name="bulk_date_shift" type="number" step="1" value="0" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><span class="text-[9px] text-gray-500">jour(s), négatif pour avancer</span></div>'),
+                planningBulkBlock('date_shift', 'le décalage des dates', '<div class="grid grid-cols-[1fr_auto] items-center gap-2"><input name="bulk_date_shift" type="number" step="1" value="0" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><span class="text-[9px] text-gray-500">jour(s), négatif pour avancer</span></div>'),
                 planningBulkBlock('notes', 'les notes', '<div class="space-y-2"><select name="bulk_notes_mode" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="append">Ajouter à la suite</option><option value="replace">Remplacer</option></select><textarea name="bulk_notes" rows="3" maxlength="3000" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Texte à appliquer"></textarea></div>')
-            ];
+            );
             if (type === 'macrocycle') {
+                common.push(planningBulkBlock('season', 'la saison', '<input name="bulk_season" type="text" maxlength="30" required class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Ex. 2026-2027">'));
+                common.push(planningBulkBlock('group', 'le groupe / la catégorie', '<input name="bulk_group" type="text" maxlength="100" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
                 common.push(planningBulkBlock('sessions_per_week', 'le nombre de séances de référence', '<input name="bulk_sessions_per_week" type="number" min="0" step="1" value="0" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
+                common.push(planningBulkBlock('deadline', 'l’échéance', '<div class="grid grid-cols-1 gap-2 sm:grid-cols-2"><input name="bulk_deadline_label" type="text" maxlength="100" class="rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Nom de l’échéance"><input name="bulk_deadline_date" type="date" class="rounded-lg border border-gray-300 bg-white p-2 text-xs"></div>'));
             } else if (type === 'mesocycle') {
+                const macrocycles = getPlanningCollection('macrocycle').map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(`${item.season ? `${item.season} — ` : ''}${item.name}`)}</option>`).join('');
                 const phases = PLANNING_MESOCYCLE_PHASES.map(phase => `<option value="${phase.code}">${escapeHtml(`${phase.code} — ${phase.label}`)}</option>`).join('');
+                common.push(planningBulkBlock('code', 'le code', '<input name="bulk_code" type="text" maxlength="20" required class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
                 common.push(planningBulkBlock('phase', 'le type de mésocycle', `<select name="bulk_phase" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">${phases}</select>`));
+                common.push(planningBulkBlock('macrocycle', 'le macrocycle lié', `<select name="bulk_macrocycle_id" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="">Non rattaché</option>${macrocycles}</select>`));
                 common.push(planningBulkBlock('load', 'la charge cible', '<input name="bulk_load" type="text" maxlength="120" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs" placeholder="Ex. progressive, élevée…">'));
+                common.push(planningBulkBlock('expected', 'le résultat attendu', '<textarea name="bulk_expected" rows="3" maxlength="2000" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"></textarea>'));
             } else if (type === 'microcycle') {
                 const mesocycles = getPlanningCollection('mesocycle').map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(`${item.phase || 'PPS'} · ${item.code || item.name} — ${item.name}`)}</option>`).join('');
                 common.push(planningBulkBlock('intensity', 'l’intensité / charge', '<input name="bulk_intensity" type="text" maxlength="120" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
                 common.push(planningBulkBlock('mesocycle', 'le mésocycle lié', `<select name="bulk_mesocycle_id" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="">Non rattaché</option>${mesocycles}</select>`));
+                common.push(planningBulkBlock('apparatuses', 'les agrès prioritaires', `<select name="bulk_apparatus_mode" class="mb-2 w-full rounded-lg border border-gray-300 bg-white p-2 text-xs"><option value="replace">Remplacer la sélection</option><option value="add">Ajouter à l’existant</option><option value="remove">Retirer de l’existant</option></select>${planningBulkCheckboxOptions('bulk_apparatuses', PROGRESSION_APPARATUS)}`));
             } else if (type === 'session') {
                 const microcycles = getPlanningCollection('microcycle').map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(`${formatPlanningPeriod(item.startDate, item.endDate)} — ${item.name}`)}</option>`).join('');
                 common.push(planningBulkBlock('session_type', 'le type de séance', '<input name="bulk_session_type" type="text" maxlength="60" value="Entraînement" class="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs">'));
@@ -5878,7 +5904,7 @@
             }
             document.getElementById('planning-bulk-editor-type').value = type;
             document.getElementById('planning-bulk-editor-title').textContent = `Modifier ${selection.size} ${getPlanningTypeLabel(type).toLocaleLowerCase('fr')}${selection.size === 1 ? '' : 's'}`;
-            document.getElementById('planning-bulk-editor-subtitle').textContent = 'Activez uniquement les changements à appliquer à toute la sélection.';
+            document.getElementById('planning-bulk-editor-subtitle').textContent = 'Tous les champs sont disponibles : activez uniquement ceux à appliquer à toute la sélection.';
             fields.innerHTML = common.join('');
             fields.querySelectorAll('[data-planning-bulk-controls] input, [data-planning-bulk-controls] select, [data-planning-bulk-controls] textarea')
                 .forEach(control => { control.disabled = true; });
@@ -5919,7 +5945,28 @@
             }
             const form = new FormData(event.currentTarget);
             const dateShift = enabled.has('date_shift') ? Math.trunc(Number(form.get('bulk_date_shift')) || 0) : 0;
+            const bulkStartDate = normalizePlanningText(form.get('bulk_start_date'), 10);
+            const bulkEndDate = normalizePlanningText(form.get('bulk_end_date'), 10);
+            if (enabled.has('name') && !normalizePlanningText(form.get('bulk_name'), 120)) {
+                alert('Indiquez un nom à appliquer à la sélection.');
+                return;
+            }
+            if (enabled.has('period') && bulkStartDate && bulkEndDate && bulkEndDate < bulkStartDate) {
+                alert('La date de fin doit être postérieure à la date de début.');
+                return;
+            }
+            if (enabled.has('date') && !/^\d{4}-\d{2}-\d{2}$/.test(String(form.get('bulk_date') || ''))) {
+                alert('Indiquez une date valide à appliquer aux séances.');
+                return;
+            }
             const applyCommon = item => {
+                if (enabled.has('name')) item.name = normalizePlanningText(form.get('bulk_name'), 120);
+                if (enabled.has('period')) {
+                    item.startDate = bulkStartDate;
+                    item.endDate = bulkEndDate;
+                }
+                if (enabled.has('objective')) item.objective = normalizePlanningText(form.get('bulk_objective'), 2000);
+                if (enabled.has('date')) item.date = normalizePlanningText(form.get('bulk_date'), 10);
                 if (enabled.has('status')) item.status = normalizePlanningText(form.get('bulk_status') || 'Planifié', 60);
                 if (enabled.has('notes')) item.notes = appendPlanningBulkNotes(item.notes, form.get('bulk_notes'), form.get('bulk_notes_mode'), type === 'session' ? 1000 : 3000);
                 if (enabled.has('date_shift') && dateShift) {
@@ -5927,6 +5974,8 @@
                     else {
                         item.startDate = addPlanningDays(item.startDate, dateShift);
                         item.endDate = addPlanningDays(item.endDate, dateShift);
+                        if (type === 'macrocycle' && item.deadlineDate)
+                            item.deadlineDate = addPlanningDays(item.deadlineDate, dateShift);
                     }
                 }
             };
@@ -5982,15 +6031,29 @@
                 getPlanningCollection(type).forEach(item => {
                     if (!selectedIds.has(item.id)) return;
                     applyCommon(item);
-                    if (type === 'macrocycle' && enabled.has('sessions_per_week'))
-                        item.sessionsPerWeek = Math.max(0, Math.trunc(Number(form.get('bulk_sessions_per_week')) || 0));
+                    if (type === 'macrocycle') {
+                        if (enabled.has('season')) item.season = normalizePlanningText(form.get('bulk_season'), 30);
+                        if (enabled.has('group')) item.group = normalizePlanningText(form.get('bulk_group'), 100);
+                        if (enabled.has('sessions_per_week'))
+                            item.sessionsPerWeek = Math.max(0, Math.trunc(Number(form.get('bulk_sessions_per_week')) || 0));
+                        if (enabled.has('deadline')) {
+                            item.deadlineLabel = normalizePlanningText(form.get('bulk_deadline_label'), 100);
+                            item.deadlineDate = normalizePlanningText(form.get('bulk_deadline_date'), 10);
+                        }
+                    }
                     if (type === 'mesocycle') {
+                        if (enabled.has('code')) item.code = normalizePlanningText(form.get('bulk_code'), 20);
                         if (enabled.has('phase')) item.phase = normalizePlanningMesocyclePhase(form.get('bulk_phase'), item);
+                        if (enabled.has('macrocycle')) item.macrocycleId = normalizePlanningText(form.get('bulk_macrocycle_id'), 100);
                         if (enabled.has('load')) item.load = normalizePlanningText(form.get('bulk_load'), 120);
+                        if (enabled.has('expected')) item.expected = normalizePlanningText(form.get('bulk_expected'), 2000);
                     }
                     if (type === 'microcycle') {
                         if (enabled.has('intensity')) item.intensity = normalizePlanningText(form.get('bulk_intensity'), 120);
                         if (enabled.has('mesocycle')) item.mesocycleId = normalizePlanningText(form.get('bulk_mesocycle_id'), 100);
+                        if (enabled.has('apparatuses')) item.apparatuses = applyPlanningBulkTagMode(
+                            item.apparatuses, form.getAll('bulk_apparatuses'), form.get('bulk_apparatus_mode'), PROGRESSION_APPARATUS
+                        );
                     }
                     item.updatedAt = new Date().toISOString();
                 });
@@ -6041,8 +6104,10 @@
             } else if (type === 'microcycle') {
                 const volume = getPlanningMicrocycleVolume(item);
                 const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
+                const apparatusLabels = normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS)
+                    .map(key => (PROGRESSION_APPARATUS.find(entry => entry.key === key) || {}).label).filter(Boolean);
                 badge = escapeHtml(mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code || mesocycle.name}` : 'Sans mésocycle');
-                description = escapeHtml(item.objective || item.apparatuses || 'Contenu à renseigner');
+                description = escapeHtml(item.objective || apparatusLabels.join(', ') || 'Contenu à renseigner');
                 metrics = `${volume.sessions} séance${volume.sessions === 1 ? '' : 's'} · ${formatPlanningHours(volume.hours)}`;
             } else {
                 const microcycle = getPlanningEntity('microcycle', item.microcycleId);
@@ -6700,12 +6765,14 @@
                 const volume = getPlanningMicrocycleVolume(item);
                 const mesocycle = getPlanningEntity('mesocycle', item.mesocycleId);
                 const sessions = getPlanningCollection('session').filter(session => session.microcycleId === item.id);
+                const apparatusLabels = normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS)
+                    .map(key => (PROGRESSION_APPARATUS.find(entry => entry.key === key) || {}).label).filter(Boolean);
                 return `${status}${planningVolumeCards(volume)}
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         ${planningDetailRow('Mésocycle', mesocycle ? `${mesocycle.phase || 'PPS'} · ${mesocycle.code} — ${mesocycle.name}` : 'Non rattaché')}
                         ${planningDetailRow('Période', formatPlanningPeriod(item.startDate, item.endDate))}
                         ${planningDetailRow('Intensité / charge', item.intensity)}
-                        ${planningDetailRow('Agrès prioritaires', item.apparatuses)}
+                        ${planningDetailRow('Agrès prioritaires', apparatusLabels.join(', ') || 'Non renseignés')}
                         ${planningDetailRow('Objectif', item.objective, true)}
                         ${planningDetailRow('Notes', item.notes, true)}
                     </div>
@@ -6815,6 +6882,18 @@
             </fieldset>`;
         }
 
+        function planningSessionWorkTagGroup(field, label, definitions, selectedValues, colorClass = 'accent-amber-600') {
+            const selected = new Set(normalizePlanningWorkTags(selectedValues, definitions));
+            return `<fieldset class="rounded-lg border border-gray-200 bg-gray-50 p-2">
+                <legend class="px-1 text-[9px] font-bold text-gray-600">${escapeHtml(label)}</legend>
+                <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">${definitions.map(item => `
+                    <label class="flex min-w-0 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[9px] font-semibold text-gray-700">
+                        <input type="checkbox" data-session-work-field="${escapeHtml(field)}" value="${escapeHtml(item.key)}"${selected.has(item.key) ? ' checked' : ''} class="h-4 w-4 shrink-0 ${colorClass}">
+                        <span class="min-w-0 leading-tight">${escapeHtml(item.label)}</span>
+                    </label>`).join('')}</div>
+            </fieldset>`;
+        }
+
         function openPlanningEditor(type, id = '') {
             const existing = id ? getPlanningEntity(type, id) : null;
             const item = existing || {};
@@ -6870,7 +6949,7 @@
                     planningEditorField('endDate', 'Fin', item.endDate, {type: 'date'}),
                     planningEditorField('intensity', 'Intensité / charge', item.intensity),
                     planningEditorField('status', 'Statut', item.status || 'Planifié'),
-                    planningEditorField('apparatuses', 'Agrès prioritaires', item.apparatuses, {full: true}),
+                    planningEditorCheckboxGroup('apparatuses', 'Agrès prioritaires', PROGRESSION_APPARATUS, normalizePlanningWorkTags(item.apparatuses, PROGRESSION_APPARATUS), 'accent-amber-600'),
                     planningEditorField('objective', 'Objectif de la semaine', item.objective, {type: 'textarea', full: true}),
                     planningEditorField('notes', 'Notes', item.notes, {type: 'textarea', full: true}),
                     '<div class="sm:col-span-2 rounded-xl border border-purple-100 bg-purple-50 p-3"><div class="flex items-center justify-between gap-2"><div><p class="font-bold text-purple-800">Séances du microcycle</p><p class="text-[9px] text-purple-600">Les durées alimentent automatiquement les totaux de la saison et de l’échéance.</p></div><button type="button" onclick="addPlanningSessionEditorRow()" class="rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white">＋ Séance</button></div><div id="planning-session-editor-list" class="mt-3 space-y-2"></div></div>'
@@ -6920,11 +6999,14 @@
             row.dataset.generatedReferenceDate = session.generatedReferenceDate || '';
             row.dataset.generatedReferenceType = session.generatedReferenceType || '';
             row.dataset.generatedReferenceStartTime = session.generatedReferenceStartTime || '';
-            row.dataset.sessionApparatuses = JSON.stringify(normalizePlanningWorkTags(session.apparatuses, PROGRESSION_APPARATUS));
-            row.dataset.sessionTechnicalProfiles = JSON.stringify(normalizePlanningWorkTags(session.technicalProfiles, PROGRESSION_FAMILIES));
+            const sessionApparatuses = normalizePlanningWorkTags(session.apparatuses, PROGRESSION_APPARATUS);
+            const sessionTechnicalProfiles = normalizePlanningWorkTags(session.technicalProfiles, PROGRESSION_FAMILIES);
+            row.dataset.sessionApparatuses = JSON.stringify(sessionApparatuses);
+            row.dataset.sessionTechnicalProfiles = JSON.stringify(sessionTechnicalProfiles);
             row.dataset.originalSession = JSON.stringify({
                 date: session.date || '', startTime: session.startTime || '', endTime: session.endTime || '',
-                type: session.type || 'Entraînement', status: session.status || 'Planifié', notes: session.notes || ''
+                type: session.type || 'Entraînement', status: session.status || 'Planifié', notes: session.notes || '',
+                apparatuses: sessionApparatuses, technicalProfiles: sessionTechnicalProfiles
             });
             row.innerHTML = `
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -6935,6 +7017,10 @@
                     <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Type<input data-session-field="type" type="text" value="${escapeHtml(session.type || 'Entraînement')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
                     <label class="text-[9px] font-bold text-gray-500">Statut<input data-session-field="status" type="text" value="${escapeHtml(session.status || 'Planifié')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
                     <label class="text-[9px] font-bold text-gray-500 sm:col-span-2">Notes<input data-session-field="notes" type="text" value="${escapeHtml(session.notes || '')}" class="mt-1 w-full rounded border border-gray-200 p-2 text-[10px] font-normal"></label>
+                </div>
+                <div class="mt-2 grid gap-2 xl:grid-cols-2">
+                    ${planningSessionWorkTagGroup('apparatuses', 'Agrès travaillés', PROGRESSION_APPARATUS, sessionApparatuses, 'accent-amber-600')}
+                    ${planningSessionWorkTagGroup('technicalProfiles', 'Profils techniques travaillés', PROGRESSION_FAMILIES, sessionTechnicalProfiles, 'accent-purple-600')}
                 </div>`;
             row.querySelector('button').onclick = () => row.remove();
             container.appendChild(row);
@@ -6951,12 +7037,23 @@
                     type: read('type'), status: read('status'), notes: read('notes'),
                     apparatuses: [], technicalProfiles: []
                 };
-                try { current.apparatuses = JSON.parse(row.dataset.sessionApparatuses || '[]'); } catch (_) {}
-                try { current.technicalProfiles = JSON.parse(row.dataset.sessionTechnicalProfiles || '[]'); } catch (_) {}
+                const readWorkTags = (field, definitions, datasetValue) => {
+                    const controls = Array.from(row.querySelectorAll(`[data-session-work-field="${field}"]`));
+                    if (controls.length) {
+                        return normalizePlanningWorkTags(controls.filter(input => input.checked).map(input => input.value), definitions);
+                    }
+                    try { return normalizePlanningWorkTags(JSON.parse(datasetValue || '[]'), definitions); } catch (_) { return []; }
+                };
+                current.apparatuses = readWorkTags('apparatuses', PROGRESSION_APPARATUS, row.dataset.sessionApparatuses);
+                current.technicalProfiles = readWorkTags('technicalProfiles', PROGRESSION_FAMILIES, row.dataset.sessionTechnicalProfiles);
                 let original = {};
                 try { original = JSON.parse(row.dataset.originalSession || '{}'); } catch (_) {}
-                const changed = ['date', 'startTime', 'endTime', 'type', 'status', 'notes']
+                const scalarChanged = ['date', 'startTime', 'endTime', 'type', 'status', 'notes']
                     .some(field => String(current[field] || '') !== String(original[field] || ''));
+                const workTagsChanged = ['apparatuses', 'technicalProfiles'].some(field =>
+                    JSON.stringify(current[field]) !== JSON.stringify(normalizePlanningWorkTags(original[field], field === 'apparatuses' ? PROGRESSION_APPARATUS : PROGRESSION_FAMILIES))
+                );
+                const changed = scalarChanged || workTagsChanged;
                 const originalSource = row.dataset.sessionSource || 'manual';
                 const replacesGenerated = row.dataset.replacesGenerated === 'true' ||
                     (changed && ['generated_regular', 'generated_holiday', 'event', 'legacy'].includes(originalSource));
@@ -7097,7 +7194,7 @@
                     mesocycleId: normalizePlanningText(form.get('mesocycleId'), 100),
                     intensity: normalizePlanningText(form.get('intensity'), 100),
                     objective: normalizePlanningText(form.get('objective'), 2000),
-                    apparatuses: normalizePlanningText(form.get('apparatuses'), 300),
+                    apparatuses: normalizePlanningWorkTags(form.getAll('apparatuses'), PROGRESSION_APPARATUS),
                     sessions: collectPlanningSessionEditorRows(id)
                 };
             }
@@ -10199,14 +10296,45 @@
             return `${shortened.trimEnd()}…`;
         }
 
-        function drawCompactProgressionEvaluationRow(doc, item, x, y, width, height) {
+        async function prepareCompactProgressionPdfSymbols(items) {
+            const symbolSources = [...new Set((Array.isArray(items) ? items : [])
+                .map(item => String(item.symbolImage || '').trim()).filter(Boolean))];
+            const sourceMap = new Map(await Promise.all(symbolSources.map(async source => [
+                source,
+                await loadProgressionPdfImage(source, 120, 120)
+            ])));
+            return new Map((Array.isArray(items) ? items : []).map(item => [
+                item.key,
+                sourceMap.get(String(item.symbolImage || '').trim()) || null
+            ]));
+        }
+
+        function drawCompactProgressionEvaluationRow(doc, item, symbolImage, x, y, width, height) {
             doc.setDrawColor(203, 213, 225);
             doc.setFillColor(255, 255, 255);
             doc.roundedRect(x, y, width, height, 0.8, 0.8, 'FD');
+            doc.setDrawColor(226, 232, 240);
+            doc.setFillColor(248, 250, 252);
+            doc.roundedRect(x + 1, y + 0.8, 5.6, 5.6, 0.6, 0.6, 'FD');
+            let symbolDrawn = false;
+            if (symbolImage) {
+                try {
+                    doc.addImage(symbolImage, 'PNG', x + 1.3, y + 1.1, 5, 5, undefined, 'FAST');
+                    symbolDrawn = true;
+                } catch (_) {
+                    symbolDrawn = false;
+                }
+            }
+            if (!symbolDrawn) {
+                doc.setTextColor(71, 85, 105);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(4.2);
+                doc.text(fitProgressionPdfText(doc, item.symbol || item.code || '—', 4.8), x + 3.8, y + 4.3, {align: 'center'});
+            }
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.6);
-            doc.text(fitProgressionPdfText(doc, item.name, width - 39), x + 2, y + 4.6);
+            doc.text(fitProgressionPdfText(doc, item.name, width - 46.5), x + 8, y + 4.6);
             const statuses = ['NR', 'ÉT', 'EC', 'AC'];
             const statusStart = x + width - 35;
             statuses.forEach((label, index) => {
@@ -10220,7 +10348,7 @@
             });
         }
 
-        function createCompactProgressionEvaluationPdfDocument(jsPDF, gymnast, items) {
+        function createCompactProgressionEvaluationPdfDocument(jsPDF, gymnast, items, symbolMap = new Map()) {
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             const bounds = getPdfPrintSafeBounds(doc);
             const pages = buildCompactProgressionEvaluationPdfPages(items);
@@ -10256,7 +10384,7 @@
                     block.rows.forEach(row => {
                         row.forEach((item, column) => {
                             const x = bounds.left + column * (columnWidth + gapX);
-                            drawCompactProgressionEvaluationRow(doc, item, x, y, columnWidth, rowHeight);
+                            drawCompactProgressionEvaluationRow(doc, item, symbolMap.get(item.key), x, y, columnWidth, rowHeight);
                         });
                         y += rowHeight + rowGap;
                     });
@@ -10287,7 +10415,8 @@
                 const mode = saveProgressionPdfModePreference();
                 let doc;
                 if (mode === 'compact') {
-                    doc = createCompactProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items);
+                    const symbolMap = await prepareCompactProgressionPdfSymbols(items);
+                    doc = createCompactProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, symbolMap);
                 } else {
                     const imageMap = await prepareProgressionEvaluationPdfImages(items);
                     doc = createSelectedProgressionEvaluationPdfDocument(window.jspdf.jsPDF, gymnast, items, imageMap);
