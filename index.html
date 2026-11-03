@@ -963,7 +963,7 @@
                                 <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
                                 <select id="progression-pdf-format" onchange="saveProgressionPdfModePreference()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700" aria-label="Format du PDF de progression">
                                     <option value="complete">PDF complet</option>
-                                    <option value="compact">PDF allégé + sigles</option>
+                                    <option value="compact">PDF allégé + sigles + valeurs</option>
                                 </select>
                                 <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Exporter</button>
                             </div>
@@ -1486,7 +1486,7 @@
                     <p class="font-bold text-blue-900">3. Format du document</p>
                     <div class="mt-3 grid gap-2 sm:grid-cols-2">
                         <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="complete" checked onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version complète</strong><span class="mt-1 block text-[9px] text-gray-500">Synthèse, diagrammes radar, qualité technique et tableau détaillé.</span></span></label>
-                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version allégée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom et statut actuel coché pour gagner de la place.</span></span></label>
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version allégée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom, valeur, bonification et statut actuel coché.</span></span></label>
                     </div>
                 </section>
                 <p id="level-progression-export-summary" class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-semibold text-gray-600">Sélectionnez au moins une gymnaste et un agrès.</p>
@@ -1923,7 +1923,7 @@
                     <div id="sigle-scoring-by-apparatus" class="grid gap-2 sm:grid-cols-2"></div>
                 </div>
                 <div>
-                    <label id="sigle-image-label" class="block font-semibold text-gray-700 mb-1">Image du mouvement :</label>
+                    <label id="sigle-image-label" class="block font-semibold text-gray-700 mb-1">Image du sigle :</label>
                     <input
                         type="file"
                         id="sigle-image-file"
@@ -1960,8 +1960,26 @@
                     </div>
                 </div>
                 <div id="sigle-image-preview-container" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-                    <img id="sigle-image-preview" alt="Aperçu de l'image" class="w-20 h-20 object-contain mx-auto rounded bg-white border border-gray-100">
-                    <button type="button" onclick="removeCurrentSigleImage()" class="mt-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">Supprimer l’image</button>
+                    <p class="mb-1 text-[9px] font-bold uppercase tracking-wide text-gray-400">Aperçu du sigle</p>
+                    <img id="sigle-image-preview" alt="Aperçu du sigle" class="w-20 h-20 object-contain mx-auto rounded bg-white border border-gray-100">
+                    <button type="button" onclick="removeCurrentSigleImage()" class="mt-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">Supprimer le sigle</button>
+                </div>
+                <div class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2">
+                    <div>
+                        <label id="sigle-brochure-image-label" class="block font-semibold text-blue-800 mb-1">Image de la brochure :</label>
+                        <input
+                            type="file"
+                            id="sigle-brochure-image-file"
+                            accept="image/*"
+                            onchange="previewCustomBrochureImage(event)"
+                            class="w-full text-xs">
+                        <p class="mt-1 text-[9px] text-blue-600">Facultative. Elle reste indépendante du sigle et apparaît dans les fiches complètes.</p>
+                    </div>
+                    <div id="sigle-brochure-image-preview-container" class="hidden rounded-lg border border-blue-100 bg-white p-2 text-center">
+                        <p class="mb-1 text-[9px] font-bold uppercase tracking-wide text-gray-400">Aperçu brochure</p>
+                        <img id="sigle-brochure-image-preview" alt="Aperçu de l’image de la brochure" class="mx-auto h-24 w-full max-w-56 rounded border border-gray-100 bg-white object-contain">
+                        <button type="button" onclick="removeCurrentBrochureImage()" class="mt-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">Supprimer l’image brochure</button>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <button
@@ -1992,7 +2010,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.38.0';
+        const APP_VERSION = '1.39.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -3150,6 +3168,7 @@
         let editingCustomSigleIndex = null;
         let editingDefaultSigleIndex = null;
         let customSigleImageRemoved = false;
+        let customBrochureImageRemoved = false;
         const movementCollapsedCategories = new Set(loadMovementCollapsedCategoryKeys());
         const progressionCollapsedCategories = new Set(loadProgressionCollapsedCategoryKeys());
         let teamModalMemberSelection = new Set();
@@ -3359,6 +3378,9 @@
                 abrev: String(override.abrev || item.abrev || '').trim().toUpperCase().slice(0, 12),
                 nom: normalizeProgressionName(override.nom || item.nom || item.abrev),
                 img: Object.hasOwn(override, 'img') ? String(override.img || '') : String(item.img || ''),
+                brochureImg: Object.hasOwn(override, 'brochureImg')
+                    ? String(override.brochureImg || '')
+                    : String(item.brochureImg || ''),
                 category,
                 apparatuses: normalizeProgressionApparatuses(
                     override.apparatuses !== undefined ? override.apparatuses : item.apparatuses
@@ -10612,8 +10634,18 @@
             }
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.6);
-            doc.text(fitProgressionPdfText(doc, item.name, width - 46.5), x + 8, y + 4.6);
+            doc.setFontSize(6.2);
+            doc.text(fitProgressionPdfText(doc, item.name, width - 46.5), x + 8, y + 3.1);
+            const movementValue = item.movementValue === null || item.movementValue === undefined
+                ? '—'
+                : formatMovementScoringValue(item.movementValue);
+            const bonusValue = item.bonusValue === null || item.bonusValue === undefined
+                ? '0'
+                : formatMovementScoringValue(item.bonusValue);
+            doc.setTextColor(126, 34, 206);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(5.2);
+            doc.text(`Valeur ${movementValue} · Bonification ${bonusValue}`, x + 8, y + 6.1);
             const statuses = [
                 {key: 'not_performed', label: 'NR'},
                 {key: 'studied', label: 'ÉT'},
@@ -10673,7 +10705,7 @@
                 doc.setTextColor(71, 85, 105);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.3);
-                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', bounds.left, 34);
+                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis · V : valeur · B : bonification', bounds.left, 34);
 
                 let y = 39;
                 page.blocks.forEach(block => {
@@ -12260,6 +12292,23 @@
             reader.readAsDataURL(file);
         }
 
+        function previewCustomBrochureImage(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                event.target.value = '';
+                alert("⚠️ Le fichier sélectionné n'est pas une image.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = loadEvent => {
+                customBrochureImageRemoved = false;
+                document.getElementById('sigle-brochure-image-preview').src = loadEvent.target.result;
+                document.getElementById('sigle-brochure-image-preview-container').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
         function getSigleDrawingCanvas() {
             return document.getElementById('sigle-drawing-canvas');
         }
@@ -12428,7 +12477,7 @@
             document.getElementById('sigle-image-file').value = '';
             document.getElementById('sigle-image-preview').src = customSigleDrawingData;
             document.getElementById('sigle-image-preview-container').classList.remove('hidden');
-            document.getElementById('sigle-drawing-status').textContent = 'Dessin prêt à être enregistré comme image du mouvement.';
+            document.getElementById('sigle-drawing-status').textContent = 'Dessin prêt à être enregistré comme image du sigle.';
         }
 
         function resetSigleDrawingEditor() {
@@ -12444,6 +12493,7 @@
             editingCustomSigleIndex = null;
             editingDefaultSigleIndex = null;
             customSigleImageRemoved = false;
+            customBrochureImageRemoved = false;
             document.getElementById('modal-custom-sigle-title').innerText = 'Bibliothèque des éléments techniques';
             document.getElementById('sigle-abrev-input').value = '';
             document.getElementById('sigle-nom-input').value = '';
@@ -12452,9 +12502,13 @@
             renderSigleScoringInputs(null);
             setSelectedSigleProgressionFamilies([]);
             document.getElementById('sigle-image-file').value = '';
-            document.getElementById('sigle-image-label').innerText = 'Image du mouvement :';
+            document.getElementById('sigle-image-label').innerText = 'Image du sigle :';
             document.getElementById('sigle-image-preview').removeAttribute('src');
             document.getElementById('sigle-image-preview-container').classList.add('hidden');
+            document.getElementById('sigle-brochure-image-file').value = '';
+            document.getElementById('sigle-brochure-image-label').innerText = 'Image de la brochure :';
+            document.getElementById('sigle-brochure-image-preview').removeAttribute('src');
+            document.getElementById('sigle-brochure-image-preview-container').classList.add('hidden');
             resetSigleDrawingEditor();
             document.getElementById('btn-save-custom-sigle').innerText = "Enregistrer l'élément";
             document.getElementById('btn-cancel-custom-sigle-edit').classList.add('hidden');
@@ -12469,6 +12523,16 @@
             const preview = document.getElementById('sigle-image-preview');
             if (preview) preview.removeAttribute('src');
             const container = document.getElementById('sigle-image-preview-container');
+            if (container) container.classList.add('hidden');
+        }
+
+        function removeCurrentBrochureImage() {
+            customBrochureImageRemoved = true;
+            const file = document.getElementById('sigle-brochure-image-file');
+            if (file) file.value = '';
+            const preview = document.getElementById('sigle-brochure-image-preview');
+            if (preview) preview.removeAttribute('src');
+            const container = document.getElementById('sigle-brochure-image-preview-container');
             if (container) container.classList.add('hidden');
         }
 
@@ -12552,6 +12616,7 @@
             editingCustomSigleIndex = null;
             editingDefaultSigleIndex = Number(index);
             customSigleImageRemoved = false;
+            customBrochureImageRemoved = false;
             document.getElementById('modal-custom-sigle-title').innerText = `Modifier ${item.nom}`;
             document.getElementById('sigle-abrev-input').value = item.abrev || '';
             document.getElementById('sigle-nom-input').value = item.nom || '';
@@ -12565,6 +12630,12 @@
             if (item.img) preview.src = item.img;
             else preview.removeAttribute('src');
             document.getElementById('sigle-image-preview-container').classList.toggle('hidden', !item.img);
+            document.getElementById('sigle-brochure-image-file').value = '';
+            document.getElementById('sigle-brochure-image-label').innerText = 'Remplacer l’image brochure (optionnel) :';
+            const brochurePreview = document.getElementById('sigle-brochure-image-preview');
+            if (item.brochureImg) brochurePreview.src = item.brochureImg;
+            else brochurePreview.removeAttribute('src');
+            document.getElementById('sigle-brochure-image-preview-container').classList.toggle('hidden', !item.brochureImg);
             document.getElementById('btn-save-custom-sigle').innerText = 'Enregistrer les modifications';
             document.getElementById('btn-cancel-custom-sigle-edit').classList.remove('hidden');
             document.getElementById('sigle-nom-input').focus();
@@ -12578,6 +12649,7 @@
             editingCustomSigleIndex = index;
             editingDefaultSigleIndex = null;
             customSigleImageRemoved = false;
+            customBrochureImageRemoved = false;
             document.getElementById('modal-custom-sigle-title').innerText = `Modifier ${item.nom}`;
             document.getElementById('sigle-abrev-input').value = item.abrev || '';
             document.getElementById('sigle-nom-input').value = item.nom || '';
@@ -12593,6 +12665,10 @@
             document.getElementById('sigle-image-label').innerText = 'Remplacer l’image (optionnel) :';
             document.getElementById('sigle-image-preview').src = item.img || '';
             document.getElementById('sigle-image-preview-container').classList.toggle('hidden', !item.img);
+            document.getElementById('sigle-brochure-image-file').value = '';
+            document.getElementById('sigle-brochure-image-label').innerText = 'Remplacer l’image brochure (optionnel) :';
+            document.getElementById('sigle-brochure-image-preview').src = item.brochureImg || '';
+            document.getElementById('sigle-brochure-image-preview-container').classList.toggle('hidden', !item.brochureImg);
             document.getElementById('btn-save-custom-sigle').innerText = 'Enregistrer les modifications';
             document.getElementById('btn-cancel-custom-sigle-edit').classList.remove('hidden');
             document.getElementById('sigle-abrev-input').focus();
@@ -12615,7 +12691,7 @@
                 area.value = area.value.replace(pattern, `[${newAbrev}]`);
         }
 
-        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined, movementValue = undefined, bonusValue = undefined, apparatuses = undefined, families = undefined, scoringByApparatus = undefined, category = undefined) {
+        function commitCustomSigleSave(abrev, nom, imageData, folderId = undefined, movementValue = undefined, bonusValue = undefined, apparatuses = undefined, families = undefined, scoringByApparatus = undefined, category = undefined, brochureImageData = undefined) {
             const previousSigles = data.customSigles.map(item => ({...item}));
             const previousMouvements = JSON.parse(JSON.stringify(data.mouvements || {}));
             const previousProgressionElements = JSON.parse(JSON.stringify(data.progressionElements || []));
@@ -12668,6 +12744,9 @@
                 category === undefined && previousItem ? previousItem.category : category,
                 nom
             );
+            const targetBrochureImage = brochureImageData === undefined
+                ? String(previousItem && previousItem.brochureImg || '')
+                : String(brochureImageData || '');
             const updatedAt = new Date().toISOString();
             if (previousItem) {
                 data.customSigles[editingCustomSigleIndex] = {
@@ -12675,6 +12754,7 @@
                     abrev,
                     nom,
                     img: imageData,
+                    brochureImg: targetBrochureImage,
                     folderId: targetFolderId,
                     movementValue: targetMovementValue,
                     bonusValue: targetBonusValue,
@@ -12690,6 +12770,7 @@
                     abrev,
                     nom,
                     img: imageData,
+                    brochureImg: targetBrochureImage,
                     folderId: targetFolderId,
                     movementValue: targetMovementValue,
                     bonusValue: targetBonusValue,
@@ -12724,7 +12805,7 @@
             alert('🟢 Élément enregistré dans Mouvements et Progression !');
         }
 
-        function commitDefaultSigleSave(abrev, nom, imageData, apparatuses, families, scoringByApparatus, category) {
+        function commitDefaultSigleSave(abrev, nom, imageData, apparatuses, families, scoringByApparatus, category, brochureImageData = undefined) {
             const index = editingDefaultSigleIndex;
             const baseItem = defaultSiglesGym[index];
             if (!baseItem) return false;
@@ -12742,6 +12823,9 @@
                 abrev,
                 nom,
                 img: imageData,
+                brochureImg: brochureImageData === undefined
+                    ? String(previousItem.brochureImg || '')
+                    : String(brochureImageData || ''),
                 category: normalizeMovementCategory(category, nom),
                 apparatuses: normalizeProgressionApparatuses(apparatuses),
                 families: normalizeProgressionFamilies(families),
@@ -12781,7 +12865,12 @@
             return true;
         }
 
-        function saveCustomSigle() {
+        function compressMovementLibraryImage(file, maxWidth, maxHeight, quality) {
+            if (!file) return Promise.resolve('');
+            return new Promise(resolve => compressImage(file, maxWidth, maxHeight, quality, resolve));
+        }
+
+        async function saveCustomSigle() {
             const abrev = document
                 .getElementById('sigle-abrev-input')
                 .value
@@ -12792,6 +12881,7 @@
                 .value
                 .trim();
             const fileInput = document.getElementById('sigle-image-file');
+            const brochureFileInput = document.getElementById('sigle-brochure-image-file');
             const category = normalizeMovementCategory(document.getElementById('sigle-category-input').value, nom);
             const apparatuses = getSelectedSigleProgressionApparatuses();
             const families = getSelectedSigleProgressionFamilies();
@@ -12817,6 +12907,20 @@
                 : editingCustomSigleIndex === null
                     ? null
                     : data.customSigles[editingCustomSigleIndex];
+
+            const symbolFile = fileInput.files && fileInput.files[0];
+            const brochureFile = brochureFileInput.files && brochureFileInput.files[0];
+            let imageData = customSigleImageRemoved ? '' : String(currentItem && currentItem.img || '');
+            let brochureImageData = customBrochureImageRemoved
+                ? ''
+                : String(currentItem && currentItem.brochureImg || '');
+            if (customSigleDrawingData && !symbolFile)
+                imageData = customSigleDrawingData;
+            else if (symbolFile)
+                imageData = await compressMovementLibraryImage(symbolFile, 200, 200, 0.86);
+            if (brochureFile)
+                brochureImageData = await compressMovementLibraryImage(brochureFile, 640, 420, 0.86);
+
             if (editingDefaultSigleIndex !== null) {
                 const normalizedName = normalizeProgressionName(nom).toLocaleLowerCase('fr');
                 const collidesWithDefaultName = getResolvedDefaultSigleEntries().some(entry =>
@@ -12828,14 +12932,9 @@
                 );
                 if (collidesWithDefaultName || collidesWithCustomName)
                     return alert('⚠️ Un autre élément porte déjà ce nom dans la bibliothèque commune.');
-                const nextImage = customSigleImageRemoved ? '' : currentItem && currentItem.img || '';
-                const commit = imageData => commitDefaultSigleSave(
-                    abrev, nom, imageData, apparatuses, families, scoring.value, category
+                return commitDefaultSigleSave(
+                    abrev, nom, imageData, apparatuses, families, scoring.value, category, brochureImageData
                 );
-                if (customSigleDrawingData && !fileInput.files[0]) return commit(customSigleDrawingData);
-                if (!fileInput.files[0]) return commit(nextImage);
-                compressImage(fileInput.files[0], 160, 160, 0.82, commit);
-                return;
             }
             const linkedElement = getLinkedProgressionElementForSigle(currentItem);
             const matchingProgression = getProgressionElements().find(item =>
@@ -12846,20 +12945,12 @@
             const collidesWithAnotherSigle = matchingSigleIndex >= 0 && matchingSigleIndex !== editingCustomSigleIndex;
             if (collidesWithAnotherElement || collidesWithAnotherSigle)
                 return alert('⚠️ Un élément portant ce nom existe déjà dans la bibliothèque commune.');
-            if (!fileInput.files[0] && !customSigleDrawingData && (!currentItem || !currentItem.img || customSigleImageRemoved))
+            if (!imageData)
                 return alert("Veuillez sélectionner une image ou dessiner un symbole à enregistrer.");
-            if (customSigleDrawingData && !fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, customSigleDrawingData, null, undefined, undefined, apparatuses, families, scoring.value, category);
-                return;
-            }
-            if (!fileInput.files[0]) {
-                commitCustomSigleSave(abrev, nom, currentItem.img, null, undefined, undefined, apparatuses, families, scoring.value, category);
-                return;
-            }
-
-            compressImage(fileInput.files[0], 160, 160, 0.82, compressedBase64 => {
-                commitCustomSigleSave(abrev, nom, compressedBase64, null, undefined, undefined, apparatuses, families, scoring.value, category);
-            });
+            commitCustomSigleSave(
+                abrev, nom, imageData, null, undefined, undefined,
+                apparatuses, families, scoring.value, category, brochureImageData
+            );
         }
 
         function deleteCustomSigle(index) {
