@@ -2010,7 +2010,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.39.0';
+        const APP_VERSION = '1.39.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -12870,6 +12870,14 @@
             return new Promise(resolve => compressImage(file, maxWidth, maxHeight, quality, resolve));
         }
 
+        function didMovementLibraryIdentityChange(currentItem, name, apparatuses) {
+            if (!currentItem) return true;
+            const normalizeName = value => normalizeProgressionName(value).toLocaleLowerCase('fr');
+            const apparatusKey = value => normalizeProgressionApparatuses(value).slice().sort().join('|');
+            return normalizeName(currentItem.nom) !== normalizeName(name) ||
+                apparatusKey(currentItem.apparatuses) !== apparatusKey(apparatuses);
+        }
+
         async function saveCustomSigle() {
             const abrev = document
                 .getElementById('sigle-abrev-input')
@@ -12921,17 +12929,21 @@
             if (brochureFile)
                 brochureImageData = await compressMovementLibraryImage(brochureFile, 640, 420, 0.86);
 
+            const libraryIdentityChanged = didMovementLibraryIdentityChange(currentItem, nom, apparatuses);
+
             if (editingDefaultSigleIndex !== null) {
-                const normalizedName = normalizeProgressionName(nom).toLocaleLowerCase('fr');
-                const collidesWithDefaultName = getResolvedDefaultSigleEntries().some(entry =>
-                    entry.index !== editingDefaultSigleIndex &&
-                    normalizeProgressionName(entry.item.nom).toLocaleLowerCase('fr') === normalizedName
-                );
-                const collidesWithCustomName = data.customSigles.some(item =>
-                    normalizeProgressionName(item.nom).toLocaleLowerCase('fr') === normalizedName
-                );
-                if (collidesWithDefaultName || collidesWithCustomName)
-                    return alert('⚠️ Un autre élément porte déjà ce nom dans la bibliothèque commune.');
+                if (libraryIdentityChanged) {
+                    const normalizedName = normalizeProgressionName(nom).toLocaleLowerCase('fr');
+                    const collidesWithDefaultName = getResolvedDefaultSigleEntries().some(entry =>
+                        entry.index !== editingDefaultSigleIndex &&
+                        normalizeProgressionName(entry.item.nom).toLocaleLowerCase('fr') === normalizedName
+                    );
+                    const collidesWithCustomName = data.customSigles.some(item =>
+                        normalizeProgressionName(item.nom).toLocaleLowerCase('fr') === normalizedName
+                    );
+                    if (collidesWithDefaultName || collidesWithCustomName)
+                        return alert('⚠️ Un autre élément porte déjà ce nom dans la bibliothèque commune.');
+                }
                 return commitDefaultSigleSave(
                     abrev, nom, imageData, apparatuses, families, scoring.value, category, brochureImageData
                 );
@@ -12943,7 +12955,7 @@
             const matchingSigleIndex = matchingProgression ? getLinkedCustomSigleIndex(matchingProgression.id) : -1;
             const collidesWithAnotherElement = matchingProgression && linkedElement && matchingProgression.id !== linkedElement.id;
             const collidesWithAnotherSigle = matchingSigleIndex >= 0 && matchingSigleIndex !== editingCustomSigleIndex;
-            if (collidesWithAnotherElement || collidesWithAnotherSigle)
+            if (libraryIdentityChanged && (collidesWithAnotherElement || collidesWithAnotherSigle))
                 return alert('⚠️ Un élément portant ce nom existe déjà dans la bibliothèque commune.');
             if (!imageData)
                 return alert("Veuillez sélectionner une image ou dessiner un symbole à enregistrer.");

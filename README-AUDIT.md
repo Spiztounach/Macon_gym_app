@@ -2,6 +2,166 @@
 
 Cette version part du fichier le plus récent retrouvé (`index.html.txt`, 16 juin 2026) et conserve les fonctions métier existantes : fiches gymnastes, résultats, statistiques, mouvements, équipes, simulation Top 3, planification, sauvegarde locale, synchronisation Google Drive et exports PDF.
 
+## Correction du remplacement des visuels — version 1.39.1
+
+- le contrôle des noms en double n’est plus déclenché lors du simple remplacement du sigle ou de l’image brochure ;
+- les homonymes officiels présents sur plusieurs agrès peuvent être modifiés sans blocage ;
+- la protection contre les vrais doublons reste active lors d’un renommage ou d’un changement d’agrès ;
+- version PWA 1.39.1 et cache v58.
+
+Test de régression ajouté pour la modification visuelle d’un élément homonyme.
+
+## Images d’éléments et valeurs dans les PDF allégés — version 1.39.0
+
+- modification indépendante de l’image du sigle et de l’image de brochure pour chaque élément intégré ou personnalisé ;
+- aperçu et suppression séparés des deux visuels dans le gestionnaire de la bibliothèque technique ;
+- conservation des visuels personnalisés dans les données synchronisées ;
+- valeur et bonification affichées sur toutes les lignes des PDF allégés ;
+- version PWA 1.39.0 et cache v57.
+
+Tests ajoutés : remplacement et suppression des deux images, persistance des surcharges intégrées et présence de la valeur/bonification dans le PDF allégé.
+
+## PDF allégé et calendriers multi-niveaux — version 1.38.0
+
+- ajout du choix « version complète » ou « version allégée » dans l'export des progressions par catégorie ;
+- version allégée composée du sigle, du nom de l'élément et des quatre statuts, avec le statut actuel de la gymnaste automatiquement coché ;
+- conservation d'un fichier PDF distinct par gymnaste et du filtre par agrès ;
+- extension du calendrier de sélection groupée aux mésocycles et microcycles, en plus des séances ;
+- affichage de chaque cycle sur tous les jours couverts par sa période ;
+- sélection possible d'un cycle, de tous les éléments couvrant une journée ou de tous les éléments du mois ;
+- le calendrier reste volontairement désactivé pour le macrocycle, qui représente la saison complète ;
+- version PWA 1.38.0 et cache v56.
+
+Validation : format complet, format allégé, statuts cochés, sigles, chevauchement des périodes, sélections par jour/mois, syntaxe et suites métier contrôlés.
+
+## Calendrier de sélection groupée et exports de progression — version 1.37.0
+
+- ajout d'un calendrier mensuel pour sélectionner les séances avant une modification en masse ;
+- sélection possible séance par séance, par journée complète ou pour tout le mois ;
+- navigation entre les mois et conservation de la sélection lors des changements de période ;
+- nouveau bouton « Progressions PDF » dans chaque catégorie de gymnastes, à côté des statistiques globales ;
+- choix libre des gymnastes et des agrès Saut, Barres, Poutre et Sol ;
+- création d'un fichier PDF distinct et clairement nommé pour chaque gymnaste sélectionnée ;
+- chaque document conserve les synthèses, diagrammes radar et tableaux, limités aux agrès choisis ;
+- version PWA 1.37.0 et cache v55.
+
+Validation : calendrier, sélections groupées, filtrage des agrès, séparation des fichiers, pagination, marges d'impression, syntaxe et suites métier contrôlés.
+
+## Sélection des agrès dans toutes les séances — version 1.36.1
+
+- ajout des cases Saut, Barres, Poutre et Sol dans chaque séance affichée à l'intérieur d'un microcycle ;
+- affichage et modification des profils techniques sur ces mêmes lignes, comme dans l'éditeur de séance complet ;
+- conservation des sélections déjà enregistrées lors de l'ouverture d'un microcycle ;
+- toute modification des agrès ou profils transforme correctement une séance automatique en exception manuelle afin qu'elle ne soit pas écrasée ;
+- interface responsive : deux colonnes sur téléphone, quatre sur tablette et ordinateur ;
+- version PWA 1.36.1 et cache v54.
+
+Validation : saisie directe, conservation des valeurs, séances automatiques, responsive, syntaxe et suites métier contrôlés.
+
+## Agrès sélectionnables, modification groupée complète et sigles — version 1.36.0
+
+- remplacement de la saisie libre des agrès prioritaires des microcycles par quatre cases : Saut, Barres, Poutre et Sol ;
+- migration automatique des anciennes valeurs textuelles vers ces sélections ;
+- modification en masse étendue à tous les champs des macrocycles, mésocycles, microcycles et séances ;
+- dates absolues ou décalage en jours, objectifs, rattachements, échéances, charges, agrès et profils modifiables en groupe ;
+- PDF allégé conservé à forte densité, avec ajout du sigle miniature de chaque élément ;
+- seules les petites images de sigles sont chargées dans le PDF allégé, sans les illustrations de brochure ;
+- version PWA 1.36.0 et cache v53.
+
+Validation : migration des agrès, formulaires individuels et groupés, protection des séances automatiques, sigles PDF, marges d’impression, syntaxe et suites métier contrôlés.
+
+## Exports au choix, musiques synchronisées et planification groupée — version 1.35.0
+
+- choix mémorisé entre la fiche de progression complète illustrée et une version allégée sans image ni sigle ;
+- version allégée organisée par agrès et catégorie, avec le nom de l’élément et quatre cases d’évaluation, jusqu’à 36 éléments visés par page ;
+- musiques stockées comme fichiers privés séparés dans l’espace applicatif Google Drive, sans alourdir le JSON des fiches ;
+- copie locale IndexedDB conservée pour l’écoute hors connexion et téléchargement automatique sur chaque appareil connecté ;
+- reprise automatique des musiques déjà enregistrées localement lors de la première synchronisation de cette version ;
+- remplacement et suppression des musiques propagés entre téléphone, tablette et ordinateur ;
+- sélection multiple des macrocycles, mésocycles, microcycles et séances ;
+- modification groupée des statuts, dates et notes, avec champs propres à chaque niveau de planification ;
+- modification groupée des horaires, agrès, profils techniques et rattachement des séances, sans perdre les exceptions aux séances automatiques ;
+- version PWA 1.35.0 et cache v52.
+
+Validation : deux formats PDF, séparation JSON/audio, synchronisation et suppression distante, modification groupée, séances générées, syntaxe et suites métier contrôlés. Les exports complets et les fonctions existantes restent disponibles.
+
+## Sécurité d’impression des PDF — version 1.34.0
+
+- zone de sécurité de 10 mm autour de tous les contenus utiles, compatible avec les marges non imprimables courantes ;
+- réserve basse renforcée à 16 mm pour séparer les tableaux des pieds de page ;
+- titres, sous-titres, numéros de page et légendes replacés à l’intérieur de la zone imprimable ;
+- répétition des en-têtes de tableaux sur chaque nouvelle page ;
+- protection des lignes, cartes, images et graphiques contre les coupures entre deux feuilles ;
+- formats portrait ou paysage conservés selon la densité de chaque document ;
+- version PWA 1.34.0 et cache v51.
+
+Validation : contrôles automatisés des limites A4, rendu visuel en portrait et paysage, pagination, syntaxe et suites métier vérifiés. Les données, les calculs et le contenu des exports restent inchangés.
+
+## Double visuel dans Mouvements — version 1.33.0
+
+- affichage côte à côte du sigle officiel et de l’illustration de brochure dans chaque carte de l’onglet Mouvements ;
+- même double aperçu dans le gestionnaire de modification des éléments intégrés ;
+- affichage simple et centré conservé pour les éléments personnalisés sans illustration de brochure ;
+- composition des enchaînements volontairement conservée en format compact avec le sigle seul ;
+- chargement différé des illustrations pour préserver la fluidité sur téléphone et tablette ;
+- version PWA 1.33.0 et cache v50.
+
+Validation : affichage simple/double, navigation par agrès, catégories repliables, composition, progression, exports et syntaxe contrôlés. Les éléments, valeurs, bonus et compositions existants restent inchangés.
+
+## Visuels et regroupement de Progression — version 1.32.0
+
+- correction de la correspondance des éléments portant le même nom dans l’ancienne bibliothèque et le catalogue FFGym ;
+- priorité au code officiel et à l’agrès pour retrouver le bon sigle et la bonne illustration, notamment pour Demi-pivot et Salto arrière ;
+- double aperçu sigle + illustration de brochure directement dans l’onglet Progression ;
+- regroupement de Progression par agrès puis par catégorie, dans le même ordre que l’onglet Mouvements ;
+- catégories de Progression repliables avec conservation de leur état sur l’appareil ;
+- fiche PDF sélectionnée organisée avec les mêmes bandeaux de catégories ;
+- PDF complet de Statistiques trié et séparé par les mêmes agrès et catégories ;
+- version PWA 1.32.0 et cache v49.
+
+Validation : 130 sigles et 130 illustrations de brochure présents, cas homonymes Poutre/Sol contrôlés, regroupements écran et PDF, pagination, syntaxe et suites métier vérifiés. Les progressions et évaluations existantes restent inchangées.
+
+## Navigation Mouvements et fiche illustrée — version 1.31.0
+
+- interface Mouvements alignée sur Progression avec quatre boutons d’agrès visibles en permanence ;
+- suppression de la liste « catégorie affichée » : toutes les catégories utiles de l’agrès sont présentées dans l’ordre configuré ;
+- chaque catégorie peut être repliée ou dépliée indépendamment, avec conservation de l’état sur l’appareil ;
+- sélection des éléments et export PDF déplacés dans l’onglet Progression ;
+- cases de sélection disponibles dans le tableau ordinateur et dans les cartes mobiles de Progression ;
+- fiche A4 paysage remplissable avec jusqu’à 15 éléments par page ;
+- affichage conjoint du sigle officiel et du dessin d’exécution extrait de la brochure FFGym ;
+- 130 illustrations de brochure disponibles hors connexion en plus des 130 sigles déjà intégrés ;
+- version PWA 1.31.0 et cache v48.
+
+Validation : navigation par boutons, catégories repliables, sélection multi-agrès, correspondance Progression/Mouvements, double illustration et pagination de la fiche imprimable contrôlées. Les données, compositions, catégories personnalisées et synchronisations existantes sont conservées.
+
+## Bibliothèque de mouvements et fiche d'évaluation — version 1.30.0
+
+- suppression des dossiers et sous-dossiers dans l'interface ; les anciennes métadonnées restent tolérées lors de l'import afin de préserver les sauvegardes historiques ;
+- filtres directs par agrès et par catégorie dans l'onglet Mouvements ;
+- catégories entièrement administrables : création, renommage, icône, couleur, ordre et suppression avec reclassement sécurisé ;
+- édition complète des éléments intégrés et personnalisés : code, nom, catégorie, agrès, profils techniques, valeurs, bonus, image importée ou dessin tactile ;
+- cartes identifiées en priorité par le nom de l'élément, le code restant une information secondaire ;
+- composition construite uniquement avec les sigles/images, sans champ de texte libre, avec déplacement et retrait de chaque carte ;
+- PDF complet déplacé dans l'onglet Statistiques ;
+- sélection PDF déplacée dans l'onglet Mouvements et transformée en fiche d'évaluation A4 paysage illustrée et remplissable ;
+- jusqu'à 15 éléments sur une même feuille, puis pagination automatique ;
+- version PWA 1.30.0 et cache v47.
+
+Validation : filtres, catégories dynamiques, modification des éléments intégrés, composition sans texte libre, sélection indépendante par gymnaste, emplacement des deux exports et structure de la fiche imprimable contrôlés. Les suites métier et la synchronisation Drive restent compatibles.
+
+## Export PDF d’une sélection de progression — version 1.29.0
+
+- cases de sélection indépendantes pour chaque gymnaste et chaque agrès ;
+- sélection rapide de tous les éléments de l’agrès affiché et remise à zéro en un clic ;
+- conservation de la sélection lors du passage entre Saut, Barres, Poutre et Sol ;
+- nouvel export A4 paysage contenant uniquement les éléments choisis, leur statut et leur qualité technique ;
+- adaptation progressive de la taille du tableau pour privilégier une seule feuille, avec pagination automatique si la sélection reste trop importante ;
+- export PDF complet historique conservé séparément avec les deux diagrammes radar ;
+- version PWA 1.29.0 et cache v46.
+
+Validation : sélection par gymnaste, sélection multi-agrès, tableau PDF compact, orientation paysage, pagination de sécurité, syntaxe et suites métier contrôlées.
+
 ## Catégories des éléments techniques — version 1.28.0
 
 - classement distinct des profils techniques : Entrées, Sauts, Tours, Bascules, Renversements, Élans et balancés, Appuis et placements, Acrobaties avant, Acrobaties arrière, Sorties et Autres ;
