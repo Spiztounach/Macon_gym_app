@@ -963,7 +963,7 @@
                                 <button type="button" onclick="clearProgressionExportSelection()" class="rounded-lg border border-gray-200 bg-white px-2 py-2 text-[9px] font-bold text-gray-600">Effacer</button>
                                 <select id="progression-pdf-format" onchange="saveProgressionPdfModePreference()" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[9px] font-bold text-purple-700" aria-label="Format du PDF de progression">
                                     <option value="complete">PDF complet</option>
-                                    <option value="compact">PDF allégé + sigles + valeurs</option>
+                                    <option value="compact">PDF allégé vierge + sigles + valeurs</option>
                                 </select>
                                 <button id="btn-export-selected-progression" type="button" onclick="exportSelectedProgressionEvaluationPDF()" disabled class="rounded-lg bg-purple-700 px-2 py-2 text-[9px] font-bold text-white shadow disabled:cursor-not-allowed disabled:opacity-40">Exporter</button>
                             </div>
@@ -1484,9 +1484,10 @@
                 </section>
                 <section class="rounded-xl border border-blue-100 bg-blue-50 p-3">
                     <p class="font-bold text-blue-900">3. Format du document</p>
-                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div class="mt-3 grid gap-2 sm:grid-cols-3">
                         <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="complete" checked onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version complète</strong><span class="mt-1 block text-[9px] text-gray-500">Synthèse, diagrammes radar, qualité technique et tableau détaillé.</span></span></label>
-                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version allégée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom, valeur, bonification et statut actuel coché.</span></span></label>
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Allégée renseignée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom, valeur, bonification et statut actuel coché.</span></span></label>
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact_blank" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Allégée vierge</strong><span class="mt-1 block text-[9px] text-gray-500">Même contenu compact, sans statut coché et avec la date à remplir.</span></span></label>
                     </div>
                 </section>
                 <p id="level-progression-export-summary" class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-[10px] font-semibold text-gray-600">Sélectionnez au moins une gymnaste et un agrès.</p>
@@ -2010,7 +2011,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.39.1';
+        const APP_VERSION = '1.40.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -10972,11 +10973,18 @@
             updateLevelProgressionExportSelection();
         }
 
+        function getLevelProgressionPdfFormat() {
+            const value = String((document.querySelector('input[name="level-progression-pdf-format"]:checked') || {}).value || '');
+            return ['compact', 'compact_blank'].includes(value) ? value : 'complete';
+        }
+
         function updateLevelProgressionExportSelection() {
             const gymnastCount = document.querySelectorAll('[data-level-progression-gymnast-id]:checked').length;
             const apparatusCount = document.querySelectorAll('[data-level-progression-apparatus]:checked').length;
-            const format = (document.querySelector('input[name="level-progression-pdf-format"]:checked') || {}).value === 'compact' ? 'compact' : 'complete';
-            const formatLabel = format === 'compact' ? 'version allégée' : 'version complète';
+            const format = getLevelProgressionPdfFormat();
+            const formatLabel = format === 'compact_blank'
+                ? 'version allégée vierge'
+                : format === 'compact' ? 'version allégée renseignée' : 'version complète';
             const summary = document.getElementById('level-progression-export-summary');
             const button = document.getElementById('btn-export-level-progressions');
             summary.textContent = gymnastCount && apparatusCount
@@ -10993,7 +11001,7 @@
             }
             const gymnastIds = new Set(Array.from(document.querySelectorAll('[data-level-progression-gymnast-id]:checked')).map(input => input.dataset.levelProgressionGymnastId));
             const apparatuses = Array.from(document.querySelectorAll('[data-level-progression-apparatus]:checked')).map(input => input.value);
-            const format = (document.querySelector('input[name="level-progression-pdf-format"]:checked') || {}).value === 'compact' ? 'compact' : 'complete';
+            const format = getLevelProgressionPdfFormat();
             const gymnasts = getLevelProgressionExportGymnasts().filter(gymnast => gymnastIds.has(gymnast.id));
             if (!gymnasts.length || !apparatuses.length) {
                 alert('⚠️ Sélectionnez au moins une gymnaste et un agrès.');
@@ -11004,13 +11012,15 @@
             const status = document.getElementById('level-progression-export-status');
             const labels = apparatuses.map(key => (PROGRESSION_APPARATUS.find(item => item.key === key) || {}).label).filter(Boolean);
             const apparatusSuffix = apparatuses.length === PROGRESSION_APPARATUS.length ? 'Tous_agres' : apparatuses.join('_');
-            const formatSuffix = format === 'compact' ? 'Allegee' : 'Complete';
+            const formatSuffix = format === 'compact_blank'
+                ? 'Allegee_Vierge'
+                : format === 'compact' ? 'Allegee_Renseignee' : 'Complete';
             button.disabled = true;
             status.classList.remove('hidden');
             let created = 0;
             try {
                 let compactSymbolMap = new Map();
-                if (format === 'compact') {
+                if (format !== 'complete') {
                     const sampleItems = getLevelProgressionPdfItems(gymnasts[0].id, apparatuses);
                     compactSymbolMap = await prepareCompactProgressionPdfSymbols(getProgressionEvaluationPdfItems(sampleItems));
                 }
@@ -11022,14 +11032,20 @@
                     const items = getLevelProgressionPdfItems(gymnast.id, apparatuses);
                     if (!items.length) continue;
                     let doc;
-                    if (format === 'compact') {
+                    if (format !== 'complete') {
                         const compactItems = getProgressionEvaluationPdfItems(items);
+                        const blank = format === 'compact_blank';
                         doc = createCompactProgressionEvaluationPdfDocument(
                             window.jspdf.jsPDF,
                             gymnast,
                             compactItems,
                             compactSymbolMap,
-                            {markCurrentStatus: true, title: 'Progression - version allégée'}
+                            {
+                                markCurrentStatus: !blank,
+                                title: blank
+                                    ? 'Évaluation de progression - version allégée vierge'
+                                    : 'Progression - version allégée renseignée'
+                            }
                         );
                     } else {
                         doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels);
