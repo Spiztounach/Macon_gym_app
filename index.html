@@ -88,6 +88,64 @@
                 background-color: var(--ui-danger-color) !important;
                 color: var(--ui-danger-contrast) !important;
             }
+            .attendance-validation-toast {
+                position: fixed;
+                z-index: 80;
+                left: 50%;
+                bottom: max(1rem, env(safe-area-inset-bottom));
+                display: flex;
+                width: min(calc(100vw - 2rem), 460px);
+                align-items: center;
+                gap: 0.75rem;
+                border: 1px solid #6ee7b7;
+                border-radius: 1rem;
+                background: rgba(236, 253, 245, 0.98);
+                padding: 0.85rem 1rem;
+                color: #064e3b;
+                box-shadow: 0 18px 45px rgba(6, 78, 59, 0.28);
+                opacity: 0;
+                pointer-events: none;
+                transform: translate(-50%, 18px) scale(0.96);
+                transition: opacity 180ms ease, transform 180ms ease;
+            }
+            .attendance-validation-toast[hidden] {
+                display: none !important;
+            }
+            .attendance-validation-toast.is-visible {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+            .attendance-validation-icon {
+                display: grid;
+                width: 2.5rem;
+                height: 2.5rem;
+                flex: 0 0 auto;
+                place-items: center;
+                border-radius: 999px;
+                background: #059669;
+                color: #ffffff;
+                font-size: 1.35rem;
+                font-weight: 900;
+            }
+            #attendance-save-button.attendance-save-confirmed {
+                background-color: #059669 !important;
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18), 0 10px 24px rgba(5, 150, 105, 0.24);
+            }
+            #attendance-save-button.attendance-save-pulse {
+                animation: attendance-save-pulse 520ms ease-out;
+            }
+            @keyframes attendance-save-pulse {
+                0% { transform: scale(1); }
+                45% { transform: scale(1.025); }
+                100% { transform: scale(1); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .attendance-validation-toast,
+                #attendance-save-button.attendance-save-pulse {
+                    animation: none;
+                    transition: none;
+                }
+            }
             .tab-content {
                 display: none;
             }
@@ -1430,7 +1488,7 @@
                         <h2 class="ui-theme-zone-title text-lg font-bold text-emerald-800">Feuille d’appel 📋</h2>
                         <p class="text-xs text-gray-500">Présences et absences reliées aux séances de la planification.</p>
                     </div>
-                    <span id="attendance-save-status" class="hidden rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700"></span>
+                    <span id="attendance-save-status" role="status" aria-live="polite" class="hidden rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700"></span>
                 </div>
 
                 <div class="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm sm:grid-cols-2">
@@ -1458,9 +1516,17 @@
                     <div id="attendance-list" class="mt-3 space-y-2"></div>
                 </div>
 
-                <button id="attendance-save-button" type="button" onclick="saveAttendanceSheet()" class="ui-theme-zone-action w-full rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white shadow">💾 Enregistrer la feuille d’appel</button>
+                <button id="attendance-save-button" type="button" onclick="saveAttendanceSheet()" class="ui-theme-zone-action w-full rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white shadow" aria-live="polite">💾 Enregistrer la feuille d’appel</button>
             </section>
 
+            <div id="attendance-validation-toast" class="attendance-validation-toast" role="status" aria-live="assertive" aria-atomic="true" hidden>
+                <span class="attendance-validation-icon" aria-hidden="true">✓</span>
+                <div class="min-w-0">
+                    <strong id="attendance-validation-title" class="block text-sm font-black">Appel validé</strong>
+                    <p id="attendance-validation-detail" class="mt-0.5 text-xs font-semibold"></p>
+                    <p id="attendance-validation-meta" class="mt-0.5 truncate text-[10px] text-emerald-700"></p>
+                </div>
+            </div>
 
     </main>
 
@@ -2044,7 +2110,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.41.1';
+        const APP_VERSION = '1.42.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -5348,6 +5414,7 @@
         let currentAttendanceSessionKey = '';
         let attendanceDraftEntries = {};
         let attendanceDraftDirty = false;
+        let attendanceSaveFeedbackTimer = null;
         let screenHistory = ['screen-levels'];
 
         const ALL_SCREENS = ['screen-levels', 'screen-gymnastes', 'screen-fiche', 'screen-competition', 'screen-planning', 'screen-planning-detail', 'screen-attendance', 'screen-settings'];
@@ -6987,11 +7054,82 @@
             return getPlanningEntity('session', currentAttendanceSessionKey);
         }
 
+        function getAttendanceDraftCounts(entries = attendanceDraftEntries) {
+            const source = entries && typeof entries === 'object' ? entries : {};
+            const gymnasts = (Array.isArray(data.gymnastes) ? data.gymnastes : [])
+                .filter(gymnast => gymnast.niveauId === currentAttendanceLevelId);
+            const present = gymnasts.filter(gymnast => source[gymnast.id] === 'present').length;
+            const absent = gymnasts.filter(gymnast => source[gymnast.id] === 'absent').length;
+            return {
+                total: gymnasts.length,
+                present,
+                absent,
+                marked: present + absent,
+                unmarked: Math.max(0, gymnasts.length - present - absent)
+            };
+        }
+
+        function hideAttendanceSaveConfirmation(immediate = true) {
+            if (attendanceSaveFeedbackTimer) {
+                clearTimeout(attendanceSaveFeedbackTimer);
+                attendanceSaveFeedbackTimer = null;
+            }
+            const toast = document.getElementById('attendance-validation-toast');
+            if (!toast) return;
+            toast.classList.remove('is-visible');
+            if (immediate) toast.hidden = true;
+            else setTimeout(() => {
+                if (!toast.classList.contains('is-visible')) toast.hidden = true;
+            }, 190);
+        }
+
+        function updateAttendanceSaveButtonState(options = {}) {
+            const button = document.getElementById('attendance-save-button');
+            if (!button) return;
+            const settings = options && typeof options === 'object' ? options : {};
+            const session = getCurrentAttendanceSession();
+            const savedSheet = session ? getAttendanceSheet(currentAttendanceLevelId, session) : null;
+            const confirmed = !attendanceDraftDirty && Boolean(savedSheet);
+            button.classList.toggle('attendance-save-confirmed', confirmed);
+            if (attendanceDraftDirty) button.textContent = '💾 Enregistrer les modifications';
+            else if (settings.cleared) button.textContent = '✓ Feuille d’appel effacée';
+            else if (settings.validated) button.textContent = '✓ Appel validé';
+            else if (confirmed) button.textContent = '✓ Appel enregistré';
+            else button.textContent = '💾 Enregistrer la feuille d’appel';
+        }
+
+        function showAttendanceSaveConfirmation(level, session, counts, cleared = false) {
+            const toast = document.getElementById('attendance-validation-toast');
+            const title = document.getElementById('attendance-validation-title');
+            const detail = document.getElementById('attendance-validation-detail');
+            const meta = document.getElementById('attendance-validation-meta');
+            if (!toast || !title || !detail || !meta) return;
+            title.textContent = cleared ? 'Feuille d’appel effacée' : 'Appel validé et enregistré';
+            detail.textContent = cleared
+                ? `${counts.total} gymnaste${counts.total === 1 ? '' : 's'} · aucun statut renseigné`
+                : `${counts.present} présente${counts.present === 1 ? '' : 's'} · ${counts.absent} absente${counts.absent === 1 ? '' : 's'} · ${counts.unmarked} non renseignée${counts.unmarked === 1 ? '' : 's'}`;
+            meta.textContent = `${level.name} · ${formatPlanningDate(session.date)} · enregistré à ${new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}`;
+            if (attendanceSaveFeedbackTimer) clearTimeout(attendanceSaveFeedbackTimer);
+            toast.hidden = false;
+            const reveal = () => toast.classList.add('is-visible');
+            if (typeof requestAnimationFrame === 'function') requestAnimationFrame(reveal);
+            else reveal();
+            const button = document.getElementById('attendance-save-button');
+            if (button) {
+                button.classList.remove('attendance-save-pulse');
+                void button.offsetWidth;
+                button.classList.add('attendance-save-pulse');
+            }
+            if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(45);
+            attendanceSaveFeedbackTimer = setTimeout(() => hideAttendanceSaveConfirmation(false), 5200);
+        }
+
         function loadAttendanceDraft() {
             const session = getCurrentAttendanceSession();
             const sheet = getAttendanceSheet(currentAttendanceLevelId, session);
             attendanceDraftEntries = sheet ? {...sheet.entries} : {};
             attendanceDraftDirty = false;
+            hideAttendanceSaveConfirmation(true);
             renderAttendanceSessionSummary();
             renderAttendanceList();
         }
@@ -7016,18 +7154,25 @@
                     ? 'Aucune séance planifiée. Ajoutez d’abord une séance dans Planification.'
                     : 'Aucune catégorie de gymnastes disponible.';
                 if (saveButton) saveButton.disabled = true;
+                if (saveButton) {
+                    saveButton.classList.remove('attendance-save-confirmed', 'attendance-save-pulse');
+                    saveButton.textContent = '💾 Enregistrer la feuille d’appel';
+                }
                 return;
             }
             if (saveButton) saveButton.disabled = false;
             const apparatuses = normalizePlanningWorkTags(session.apparatuses, PROGRESSION_APPARATUS)
                 .map(key => (PROGRESSION_APPARATUS.find(item => item.key === key) || {}).label).filter(Boolean);
             container.innerHTML = `<strong>${escapeHtml(level.name)}</strong> · ${escapeHtml(formatPlanningDate(session.date))} · ${escapeHtml(session.startTime && session.endTime ? `${session.startTime}–${session.endTime}` : 'horaire libre')} · ${escapeHtml(formatPlanningHours(calculatePlanningSessionHours(session)))}<span class="mt-1 block text-[10px]">${escapeHtml(session.type)}${apparatuses.length ? ` · ${escapeHtml(apparatuses.join(', '))}` : ''}</span>`;
+            updateAttendanceSaveButtonState();
         }
 
         function setAttendanceStatus(gymId, status) {
             if (!['present', 'absent'].includes(status)) delete attendanceDraftEntries[gymId];
             else attendanceDraftEntries[gymId] = status;
             attendanceDraftDirty = true;
+            hideAttendanceSaveConfirmation(true);
+            updateAttendanceSaveButtonState();
             renderAttendanceList();
         }
 
@@ -7038,6 +7183,8 @@
                 else delete attendanceDraftEntries[gymnast.id];
             });
             attendanceDraftDirty = true;
+            hideAttendanceSaveConfirmation(true);
+            updateAttendanceSaveButtonState();
             renderAttendanceList();
         }
 
@@ -7122,12 +7269,15 @@
             attendanceDraftEntries = entries;
             attendanceDraftDirty = false;
             saveAllData();
+            const counts = getAttendanceDraftCounts(entries);
+            updateAttendanceSaveButtonState({validated: !silent && counts.marked > 0, cleared: !silent && counts.marked === 0});
             const status = document.getElementById('attendance-save-status');
             if (status && !silent) {
-                status.textContent = Object.keys(entries).length ? '✓ Feuille enregistrée' : '✓ Feuille effacée';
+                status.textContent = counts.marked ? `✓ Appel validé · ${counts.present} P / ${counts.absent} A` : '✓ Feuille effacée';
                 status.classList.remove('hidden');
                 setTimeout(() => status.classList.add('hidden'), 2500);
             }
+            if (!silent) showAttendanceSaveConfirmation(level, session, counts, counts.marked === 0);
             if (!silent) renderAttendanceList();
             return true;
         }
