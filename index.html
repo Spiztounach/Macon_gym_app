@@ -832,6 +832,11 @@
                                     <p id="progression-statistics-total" class="text-[10px] text-purple-600">Aucun élément enregistré</p>
                                 </div>
                                 <div class="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+                                    <select id="progression-statistics-program-filter" onchange="setProgressionProgramFilter(this.value)" class="rounded-lg border border-purple-200 bg-white px-2 py-2 text-[10px] font-bold text-purple-700" aria-label="Programme technique des statistiques">
+                                        <option value="federal_a">Fédéral A</option>
+                                        <option value="federal_b">Fédéral B</option>
+                                        <option value="all">Tous</option>
+                                    </select>
                                     <button type="button" onclick="exportProgressionPDF()" class="whitespace-nowrap rounded-lg bg-purple-700 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-purple-800">📄 PDF complet</button>
                                     <span id="progression-statistics-percent" class="rounded-full bg-white px-3 py-1.5 text-sm font-black text-purple-700 shadow-sm">0 %</span>
                                 </div>
@@ -904,6 +909,15 @@
 
                     <!-- TAB : Progression des éléments -->
                     <div id="content-progression" data-ui-zone="tab-progression" class="ui-theme-zone tab-content space-y-4 p-2">
+                        <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                            <label for="progression-program-filter" class="block text-[10px] font-black uppercase tracking-wider text-indigo-800">Programme technique affiché</label>
+                            <select id="progression-program-filter" onchange="setProgressionProgramFilter(this.value)" class="mt-1.5 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold text-indigo-900 sm:max-w-xs">
+                                <option value="federal_a">Fédéral A</option>
+                                <option value="federal_b">Fédéral B</option>
+                                <option value="all">Tous les programmes</option>
+                            </select>
+                            <p id="progression-program-note" class="mt-1.5 text-[9px] leading-relaxed text-indigo-700">Les éléments communs à A et B conservent la même progression personnelle.</p>
+                        </div>
                         <div class="rounded-xl border border-purple-100 bg-purple-50 p-3 space-y-3">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
@@ -988,6 +1002,15 @@
 
                     <!-- TAB : Mouvements -->
                     <div id="content-mouvements" data-ui-zone="tab-mouvements" class="ui-theme-zone tab-content space-y-3 p-2">
+                        <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+                            <label for="movement-program-filter" class="block text-[10px] font-black uppercase tracking-wider text-indigo-800">Programme technique affiché</label>
+                            <select id="movement-program-filter" onchange="setMovementProgramFilter(this.value)" class="mt-1.5 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold text-indigo-900 sm:max-w-xs">
+                                <option value="federal_a">Fédéral A</option>
+                                <option value="federal_b">Fédéral B</option>
+                                <option value="all">Tous les programmes</option>
+                            </select>
+                            <p id="movement-program-note" class="mt-1.5 text-[9px] leading-relaxed text-indigo-700">Valeurs, bonifications et bibliothèque du programme Fédéral A.</p>
+                        </div>
                         <div id="movement-apparatus-tabs" class="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 sm:grid-cols-4" role="tablist" aria-label="Agrès de la bibliothèque des mouvements"></div>
                         <div>
                             <label
@@ -1011,7 +1034,7 @@
                                     <output id="movement-start-score" class="text-xl font-black text-purple-700">0</output>
                                 </div>
                                 <label id="movement-saut-variant-row" class="mt-2 hidden items-center justify-between gap-3 rounded-lg border border-purple-200 bg-white px-2 py-1.5 text-[10px] font-semibold text-purple-800">
-                                    Matériel utilisé au saut
+                                    <span id="movement-saut-variant-label">Matériel utilisé au saut</span>
                                     <select id="movement-saut-variant" onchange="setMovementSautScoringVariant(this.value)" class="rounded border border-purple-200 bg-white px-2 py-1 text-[10px] font-bold text-purple-800">
                                         <option value="tremplin">Tremplin</option>
                                         <option value="trampo_tremp">Trampo-tremp</option>
@@ -1482,8 +1505,17 @@
                     <p class="font-bold text-amber-900">2. Agrès à inclure</p>
                     <div id="level-progression-apparatus-list" class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"></div>
                 </section>
+                <section class="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                    <label for="level-progression-program" class="font-bold text-indigo-900">3. Programme technique</label>
+                    <select id="level-progression-program" onchange="updateLevelProgressionExportSelection()" class="mt-2 w-full rounded-lg border border-indigo-200 bg-white p-2 text-[10px] font-bold text-indigo-800 sm:max-w-xs">
+                        <option value="federal_a">Fédéral A</option>
+                        <option value="federal_b">Fédéral B</option>
+                        <option value="all">Tous les programmes</option>
+                    </select>
+                    <p class="mt-1.5 text-[9px] text-indigo-600">Les valeurs et bonifications du PDF suivent le programme sélectionné.</p>
+                </section>
                 <section class="rounded-xl border border-blue-100 bg-blue-50 p-3">
-                    <p class="font-bold text-blue-900">3. Format du document</p>
+                    <p class="font-bold text-blue-900">4. Format du document</p>
                     <div class="mt-3 grid gap-2 sm:grid-cols-3">
                         <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="complete" checked onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Version complète</strong><span class="mt-1 block text-[9px] text-gray-500">Synthèse, diagrammes radar, qualité technique et tableau détaillé.</span></span></label>
                         <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-blue-200 bg-white p-3 text-[10px] text-gray-700"><input type="radio" name="level-progression-pdf-format" value="compact" onchange="updateLevelProgressionExportSelection()" class="mt-0.5 h-4 w-4 shrink-0 accent-blue-700"><span><strong class="block text-blue-800">Allégée renseignée</strong><span class="mt-1 block text-[9px] text-gray-500">Sigle, nom, valeur, bonification et statut actuel coché.</span></span></label>
@@ -2007,11 +2039,12 @@
 
     <!-- ═══════════════════════════════════════════════════ SCRIPT ═══ -->
     <script src="./ffgym-federal-a-catalog.js"></script>
+    <script src="./ffgym-federal-b-catalog.js"></script>
     <script>
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.40.0';
+        const APP_VERSION = '1.41.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -2032,6 +2065,80 @@
             {key: 'poutre', label: 'Poutre'},
             {key: 'sol', label: 'Sol'}
         ];
+        const TECHNICAL_PROGRAMS = [
+            {key: 'federal_a', label: 'Fédéral A'},
+            {key: 'federal_b', label: 'Fédéral B'},
+            {key: 'all', label: 'Tous les programmes'}
+        ];
+
+        function normalizeTechnicalProgram(value) {
+            const key = String(value || '').trim().toLowerCase();
+            return TECHNICAL_PROGRAMS.some(program => program.key === key) ? key : 'federal_a';
+        }
+
+        function getTechnicalProgramLabel(value) {
+            const key = normalizeTechnicalProgram(value);
+            const program = TECHNICAL_PROGRAMS.find(item => item.key === key);
+            return program ? program.label : 'Fédéral A';
+        }
+
+        function getOfficialProgramCatalog() {
+            if (Array.isArray(globalThis.FFGYM_PROGRAM_CATALOG)) return globalThis.FFGYM_PROGRAM_CATALOG;
+            return Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
+                ? globalThis.FFGYM_FEDERAL_A_CATALOG
+                : [];
+        }
+
+        function getItemTechnicalPrograms(item) {
+            const programs = Array.isArray(item && item.programs)
+                ? item.programs.map(normalizeTechnicalProgram).filter(program => program !== 'all')
+                : [];
+            return programs.length ? [...new Set(programs)] : ['federal_a', 'federal_b'];
+        }
+
+        function itemSupportsTechnicalProgram(item, requestedProgram) {
+            const program = normalizeTechnicalProgram(requestedProgram);
+            return program === 'all' || getItemTechnicalPrograms(item).includes(program);
+        }
+
+        function getTechnicalScoringProgram(item, requestedProgram) {
+            const program = normalizeTechnicalProgram(requestedProgram);
+            if (program !== 'all') return program;
+            const programs = getItemTechnicalPrograms(item);
+            return programs.includes('federal_a') ? 'federal_a' : 'federal_b';
+        }
+
+        function getMovementProgramFilter() {
+            const select = typeof document !== 'undefined' ? document.getElementById('movement-program-filter') : null;
+            if (select) return normalizeTechnicalProgram(select.value);
+            const preferences = typeof getUiFilterPreferences === 'function' ? getUiFilterPreferences() : {};
+            return normalizeTechnicalProgram(preferences.movementProgram);
+        }
+
+        function getProgressionProgramFilter() {
+            const select = typeof document !== 'undefined' ? document.getElementById('progression-program-filter') : null;
+            if (select) return normalizeTechnicalProgram(select.value);
+            const preferences = typeof getUiFilterPreferences === 'function' ? getUiFilterPreferences() : {};
+            return normalizeTechnicalProgram(preferences.progressionProgram);
+        }
+
+        function filterProgressionItemsByProgram(items, requestedProgram = undefined) {
+            const selectedProgram = requestedProgram === undefined && typeof getProgressionProgramFilter === 'function'
+                ? getProgressionProgramFilter()
+                : requestedProgram;
+            const program = normalizeTechnicalProgram(selectedProgram);
+            return (Array.isArray(items) ? items : []).filter(item => {
+                if (program === 'all') return true;
+                const entry = typeof getMovementEntryForProgressionItem === 'function'
+                    ? getMovementEntryForProgressionItem(item, program)
+                    : null;
+                if (entry) return itemSupportsTechnicalProgram(entry.item, program);
+                const anyProgramEntry = typeof getMovementEntryForProgressionItem === 'function'
+                    ? getMovementEntryForProgressionItem(item, 'all')
+                    : null;
+                return !(anyProgramEntry && anyProgramEntry.item && anyProgramEntry.item.catalogId);
+            });
+        }
         const PROGRESSION_FAMILIES = [
             {key: 'acro_forward', label: 'Acrobatie avant'},
             {key: 'acro_backward', label: 'Acrobatie arrière'},
@@ -3592,9 +3699,11 @@
                 return element;
             };
 
-            const federalCatalog = Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
-                ? globalThis.FFGYM_FEDERAL_A_CATALOG
-                : [];
+            const federalCatalog = typeof getOfficialProgramCatalog === 'function'
+                ? getOfficialProgramCatalog()
+                : Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
+                    ? globalThis.FFGYM_FEDERAL_A_CATALOG
+                    : [];
             const federalCatalogCodes = new Set();
             const federalCatalogElementIds = new Set();
             federalCatalog.forEach(item => {
@@ -3826,6 +3935,7 @@
             const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
             const allowedSorts = ['name_asc', 'first_name_asc', 'age_asc', 'age_desc', 'category_asc'];
             const allowedAges = ['all', 'under_7', 'poussine', 'benjamine', 'minime', 'cadette', 'junior', 'senior', 'unknown'];
+            const allowedPrograms = ['federal_a', 'federal_b', 'all'];
             const shortText = (input, max) => String(input || '').slice(0, max);
             return {
                 gymnastSearch: shortText(source.gymnastSearch, 120),
@@ -3836,7 +3946,9 @@
                 planningSession: shortText(source.planningSession || 'all', 240) || 'all',
                 planningSessionSearch: shortText(source.planningSessionSearch, 160),
                 workloadPeriod: source.workloadPeriod === 'month' ? 'month' : 'week',
-                workloadMetric: source.workloadMetric === 'hours' ? 'hours' : 'sessions'
+                workloadMetric: source.workloadMetric === 'hours' ? 'hours' : 'sessions',
+                movementProgram: allowedPrograms.includes(source.movementProgram) ? source.movementProgram : 'federal_a',
+                progressionProgram: allowedPrograms.includes(source.progressionProgram) ? source.progressionProgram : 'federal_a'
             };
         }
 
@@ -3870,7 +3982,9 @@
                 planningSession: readSelect('planning-session-filter', previous.planningSession),
                 planningSessionSearch: readText('planning-session-search', previous.planningSessionSearch, 160),
                 workloadPeriod: readSelect('planning-workload-period', previous.workloadPeriod),
-                workloadMetric: readSelect('planning-workload-metric', previous.workloadMetric)
+                workloadMetric: readSelect('planning-workload-metric', previous.workloadMetric),
+                movementProgram: readSelect('movement-program-filter', previous.movementProgram),
+                progressionProgram: readSelect('progression-program-filter', previous.progressionProgram)
             });
             localStorage.setItem(UI_FILTER_STORAGE_KEY, JSON.stringify(next));
             return next;
@@ -3894,7 +4008,66 @@
             setText('planning-session-search', preferences.planningSessionSearch);
             setSelect('planning-workload-period', preferences.workloadPeriod);
             setSelect('planning-workload-metric', preferences.workloadMetric);
+            setSelect('movement-program-filter', preferences.movementProgram);
+            setSelect('progression-program-filter', preferences.progressionProgram);
+            setSelect('progression-statistics-program-filter', preferences.progressionProgram);
+            if (typeof updateMovementProgramUI === 'function') updateMovementProgramUI();
+            if (typeof updateProgressionProgramUI === 'function') updateProgressionProgramUI();
             return preferences;
+        }
+
+        function updateMovementProgramUI() {
+            const program = getMovementProgramFilter();
+            const note = document.getElementById('movement-program-note');
+            if (note) {
+                note.textContent = program === 'federal_b'
+                    ? 'Bibliothèque et valeurs Fédéral B. Au saut, les valeurs correspondent au trampo-tremp.'
+                    : program === 'all'
+                        ? 'Bibliothèque réunie. Les éléments communs utilisent les valeurs Fédéral A ; les éléments propres au B conservent leurs valeurs B.'
+                        : 'Valeurs, bonifications et bibliothèque du programme Fédéral A.';
+            }
+            if (program === 'federal_b') {
+                movementSautScoringVariant = 'trampo_tremp';
+                localStorage.setItem(MOVEMENT_SAUT_VARIANT_KEY, movementSautScoringVariant);
+            }
+            if (typeof updateMovementSautVariantUI === 'function') updateMovementSautVariantUI();
+            return program;
+        }
+
+        function updateProgressionProgramUI() {
+            const program = getProgressionProgramFilter();
+            const note = document.getElementById('progression-program-note');
+            if (note) {
+                note.textContent = program === 'all'
+                    ? 'Tous les éléments sont affichés. Les éléments communs ne sont pas dupliqués.'
+                    : `Éléments du programme ${getTechnicalProgramLabel(program)}. Les éléments communs à A et B conservent la même progression personnelle.`;
+            }
+            return program;
+        }
+
+        function setMovementProgramFilter(value) {
+            const program = normalizeTechnicalProgram(value);
+            const select = document.getElementById('movement-program-filter');
+            if (select) select.value = program;
+            updateMovementProgramUI();
+            saveUiFilterPreferences();
+            if (typeof renderSiglesPalette === 'function') renderSiglesPalette();
+            if (typeof renderCustomSiglesManager === 'function') renderCustomSiglesManager();
+            if (typeof updateMovementStartScoreDisplay === 'function') updateMovementStartScoreDisplay();
+            return program;
+        }
+
+        function setProgressionProgramFilter(value) {
+            const program = normalizeTechnicalProgram(value);
+            const select = document.getElementById('progression-program-filter');
+            if (select) select.value = program;
+            const statisticsSelect = document.getElementById('progression-statistics-program-filter');
+            if (statisticsSelect) statisticsSelect.value = program;
+            updateProgressionProgramUI();
+            saveUiFilterPreferences();
+            if (typeof renderProgressionTable === 'function') renderProgressionTable();
+            if (typeof renderProgressionStatistics === 'function') renderProgressionStatistics();
+            return program;
         }
 
         function getProgressionPdfModePreference() {
@@ -9435,7 +9608,10 @@
 
         function getSelectedProgressionItems(gymId = currentGymId) {
             const selection = getProgressionExportSelection(gymId);
-            const items = getGymnastProgression(gymId);
+            const allItems = getGymnastProgression(gymId);
+            const items = typeof filterProgressionItemsByProgram === 'function'
+                ? filterProgressionItemsByProgram(allItems)
+                : allItems;
             const validKeys = new Set(items.map(getProgressionExportKey));
             [...selection].forEach(key => {
                 if (!validKeys.has(key)) selection.delete(key);
@@ -9467,7 +9643,11 @@
 
         function selectAllVisibleProgressionForExport() {
             const selection = getProgressionExportSelection();
-            getGymnastProgression().filter(item =>
+            const allItems = getGymnastProgression();
+            const visibleItems = typeof filterProgressionItemsByProgram === 'function'
+                ? filterProgressionItemsByProgram(allItems)
+                : allItems;
+            visibleItems.filter(item =>
                 normalizeProgressionApparatus(item.apparatus) === currentProgressionApparatusTab
             ).forEach(item => selection.add(getProgressionExportKey(item)));
             renderProgressionTable();
@@ -9499,7 +9679,7 @@
             if (!body || !mobileList || !empty) return;
             body.innerHTML = '';
             mobileList.innerHTML = '';
-            const allItems = getGymnastProgression();
+            const allItems = filterProgressionItemsByProgram(getGymnastProgression());
             renderProgressionApparatusTabs(allItems);
             const items = allItems.filter(item =>
                 normalizeProgressionApparatus(item.apparatus) === currentProgressionApparatusTab
@@ -9809,7 +9989,7 @@
         }
 
         function renderProgressionStatistics() {
-            const items = getGymnastProgression();
+            const items = filterProgressionItemsByProgram(getGymnastProgression());
             const summary = calculateProgressionSummary(items);
             const total = document.getElementById('progression-statistics-total');
             if (!total) return summary;
@@ -10136,7 +10316,7 @@
             return doc;
         }
 
-        function getMovementEntryForProgressionItem(item) {
+        function getMovementEntryForProgressionItem(item, requestedProgram = undefined) {
             if (!item) return null;
             const itemId = String(item.id || '');
             const code = String(item.code || '').trim().toUpperCase();
@@ -10151,8 +10331,18 @@
             );
             if (linkedCustom) return linkedCustom;
 
+            const programSource = requestedProgram === undefined
+                ? (typeof getProgressionProgramFilter === 'function' ? getProgressionProgramFilter() : 'all')
+                : requestedProgram;
+            const program = typeof normalizeTechnicalProgram === 'function'
+                ? normalizeTechnicalProgram(programSource)
+                : ['federal_a', 'federal_b', 'all'].includes(programSource) ? programSource : 'all';
             const defaultEntries = getResolvedDefaultSigleEntries();
-            const officialEntries = defaultEntries.filter(entry => entry.item.catalogId && supportsApparatus(entry));
+            const officialEntries = defaultEntries.filter(entry =>
+                entry.item.catalogId && supportsApparatus(entry) && (
+                    typeof itemSupportsTechnicalProgram !== 'function' || itemSupportsTechnicalProgram(entry.item, program)
+                )
+            );
             const catalogCode = itemId.startsWith('PROG-FFGYM-')
                 ? itemId.slice('PROG-FFGYM-'.length).toUpperCase()
                 : '';
@@ -10186,11 +10376,17 @@
             ) || null;
         }
 
-        function getProgressionEvaluationPdfItems(items = getSelectedProgressionItems()) {
+        function getProgressionEvaluationPdfItems(items = getSelectedProgressionItems(), requestedProgram = undefined) {
+            const selectedProgram = requestedProgram === undefined && typeof getProgressionProgramFilter === 'function'
+                ? getProgressionProgramFilter()
+                : requestedProgram;
+            const program = typeof normalizeTechnicalProgram === 'function'
+                ? normalizeTechnicalProgram(selectedProgram)
+                : 'federal_a';
             const apparatusOrder = new Map(PROGRESSION_APPARATUS.map((apparatus, index) => [apparatus.key, index]));
             const categoryOrder = new Map(getMovementCategoryDefinitions().map((category, index) => [category.key, index]));
             return [...(Array.isArray(items) ? items : [])].map(item => {
-                    const entry = getMovementEntryForProgressionItem(item);
+                    const entry = getMovementEntryForProgressionItem(item, program);
                     const source = entry && entry.item || {};
                     const apparatus = normalizeProgressionApparatus(item.apparatus);
                     const categoryDefinition = entry
@@ -10199,8 +10395,8 @@
                             getMovementCategoryDefinitions()[getMovementCategoryDefinitions().length - 1];
                     const scoring = entry
                         ? entry.kind === 'default'
-                            ? getDefaultSigleScoring(source, apparatus)
-                            : getCustomSigleScoring(source, apparatus)
+                            ? getDefaultSigleScoring(source, apparatus, program)
+                            : getCustomSigleScoring(source, apparatus, program)
                         : {movementValue: null, bonusValue: 0};
                     return {
                         key: getProgressionExportKey(item),
@@ -10218,6 +10414,9 @@
                         categoryAccent: categoryDefinition.accent || '#64748b',
                         movementValue: scoring.movementValue,
                         bonusValue: scoring.bonusValue,
+                        program: scoring.program || (typeof getTechnicalScoringProgram === 'function'
+                            ? getTechnicalScoringProgram(source, program)
+                            : program),
                         catalogIndex: Number(item.catalogIndex || 0)
                     };
                 }).sort((left, right) =>
@@ -10823,7 +11022,10 @@
                 .replace(/^_+|_+$/g, '') || 'Gymnaste';
         }
 
-        function createProgressionOverviewPdfDocument(jsPDF, gymnast, items, selectedApparatusLabels = []) {
+        function createProgressionOverviewPdfDocument(jsPDF, gymnast, items, selectedApparatusLabels = [], requestedProgram = undefined) {
+            const program = requestedProgram === undefined && typeof getProgressionProgramFilter === 'function'
+                ? getProgressionProgramFilter()
+                : requestedProgram || 'federal_a';
             const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
             if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
             const summary = calculateProgressionSummary(items);
@@ -10840,6 +11042,9 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             doc.text(`${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim(), 14, 25);
+            doc.setFontSize(8.5);
+            doc.text(typeof getTechnicalProgramLabel === 'function' ? getTechnicalProgramLabel(program) : 'Fédéral A', 105, 25, {align: 'center'});
+            doc.setFontSize(10);
             doc.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, 196, 25, {align: 'right'});
 
             doc.setTextColor(55, 65, 81);
@@ -10901,9 +11106,14 @@
             return doc;
         }
 
-        function getLevelProgressionPdfItems(gymId, apparatuses) {
+        function getLevelProgressionPdfItems(gymId, apparatuses, requestedProgram = undefined) {
             const selected = new Set(normalizePlanningWorkTags(apparatuses, PROGRESSION_APPARATUS));
-            return getGymnastProgression(gymId).filter(item => selected.has(normalizeProgressionApparatus(item.apparatus)));
+            const allItems = getGymnastProgression(gymId);
+            const items = typeof filterProgressionItemsByProgram === 'function'
+                ? filterProgressionItemsByProgram(allItems, requestedProgram)
+                : allItems;
+            return items
+                .filter(item => selected.has(normalizeProgressionApparatus(item.apparatus)));
         }
 
         function exportProgressionPDF() {
@@ -10913,14 +11123,15 @@
             }
             const gymnast = data.gymnastes.find(item => item.id === currentGymId);
             if (!gymnast) return;
-            const items = getGymnastProgression();
+            const program = getProgressionProgramFilter();
+            const items = filterProgressionItemsByProgram(getGymnastProgression(), program);
             if (items.length === 0) {
                 alert("⚠️ Ajoutez au moins un élément avant d'exporter le tableau.");
                 return;
             }
             try {
-                const doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items);
-                doc.save(`Progression_${getSafeGymnastPdfName(gymnast)}.pdf`);
+                const doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, [], program);
+                doc.save(`Progression_${program === 'federal_b' ? 'Federal_B' : program === 'all' ? 'Tous_programmes' : 'Federal_A'}_${getSafeGymnastPdfName(gymnast)}.pdf`);
             } catch (error) {
                 console.error('[GymSuivi] Erreur export progression :', error);
                 alert(`❌ Impossible de créer le PDF : ${error.message}`);
@@ -10949,6 +11160,8 @@
             }
             const list = document.getElementById('level-progression-gymnast-list');
             const apparatusList = document.getElementById('level-progression-apparatus-list');
+            const programSelect = document.getElementById('level-progression-program');
+            if (programSelect) programSelect.value = getProgressionProgramFilter();
             document.getElementById('level-progression-export-level').textContent = `${level.name} · ${gymnasts.length} gymnaste${gymnasts.length === 1 ? '' : 's'}`;
             list.innerHTML = gymnasts.map(gymnast => {
                 const name = `${gymnast.nom || ''} ${gymnast.prenom || ''}`.trim() || 'Gymnaste sans nom';
@@ -10978,20 +11191,26 @@
             return ['compact', 'compact_blank'].includes(value) ? value : 'complete';
         }
 
+        function getLevelProgressionProgram() {
+            const select = document.getElementById('level-progression-program');
+            return normalizeTechnicalProgram(select ? select.value : getProgressionProgramFilter());
+        }
+
         function updateLevelProgressionExportSelection() {
             const gymnastCount = document.querySelectorAll('[data-level-progression-gymnast-id]:checked').length;
             const apparatusCount = document.querySelectorAll('[data-level-progression-apparatus]:checked').length;
             const format = getLevelProgressionPdfFormat();
+            const program = getLevelProgressionProgram();
             const formatLabel = format === 'compact_blank'
                 ? 'version allégée vierge'
                 : format === 'compact' ? 'version allégée renseignée' : 'version complète';
             const summary = document.getElementById('level-progression-export-summary');
             const button = document.getElementById('btn-export-level-progressions');
             summary.textContent = gymnastCount && apparatusCount
-                ? `${gymnastCount} gymnaste${gymnastCount === 1 ? '' : 's'} · ${apparatusCount} agrès · ${formatLabel} · ${gymnastCount} fichier${gymnastCount === 1 ? '' : 's'} PDF distinct${gymnastCount === 1 ? '' : 's'}`
+                ? `${gymnastCount} gymnaste${gymnastCount === 1 ? '' : 's'} · ${apparatusCount} agrès · ${getTechnicalProgramLabel(program)} · ${formatLabel} · ${gymnastCount} fichier${gymnastCount === 1 ? '' : 's'} PDF distinct${gymnastCount === 1 ? '' : 's'}`
                 : 'Sélectionnez au moins une gymnaste et un agrès.';
             button.disabled = gymnastCount === 0 || apparatusCount === 0;
-            return {gymnastCount, apparatusCount, format};
+            return {gymnastCount, apparatusCount, format, program};
         }
 
         async function exportLevelProgressionPDFs() {
@@ -11002,6 +11221,7 @@
             const gymnastIds = new Set(Array.from(document.querySelectorAll('[data-level-progression-gymnast-id]:checked')).map(input => input.dataset.levelProgressionGymnastId));
             const apparatuses = Array.from(document.querySelectorAll('[data-level-progression-apparatus]:checked')).map(input => input.value);
             const format = getLevelProgressionPdfFormat();
+            const program = getLevelProgressionProgram();
             const gymnasts = getLevelProgressionExportGymnasts().filter(gymnast => gymnastIds.has(gymnast.id));
             if (!gymnasts.length || !apparatuses.length) {
                 alert('⚠️ Sélectionnez au moins une gymnaste et un agrès.');
@@ -11015,25 +11235,26 @@
             const formatSuffix = format === 'compact_blank'
                 ? 'Allegee_Vierge'
                 : format === 'compact' ? 'Allegee_Renseignee' : 'Complete';
+            const programSuffix = program === 'federal_b' ? 'Federal_B' : program === 'all' ? 'Tous_programmes' : 'Federal_A';
             button.disabled = true;
             status.classList.remove('hidden');
             let created = 0;
             try {
                 let compactSymbolMap = new Map();
                 if (format !== 'complete') {
-                    const sampleItems = getLevelProgressionPdfItems(gymnasts[0].id, apparatuses);
-                    compactSymbolMap = await prepareCompactProgressionPdfSymbols(getProgressionEvaluationPdfItems(sampleItems));
+                    const sampleItems = getLevelProgressionPdfItems(gymnasts[0].id, apparatuses, program);
+                    compactSymbolMap = await prepareCompactProgressionPdfSymbols(getProgressionEvaluationPdfItems(sampleItems, program));
                 }
                 for (let index = 0; index < gymnasts.length; index += 1) {
                     const gymnast = gymnasts[index];
                     status.textContent = `Création ${index + 1} / ${gymnasts.length} : ${gymnast.prenom || ''} ${gymnast.nom || ''}`.trim();
                     button.textContent = `Création ${index + 1} / ${gymnasts.length}…`;
                     await new Promise(resolve => setTimeout(resolve, 0));
-                    const items = getLevelProgressionPdfItems(gymnast.id, apparatuses);
+                    const items = getLevelProgressionPdfItems(gymnast.id, apparatuses, program);
                     if (!items.length) continue;
                     let doc;
                     if (format !== 'complete') {
-                        const compactItems = getProgressionEvaluationPdfItems(items);
+                        const compactItems = getProgressionEvaluationPdfItems(items, program);
                         const blank = format === 'compact_blank';
                         doc = createCompactProgressionEvaluationPdfDocument(
                             window.jspdf.jsPDF,
@@ -11048,9 +11269,9 @@
                             }
                         );
                     } else {
-                        doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels);
+                        doc = createProgressionOverviewPdfDocument(window.jspdf.jsPDF, gymnast, items, labels, program);
                     }
-                    doc.save(`Progression_${formatSuffix}_${getSafeGymnastPdfName(gymnast)}_${apparatusSuffix}.pdf`);
+                    doc.save(`Progression_${formatSuffix}_${programSuffix}_${getSafeGymnastPdfName(gymnast)}_${apparatusSuffix}.pdf`);
                     created += 1;
                     await new Promise(resolve => setTimeout(resolve, 180));
                 }
@@ -11393,10 +11614,9 @@
                 nom: "Tsukahara"
             }
         ];
-        const federalACatalogSigles = Array.isArray(globalThis.FFGYM_FEDERAL_A_CATALOG)
-            ? globalThis.FFGYM_FEDERAL_A_CATALOG.map(item => ({...item, symbole: ''}))
-            : [];
-        const defaultSiglesGym = [...legacyDefaultSiglesGym, ...federalACatalogSigles];
+        const federalProgramCatalogSigles = getOfficialProgramCatalog()
+            .map(item => ({...item, symbole: ''}));
+        const defaultSiglesGym = [...legacyDefaultSiglesGym, ...federalProgramCatalogSigles];
         const MOVEMENT_SAUT_VARIANT_KEY = 'gym_movement_saut_variant_v1';
         const MOVEMENT_APPARATUS_KEYS = {Saut: 'saut', Barres: 'barres', Poutre: 'poutre', Sol: 'sol'};
         let movementSautScoringVariant = localStorage.getItem(MOVEMENT_SAUT_VARIANT_KEY) === 'trampo_tremp'
@@ -11477,7 +11697,9 @@
         }
 
         function setMovementSautScoringVariant(value) {
-            movementSautScoringVariant = value === 'trampo_tremp' ? 'trampo_tremp' : 'tremplin';
+            movementSautScoringVariant = getMovementProgramFilter() === 'federal_b'
+                ? 'trampo_tremp'
+                : value === 'trampo_tremp' ? 'trampo_tremp' : 'tremplin';
             localStorage.setItem(MOVEMENT_SAUT_VARIANT_KEY, movementSautScoringVariant);
             const select = document.getElementById('movement-saut-variant');
             if (select) select.value = movementSautScoringVariant;
@@ -11487,11 +11709,21 @@
         function updateMovementSautVariantUI() {
             const row = document.getElementById('movement-saut-variant-row');
             const select = document.getElementById('movement-saut-variant');
+            const label = document.getElementById('movement-saut-variant-label');
+            const federalB = getMovementProgramFilter() === 'federal_b';
+            if (federalB) movementSautScoringVariant = 'trampo_tremp';
             if (row) {
                 row.classList.toggle('hidden', currentMvtAgres !== 'Saut');
                 row.classList.toggle('flex', currentMvtAgres === 'Saut');
             }
-            if (select) select.value = movementSautScoringVariant;
+            if (select) {
+                select.value = movementSautScoringVariant;
+                select.disabled = federalB;
+                select.classList.toggle('opacity-60', federalB);
+            }
+            if (label) label.textContent = federalB
+                ? 'Matériel au saut — imposé en Fédéral B'
+                : 'Matériel utilisé au saut';
         }
 
         function normalizeMovementScoringValue(value) {
@@ -11527,13 +11759,26 @@
             return {valid: true, value};
         }
 
-        function resolveMovementScoringRecord(item, apparatus = getCurrentMovementApparatusKey()) {
-            const byApparatus = item && item.scoringByApparatus && typeof item.scoringByApparatus === 'object'
-                ? item.scoringByApparatus[apparatus]
+        function resolveMovementScoringRecord(item, apparatus = getCurrentMovementApparatusKey(), requestedProgram = undefined) {
+            const selectedProgram = requestedProgram || (
+                typeof getMovementProgramFilter === 'function' ? getMovementProgramFilter() : 'federal_a'
+            );
+            const program = typeof getTechnicalScoringProgram === 'function'
+                ? getTechnicalScoringProgram(item, selectedProgram)
+                : 'federal_a';
+            const byProgram = item && item.scoringByProgram && typeof item.scoringByProgram === 'object' &&
+                item.scoringByProgram[program] && typeof item.scoringByProgram[program] === 'object'
+                ? item.scoringByProgram[program][apparatus]
                 : null;
+            const byApparatus = byProgram || (item && item.scoringByApparatus && typeof item.scoringByApparatus === 'object'
+                ? item.scoringByApparatus[apparatus]
+                : null);
             const record = byApparatus && typeof byApparatus === 'object' ? byApparatus : {};
+            const scoringVariant = apparatus === 'saut' && program === 'federal_b'
+                ? 'trampo_tremp'
+                : movementSautScoringVariant;
             const variantValue = apparatus === 'saut' && record.variants && typeof record.variants === 'object'
-                ? record.variants[movementSautScoringVariant]
+                ? record.variants[scoringVariant]
                 : undefined;
             const movementSource = variantValue !== undefined
                 ? variantValue
@@ -11546,21 +11791,28 @@
             return {
                 movementValue: normalizeMovementScoringValue(movementSource),
                 bonusValue: normalizeMovementScoringValue(bonusSource) || 0,
-                bonusRule: String(record.bonusRule || item && item.bonusRule || '')
+                bonusRule: String(record.bonusRule || item && item.bonusRule || ''),
+                program
             };
         }
 
-        function getDefaultSigleScoring(item, apparatus = getCurrentMovementApparatusKey()) {
-            const base = resolveMovementScoringRecord(item, apparatus);
+        function getDefaultSigleScoring(item, apparatus = getCurrentMovementApparatusKey(), requestedProgram = undefined) {
+            const base = resolveMovementScoringRecord(item, apparatus, requestedProgram);
             const saved = data.defaultSigleScoring && item
                 ? data.defaultSigleScoring[item.abrev]
+                : null;
+            const savedByProgram = saved && saved.scoringByProgram && typeof saved.scoringByProgram === 'object' &&
+                saved.scoringByProgram[base.program] && typeof saved.scoringByProgram[base.program] === 'object'
+                ? saved.scoringByProgram[base.program][apparatus]
                 : null;
             const savedByApparatus = saved && saved.scoringByApparatus && typeof saved.scoringByApparatus === 'object'
                 ? saved.scoringByApparatus[apparatus]
                 : null;
-            const override = savedByApparatus && typeof savedByApparatus === 'object'
+            const override = savedByProgram && typeof savedByProgram === 'object'
+                ? savedByProgram
+                : (base.program === 'federal_a' || !item.catalogId) && savedByApparatus && typeof savedByApparatus === 'object'
                 ? savedByApparatus
-                : saved && (!saved.scoringByApparatus || !item.catalogId)
+                : saved && (!saved.scoringByApparatus && !saved.scoringByProgram || !item.catalogId)
                     ? saved
                     : null;
             return {
@@ -11570,12 +11822,13 @@
                 bonusValue: override && Object.hasOwn(override, 'bonusValue')
                     ? normalizeMovementScoringValue(override.bonusValue) || 0
                     : base.bonusValue,
-                bonusRule: String(override && override.bonusRule || base.bonusRule || '')
+                bonusRule: String(override && override.bonusRule || base.bonusRule || ''),
+                program: base.program
             };
         }
 
-        function getCustomSigleScoring(item, apparatus = getCurrentMovementApparatusKey()) {
-            return resolveMovementScoringRecord(item, apparatus);
+        function getCustomSigleScoring(item, apparatus = getCurrentMovementApparatusKey(), requestedProgram = undefined) {
+            return resolveMovementScoringRecord(item, apparatus, requestedProgram);
         }
 
         function getCustomSigleScoringSummary(item) {
@@ -11602,6 +11855,13 @@
 
         function calculateMovementStartScore(content) {
             const text = String(content || '');
+            const selectedProgram = typeof getMovementProgramFilter === 'function'
+                ? getMovementProgramFilter()
+                : 'all';
+            const availableDefaults = getResolvedDefaultSigles().filter(item =>
+                !item || !item.catalogId || typeof itemSupportsTechnicalProgram !== 'function' ||
+                itemSupportsTechnicalProgram(item, selectedProgram)
+            );
             let movementValueTotal = 0;
             let bonusTotal = 0;
             let recognizedCount = 0;
@@ -11626,7 +11886,7 @@
                 }
                 details.push({label, token, count, movementValue, bonusValue});
             };
-            getResolvedDefaultSigles().forEach(item => {
+            availableDefaults.forEach(item => {
                 const token = item && item.catalogId ? `[${item.abrev}]` : `${item.symbole} (${item.abrev})`;
                 addOccurrences(item.nom, token, getDefaultSigleScoring(item));
             });
@@ -11635,7 +11895,7 @@
             });
             const knownCustomCodes = new Set([
                 ...data.customSigles.map(item => String(item.abrev || '')),
-                ...getResolvedDefaultSigles().filter(item => item.catalogId).map(item => String(item.abrev || ''))
+                ...availableDefaults.filter(item => item.catalogId).map(item => String(item.abrev || ''))
             ]);
             const unknownCount = [...text.matchAll(/\[([A-Z0-9_-]{1,12})\]/g)]
                 .filter(match => !knownCustomCodes.has(match[1])).length;
@@ -11845,18 +12105,26 @@
                     ? item.apparatuses[0]
                     : getCurrentMovementApparatusKey();
                 const current = data.defaultSigleScoring[item.abrev] || {};
-                const scoringByApparatus = {...(current.scoringByApparatus || {})};
-                if (movementValue.value === null && bonusValue.value === null)
-                    delete scoringByApparatus[apparatus];
-                else
-                    scoringByApparatus[apparatus] = {
+                const program = getTechnicalScoringProgram(item, getMovementProgramFilter());
+                const scoringByProgram = JSON.parse(JSON.stringify(current.scoringByProgram || {}));
+                const programScoring = {...(scoringByProgram[program] || {})};
+                if (movementValue.value === null && bonusValue.value === null) {
+                    delete programScoring[apparatus];
+                } else {
+                    programScoring[apparatus] = {
                         movementValue: movementValue.value,
                         bonusValue: bonusValue.value
                     };
-                if (Object.keys(scoringByApparatus).length)
-                    data.defaultSigleScoring[item.abrev] = {...current, scoringByApparatus};
-                else
+                }
+                if (Object.keys(programScoring).length) scoringByProgram[program] = programScoring;
+                else delete scoringByProgram[program];
+                if (Object.keys(scoringByProgram).length) {
+                    data.defaultSigleScoring[item.abrev] = {...current, scoringByProgram};
+                } else if (current.scoringByApparatus && Object.keys(current.scoringByApparatus).length) {
+                    data.defaultSigleScoring[item.abrev] = {...current, scoringByProgram: {}};
+                } else {
                     delete data.defaultSigleScoring[item.abrev];
+                }
             } else if (movementValue.value === null && bonusValue.value === null) {
                 delete data.defaultSigleScoring[item.abrev];
             } else {
@@ -11888,6 +12156,7 @@
                     Sol: ""
                 };
             refreshMovementCategoryControls();
+            updateMovementProgramUI();
             switchMvtAgres(currentMvtAgres);
             renderSiglesPalette();
         }
@@ -12054,8 +12323,9 @@
         }
 
         function getMovementEntriesForApparatus(apparatus = getCurrentMovementApparatusKey()) {
+            const program = getMovementProgramFilter();
             const defaults = getResolvedDefaultSigleEntries().filter(entry =>
-                !isDefaultSigleDeleted(entry.item) && (
+                !isDefaultSigleDeleted(entry.item) && itemSupportsTechnicalProgram(entry.item, program) && (
                     !entry.item.catalogId || normalizeProgressionApparatuses(entry.item.apparatuses).includes(apparatus)
                 )
             );
@@ -12113,11 +12383,14 @@
                 : `insertDefaultSigleToken(${entry.index})`;
             const scoring = entry.kind === 'custom' ? getCustomSigleScoring(item) : getDefaultSigleScoring(item);
             const visuals = renderMovementElementVisuals(item, 'palette');
+            const programBadge = item.catalogId
+                ? getItemTechnicalPrograms(item).map(program => program === 'federal_a' ? 'A' : 'B').join(' · ')
+                : 'Personnel';
             return `<article class="relative min-h-40 rounded-xl border border-gray-200 bg-white p-1.5 text-center shadow-sm transition hover:border-pink-300">
                 <button type="button" onclick="${insertAction}" title="Ajouter ${escapeHtml(item.nom)} à la composition" class="flex min-h-36 w-full flex-col items-center justify-center rounded-lg px-1 hover:bg-pink-50">
                     ${visuals}
                     <span class="mt-1 block min-h-7 w-full text-[9px] font-black leading-tight text-gray-800">${escapeHtml(item.nom)}</span>
-                    <span class="block w-full truncate text-[7px] text-gray-400">${escapeHtml(item.abrev)} · ${escapeHtml(categoryLabel)}</span>
+                    <span class="block w-full truncate text-[7px] text-gray-400">${escapeHtml(item.abrev)} · ${escapeHtml(categoryLabel)} · ${escapeHtml(programBadge)}</span>
                     <span class="block w-full truncate text-[7px] font-bold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
                 </button>
             </article>`;
@@ -12848,14 +13121,26 @@
                 updatedAt: new Date().toISOString()
             };
             if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object') data.defaultSigleScoring = {};
+            const existingScoring = JSON.parse(JSON.stringify(data.defaultSigleScoring[previousItem.abrev] || {}));
             if (previousItem.abrev !== abrev) {
                 delete data.defaultSigleScoring[previousItem.abrev];
                 replaceCustomSigleTokens(previousItem.abrev, abrev);
             }
-            data.defaultSigleScoring[abrev] = {
-                ...(data.defaultSigleScoring[abrev] || {}),
-                scoringByApparatus: JSON.parse(JSON.stringify(scoringByApparatus || {}))
-            };
+            if (previousItem.catalogId) {
+                const program = getTechnicalScoringProgram(previousItem, getMovementProgramFilter());
+                data.defaultSigleScoring[abrev] = {
+                    ...existingScoring,
+                    scoringByProgram: {
+                        ...(existingScoring.scoringByProgram || {}),
+                        [program]: JSON.parse(JSON.stringify(scoringByApparatus || {}))
+                    }
+                };
+            } else {
+                data.defaultSigleScoring[abrev] = {
+                    ...existingScoring,
+                    scoringByApparatus: JSON.parse(JSON.stringify(scoringByApparatus || {}))
+                };
+            }
             normalizeProgressionData(data);
             try {
                 saveAllData();
@@ -14586,7 +14871,13 @@
         }
 
         function buildGymnastProgressionExportHtml(gymId = currentGymId) {
-            const items = getGymnastProgression(gymId);
+            const program = typeof getProgressionProgramFilter === 'function'
+                ? getProgressionProgramFilter()
+                : 'federal_a';
+            const allItems = getGymnastProgression(gymId);
+            const items = typeof filterProgressionItemsByProgram === 'function'
+                ? filterProgressionItemsByProgram(allItems, program)
+                : allItems;
             if (items.length === 0) {
                 return `<h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937; margin-top:35px;">🎯 Progression des éléments</h2>
                     <p style="color:#9ca3af; font-style:italic; font-size:12px;">Aucun élément de progression enregistré.</p>`;
@@ -14602,7 +14893,7 @@
                 <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
             </tr>`).join('');
             return `<section style="margin-top:35px;">
-                <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937;">🎯 Progression des éléments</h2>
+                <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937;">🎯 Progression des éléments — ${escapeHtml(typeof getTechnicalProgramLabel === 'function' ? getTechnicalProgramLabel(program) : 'Fédéral A')}</h2>
                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; text-align:center; font-size:11px;">
                     <div style="flex:1; min-width:90px; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.not_performed}</strong>Non réalisé</div>
                     <div style="flex:1; min-width:90px; border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.studied}</strong>Étudié</div>
