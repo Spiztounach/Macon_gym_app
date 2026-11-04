@@ -2044,7 +2044,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.41.0';
+        const APP_VERSION = '1.41.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -2106,6 +2106,25 @@
             if (program !== 'all') return program;
             const programs = getItemTechnicalPrograms(item);
             return programs.includes('federal_a') ? 'federal_a' : 'federal_b';
+        }
+
+        function getItemTechnicalProgramBadge(item) {
+            if (!item || !item.catalogId) {
+                return {key: 'personal', label: 'Perso', color: '#64748b'};
+            }
+            const programs = getItemTechnicalPrograms(item);
+            const federalA = programs.includes('federal_a');
+            const federalB = programs.includes('federal_b');
+            if (federalA && federalB) return {key: 'federal_ab', label: 'A/B', color: '#7e22ce'};
+            if (federalB) return {key: 'federal_b', label: 'B', color: '#d97706'};
+            return {key: 'federal_a', label: 'A', color: '#2563eb'};
+        }
+
+        function getProgressionItemTechnicalProgramBadge(item, requestedProgram = undefined) {
+            const entry = typeof getMovementEntryForProgressionItem === 'function'
+                ? getMovementEntryForProgressionItem(item, requestedProgram)
+                : null;
+            return getItemTechnicalProgramBadge(entry && entry.item);
         }
 
         function getMovementProgramFilter() {
@@ -10039,12 +10058,28 @@
                     Number(left.catalogIndex || 0) - Number(right.catalogIndex || 0) ||
                     String(left.name || '').localeCompare(String(right.name || ''), 'fr', {sensitivity: 'base'})
                 )
-                .map(item => [
-                    item.name,
-                    getProgressionApparatusLabel(item.apparatus),
-                    getProgressionStatusLabel(item.status),
-                    getProgressionFamilyQualityText(item)
-                ]);
+                .map(item => {
+                    const badge = typeof getProgressionItemTechnicalProgramBadge === 'function'
+                        ? getProgressionItemTechnicalProgramBadge(item)
+                        : {label: 'Perso', color: '#64748b'};
+                    return [
+                        item.name,
+                        getProgressionApparatusLabel(item.apparatus),
+                        getProgressionStatusLabel(item.status),
+                        getProgressionFamilyQualityText(item),
+                        {
+                            content: badge.label,
+                            styles: {
+                                fillColor: typeof parsePdfHexColor === 'function'
+                                    ? parsePdfHexColor(badge.color)
+                                    : [100, 116, 139],
+                                textColor: [255, 255, 255],
+                                fontStyle: 'bold',
+                                halign: 'center'
+                            }
+                        }
+                    ];
+                });
         }
 
         function getSelectedProgressionPdfConfigurations() {
@@ -10084,7 +10119,7 @@
 
             doc.autoTable({
                 startY: 41,
-                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité']],
+                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité', 'Programme']],
                 body: rows,
                 theme: 'grid',
                 showHead: 'everyPage',
@@ -10108,7 +10143,8 @@
                     0: {cellWidth: 56, fontStyle: 'bold'},
                     1: {cellWidth: 24},
                     2: {cellWidth: 30, fontStyle: 'bold'},
-                    3: {cellWidth: 165}
+                    3: {cellWidth: 147},
+                    4: {cellWidth: 18, halign: 'center', fontStyle: 'bold'}
                 },
                 margin: getPdfPrintSafeTableMargins({top: 12}),
                 rowPageBreak: 'avoid'
@@ -10370,6 +10406,13 @@
                 String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
             );
             if (customByName) return customByName;
+            const allOfficialEntries = defaultEntries.filter(entry => entry.item.catalogId && supportsApparatus(entry));
+            const belongsToOfficialCatalog = itemId.startsWith('PROG-FFGYM-') || allOfficialEntries.some(entry =>
+                matchesCode(entry, catalogCode) || matchesCode(entry, code) || (
+                    name && String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
+                )
+            );
+            if (belongsToOfficialCatalog) return null;
             return defaultEntries.find(entry =>
                 !entry.item.catalogId && name &&
                 String(entry.item.nom || '').trim().toLocaleLowerCase('fr') === name
@@ -10398,6 +10441,9 @@
                             ? getDefaultSigleScoring(source, apparatus, program)
                             : getCustomSigleScoring(source, apparatus, program)
                         : {movementValue: null, bonusValue: 0};
+                    const programBadge = typeof getItemTechnicalProgramBadge === 'function'
+                        ? getItemTechnicalProgramBadge(source)
+                        : {key: 'personal', label: 'Perso', color: '#64748b'};
                     return {
                         key: getProgressionExportKey(item),
                         name: String(item.name || source.nom || ''),
@@ -10414,6 +10460,9 @@
                         categoryAccent: categoryDefinition.accent || '#64748b',
                         movementValue: scoring.movementValue,
                         bonusValue: scoring.bonusValue,
+                        programKey: programBadge.key,
+                        programLabel: programBadge.label,
+                        programColor: programBadge.color,
                         program: scoring.program || (typeof getTechnicalScoringProgram === 'function'
                             ? getTechnicalScoringProgram(source, program)
                             : program),
@@ -10501,6 +10550,21 @@
             const match = String(value || '').trim().match(/^#([0-9a-f]{6})$/i);
             if (!match) return fallback;
             return [0, 2, 4].map(offset => parseInt(match[1].slice(offset, offset + 2), 16));
+        }
+
+        function drawTechnicalProgramPdfBadge(doc, item, x, y, width = 9, height = 4) {
+            const label = String(item && item.programLabel || 'Perso');
+            const color = parsePdfHexColor(item && item.programColor, [100, 116, 139]);
+            doc.setFillColor(...color);
+            doc.roundedRect(x, y, width, height, 0.8, 0.8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(label.length > 3 ? 4.1 : 5.2);
+            doc.text(label, x + width / 2, y + height - 1.05, {align: 'center'});
+        }
+
+        function getTechnicalProgramPdfLegendText() {
+            return 'Programme : A = Fédéral A · B = Fédéral B · A/B = commun aux deux';
         }
 
         function drawProgressionEvaluationCategoryHeader(doc, block, x, y, width, height) {
@@ -10619,10 +10683,12 @@
 
             const textX = x + 43;
             const textWidth = width - 45;
+            const badgeWidth = 9;
+            drawTechnicalProgramPdfBadge(doc, item, x + width - badgeWidth - 2, y + 2, badgeWidth, 4);
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7.4);
-            const nameLines = doc.splitTextToSize(String(item.name || ''), textWidth).slice(0, 2);
+            const nameLines = doc.splitTextToSize(String(item.name || ''), textWidth - badgeWidth - 1).slice(0, 2);
             doc.text(nameLines, textX, y + 5);
             const detailY = y + (nameLines.length > 1 ? 11 : 9);
             doc.setFont('helvetica', 'normal');
@@ -10697,6 +10763,9 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(107, 114, 128);
                 doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis', pageWidth - left, 33, {align: 'right'});
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.8);
+                doc.text(getTechnicalProgramPdfLegendText(), pageWidth / 2, 36.2, {align: 'center'});
 
                 let y = top;
                 page.blocks.forEach(block => {
@@ -10835,7 +10904,11 @@
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
-            doc.text(fitProgressionPdfText(doc, item.name, width - 46.5), x + 8, y + 3.1);
+            drawTechnicalProgramPdfBadge(doc, item, x + 8, y + 1.2, 7, 3.8);
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.2);
+            doc.text(fitProgressionPdfText(doc, item.name, width - 54.5), x + 16, y + 3.9);
             const movementValue = item.movementValue === null || item.movementValue === undefined
                 ? '—'
                 : formatMovementScoringValue(item.movementValue);
@@ -10906,6 +10979,9 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.3);
                 doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis · V : valeur · B : bonification', bounds.left, 34);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.8);
+                doc.text(getTechnicalProgramPdfLegendText(), bounds.right, 34, {align: 'right'});
 
                 let y = 39;
                 page.blocks.forEach(block => {
@@ -10970,10 +11046,10 @@
             return exportSelectedProgressionEvaluationPDF();
         }
 
-        function buildGroupedProgressionPdfTableRows(items) {
+        function buildGroupedProgressionPdfTableRows(items, requestedProgram = undefined) {
             const source = Array.isArray(items) ? items : [];
             const itemsByKey = new Map(source.map(item => [getProgressionExportKey(item), item]));
-            const metadata = getProgressionEvaluationPdfItems(source);
+            const metadata = getProgressionEvaluationPdfItems(source, requestedProgram);
             const groupCounts = metadata.reduce((counts, item) => {
                 const key = `${item.apparatus}::${item.categoryKey}`;
                 counts.set(key, (counts.get(key) || 0) + 1);
@@ -10988,7 +11064,7 @@
                     const count = groupCounts.get(groupKey) || 0;
                     rows.push([{
                         content: `${meta.apparatusLabel} — ${meta.category} (${count})`,
-                        colSpan: 7,
+                        colSpan: 8,
                         styles: {
                             fillColor: color,
                             textColor: [255, 255, 255],
@@ -11003,6 +11079,15 @@
                 if (!item) return;
                 rows.push([
                     item.name,
+                    {
+                        content: meta.programLabel,
+                        styles: {
+                            fillColor: parsePdfHexColor(meta.programColor),
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        }
+                    },
                     meta.apparatusLabel,
                     getProgressionFamilyQualityText(item),
                     item.status === 'not_performed' ? 'X' : '',
@@ -11084,19 +11169,20 @@
 
             doc.autoTable({
                 startY: classificationWarnings.length ? 126 : 121,
-                head: [["Nom de l'élément", 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
-                body: buildGroupedProgressionPdfTableRows(items),
+                head: [["Nom de l'élément", 'Programme', 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
+                body: buildGroupedProgressionPdfTableRows(items, program),
                 theme: 'grid',
                 styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                 headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
                 columnStyles: {
-                    0: {cellWidth: 36, halign: 'left', fontStyle: 'bold'},
-                    1: {cellWidth: 19, halign: 'left'},
-                    2: {cellWidth: 45, halign: 'left'},
-                    3: {cellWidth: 22, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                    4: {cellWidth: 22, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
-                    5: {cellWidth: 22, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                    6: {cellWidth: 22, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                    0: {cellWidth: 30, halign: 'left', fontStyle: 'bold'},
+                    1: {cellWidth: 15, halign: 'center', fontStyle: 'bold'},
+                    2: {cellWidth: 17, halign: 'left'},
+                    3: {cellWidth: 38, halign: 'left'},
+                    4: {cellWidth: 20, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                    5: {cellWidth: 20, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                    6: {cellWidth: 20, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                    7: {cellWidth: 20, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                 },
                 margin: getPdfPrintSafeTableMargins(),
                 showHead: 'everyPage',
@@ -14883,15 +14969,21 @@
                     <p style="color:#9ca3af; font-style:italic; font-size:12px;">Aucun élément de progression enregistré.</p>`;
             }
             const summary = calculateProgressionSummary(items);
-            const rows = items.map(item => `<tr style="text-align:center; page-break-inside:avoid;">
-                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left; font-weight:600;">${escapeHtml(item.name)}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionApparatusLabel(item.apparatus))}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyQualityText(item))}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_performed' ? 'X' : ''}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; color:#2563eb; font-weight:bold;">${item.status === 'studied' ? 'X' : ''}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; color:#d97706; font-weight:bold;">${item.status === 'in_progress' ? 'X' : ''}</td>
-                <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
-            </tr>`).join('');
+            const rows = items.map(item => {
+                const badge = typeof getProgressionItemTechnicalProgramBadge === 'function'
+                    ? getProgressionItemTechnicalProgramBadge(item, program)
+                    : {label: 'Perso', color: '#64748b'};
+                return `<tr style="text-align:center; page-break-inside:avoid;">
+                    <td style="border:1px solid #e5e7eb; padding:7px; text-align:left; font-weight:600;">${escapeHtml(item.name)}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px;"><span style="display:inline-block; min-width:24px; border-radius:4px; padding:3px 5px; background:${escapeHtml(badge.color)}; color:#fff; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">${escapeHtml(badge.label)}</span></td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionApparatusLabel(item.apparatus))}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; text-align:left;">${escapeHtml(getProgressionFamilyQualityText(item))}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; color:#dc2626; font-weight:bold;">${item.status === 'not_performed' ? 'X' : ''}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; color:#2563eb; font-weight:bold;">${item.status === 'studied' ? 'X' : ''}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; color:#d97706; font-weight:bold;">${item.status === 'in_progress' ? 'X' : ''}</td>
+                    <td style="border:1px solid #e5e7eb; padding:7px; color:#16a34a; font-weight:bold;">${item.status === 'acquired' ? 'X' : ''}</td>
+                </tr>`;
+            }).join('');
             return `<section style="margin-top:35px;">
                 <h2 style="font-size:15px; border-bottom:2px solid #e5e7eb; padding-bottom:6px; color:#1f2937;">🎯 Progression des éléments — ${escapeHtml(typeof getTechnicalProgramLabel === 'function' ? getTechnicalProgramLabel(program) : 'Fédéral A')}</h2>
                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; text-align:center; font-size:11px;">
@@ -14901,15 +14993,17 @@
                     <div style="flex:1; border:1px solid #bbf7d0; background:#f0fdf4; color:#15803d; padding:8px; border-radius:7px;"><strong style="display:block; font-size:17px;">${summary.acquired}</strong>Acquis (${summary.acquiredPercent} %)</div>
                 </div>
                 <p style="margin:8px 0; color:#4b5563; font-size:9px; line-height:1.5;"><strong>Acquis :</strong> technique et rythmique respectées · <strong>En cours :</strong> petite erreur technique, rythmique ou d’amplitude · <strong>Étudié :</strong> réalisé globalement ou partiellement · <strong>Non réalisé :</strong> élément non effectué.</p>
+                <p style="margin:8px 0; color:#4b5563; font-size:9px;"><strong>Programme :</strong> <span style="color:#2563eb; font-weight:bold;">A</span> = Fédéral A · <span style="color:#d97706; font-weight:bold;">B</span> = Fédéral B · <span style="color:#7e22ce; font-weight:bold;">A/B</span> = commun aux deux.</p>
                 <h3 style="font-size:12px; color:#6b21a8; margin:18px 0 5px; text-align:center;">Qualité par familles techniques</h3>
                 ${buildProgressionRadarSvg(items, 'family')}
                 <h3 style="font-size:12px; color:#1d4ed8; margin:18px 0 5px; text-align:center; page-break-before:auto;">Acquisition par agrès</h3>
                 ${buildProgressionRadarSvg(items, 'apparatus')}
                 <table style="width:100%; border-collapse:collapse; margin-top:18px; font-size:10px;">
                     <thead><tr style="background:#f3e8ff; color:#581c87;">
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:25%;">Nom de l'élément</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:11%;">Agrès</th>
-                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:24%;">Famille(s) et qualité</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:21%;">Nom de l'élément</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; width:8%;">Programme</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:10%;">Agrès</th>
+                        <th style="border:1px solid #d8b4fe; padding:7px; text-align:left; width:21%;">Famille(s) et qualité</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">Non réalisé</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">Étudié</th>
                         <th style="border:1px solid #d8b4fe; padding:7px;">En cours</th>
