@@ -2110,7 +2110,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.42.0';
+        const APP_VERSION = '1.42.1';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -10834,13 +10834,17 @@
             const textX = x + 43;
             const textWidth = width - 45;
             const badgeWidth = 9;
-            drawTechnicalProgramPdfBadge(doc, item, x + width - badgeWidth - 2, y + 2, badgeWidth, 4);
+            doc.setTextColor(107, 114, 128);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(4.2);
+            doc.text('PROGRAMME', textX, y + 3.7);
+            drawTechnicalProgramPdfBadge(doc, item, x + width - badgeWidth - 2, y + 1.2, badgeWidth, 4);
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7.4);
-            const nameLines = doc.splitTextToSize(String(item.name || ''), textWidth - badgeWidth - 1).slice(0, 2);
-            doc.text(nameLines, textX, y + 5);
-            const detailY = y + (nameLines.length > 1 ? 11 : 9);
+            const nameLines = doc.splitTextToSize(String(item.name || ''), textWidth).slice(0, 2);
+            doc.text(nameLines, textX, y + 8);
+            const detailY = y + (nameLines.length > 1 ? 14 : 12);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(5.3);
             doc.setTextColor(107, 114, 128);
@@ -11051,14 +11055,18 @@
                 doc.setFontSize(4.2);
                 doc.text(fitProgressionPdfText(doc, item.symbol || item.code || '—', 4.8), x + 3.8, y + 4.3, {align: 'center'});
             }
+            const programX = x + 8;
+            const programWidth = 9;
+            const nameX = programX + programWidth + 2;
+            const statusStart = x + width - 35;
+            const nameWidth = Math.max(12, statusStart - nameX - 2);
+            drawTechnicalProgramPdfBadge(doc, item, programX, y + 1.2, programWidth, 3.8);
+            doc.setDrawColor(226, 232, 240);
+            doc.line(programX + programWidth + 1, y + 0.9, programX + programWidth + 1, y + height - 0.9);
             doc.setTextColor(31, 41, 55);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
-            drawTechnicalProgramPdfBadge(doc, item, x + 8, y + 1.2, 7, 3.8);
-            doc.setTextColor(31, 41, 55);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.2);
-            doc.text(fitProgressionPdfText(doc, item.name, width - 54.5), x + 16, y + 3.9);
+            doc.text(fitProgressionPdfText(doc, item.name, nameWidth), nameX, y + 3.9);
             const movementValue = item.movementValue === null || item.movementValue === undefined
                 ? '—'
                 : formatMovementScoringValue(item.movementValue);
@@ -11068,14 +11076,13 @@
             doc.setTextColor(126, 34, 206);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(5.2);
-            doc.text(`Valeur ${movementValue} · Bonification ${bonusValue}`, x + 8, y + 6.1);
+            doc.text(`Valeur ${movementValue} · Bonification ${bonusValue}`, nameX, y + 6.1);
             const statuses = [
                 {key: 'not_performed', label: 'NR'},
                 {key: 'studied', label: 'ÉT'},
                 {key: 'in_progress', label: 'EC'},
                 {key: 'acquired', label: 'AC'}
             ];
-            const statusStart = x + width - 35;
             statuses.forEach((status, index) => {
                 const optionX = statusStart + index * 8.5;
                 const active = markCurrentStatus && normalizeProgressionStatus(item.status) === status.key;
