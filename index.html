@@ -1101,9 +1101,12 @@
                                 <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-purple-700">
                                     <span>Valeur des mouvements : <strong id="movement-value-total">0</strong></span>
                                     <span>Bonifications potentielles : <strong id="movement-bonus-total">0</strong></span>
+                                    <span id="movement-artistic-bonus-row" class="hidden">Bonus artistique : <strong id="movement-artistic-bonus-total">0</strong></span>
                                 </div>
+                                <p id="movement-score-context" class="mt-1 text-[9px] font-semibold text-purple-600"></p>
                                 <p id="movement-score-warning" class="hidden mt-1 text-[10px] font-semibold text-amber-700"></p>
                             </div>
+                            <div id="movement-bonus-criteria-panel" class="mt-2 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3"></div>
                             <button
                                 onclick="saveMouvementData()"
                                 class="w-full mt-1 bg-green-600 text-white py-1.5 rounded text-xs font-medium shadow hover:bg-green-700 transition">Enregistrer l'enchaînement</button>
@@ -2096,6 +2099,7 @@
                         <span class="font-bold text-gray-700">Éléments enregistrés</span>
                         <span id="custom-sigles-count" class="text-[10px] text-gray-400">0 élément</span>
                     </div>
+                    <button type="button" onclick="restoreAllOfficialMovementScoring()" class="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-[10px] font-bold text-indigo-700">↺ Restaurer toutes les valeurs officielles A et B</button>
                     <p class="text-[10px] text-gray-500">La liste suit les filtres Agrès et Catégorie de l’onglet Mouvements.</p>
                     <div id="custom-sigles-manager-list" class="space-y-2"></div>
                 </div>
@@ -2110,7 +2114,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.42.1';
+        const APP_VERSION = '1.43.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -2136,6 +2140,42 @@
             {key: 'federal_b', label: 'Fédéral B'},
             {key: 'all', label: 'Tous les programmes'}
         ];
+        const MOVEMENT_PROGRAM_STYLES = {
+            federal_a: {shortLabel: 'A', label: 'Fédéral A', textClass: 'text-blue-700', borderClass: 'border-blue-200', backgroundClass: 'bg-blue-50', color: '#2563eb'},
+            federal_b: {shortLabel: 'B', label: 'Fédéral B', textClass: 'text-amber-700', borderClass: 'border-amber-200', backgroundClass: 'bg-amber-50', color: '#d97706'}
+        };
+        const MOVEMENT_COMPOSITION_BONUS_CRITERIA = {
+            federal_a: {
+                poutre: [
+                    {key: 'a_poutre_gym_series', kind: 'start', value: 0.5, label: 'Série de 2 éléments gymniques différents avec au moins un saut'},
+                    {key: 'a_poutre_acro_series', kind: 'start', value: 0.5, label: 'Série acrobatique ou série mixte autorisée'},
+                    {key: 'a_poutre_directions', kind: 'start', value: 0.5, label: 'Un élément acrobatique avant ou latéral et un élément arrière'},
+                    {key: 'a_poutre_art_posture', kind: 'artistic', value: 0.1, label: 'Belle tenue du corps'},
+                    {key: 'a_poutre_art_gesture', kind: 'artistic', value: 0.1, label: 'Présence de gestuelle'},
+                    {key: 'a_poutre_art_half_toe', kind: 'artistic', value: 0.1, label: 'Passage sur demi-pointes'}
+                ],
+                sol: [
+                    {key: 'a_sol_two_lines', kind: 'start', value: 0.5, label: 'Deux lignes acrobatiques minimum'},
+                    {key: 'a_sol_three_flight_salto', kind: 'start', value: 0.5, label: 'Ligne de 3 éléments avec envol comprenant un salto'},
+                    {key: 'a_sol_gym_series', kind: 'start', value: 0.5, label: 'Série ou passage gymnique de 2 sauts différents'},
+                    {key: 'a_sol_art_posture', kind: 'artistic', value: 0.1, label: 'Belle tenue du corps'},
+                    {key: 'a_sol_art_gesture', kind: 'artistic', value: 0.1, label: 'Présence de gestuelle'},
+                    {key: 'a_sol_art_expression', kind: 'artistic', value: 0.1, label: 'Expression du visage'}
+                ]
+            },
+            federal_b: {
+                poutre: [
+                    {key: 'b_poutre_art_posture', kind: 'artistic', value: 0.1, label: 'Belle tenue du corps'},
+                    {key: 'b_poutre_art_gesture', kind: 'artistic', value: 0.1, label: 'Présence de gestuelle'},
+                    {key: 'b_poutre_art_half_toe', kind: 'artistic', value: 0.1, label: 'Passage sur demi-pointes'}
+                ],
+                sol: [
+                    {key: 'b_sol_art_posture', kind: 'artistic', value: 0.1, label: 'Belle tenue du corps'},
+                    {key: 'b_sol_art_gesture', kind: 'artistic', value: 0.1, label: 'Présence de gestuelle'},
+                    {key: 'b_sol_art_half_toe', kind: 'artistic', value: 0.1, label: 'Passage sur demi-pointes'}
+                ]
+            }
+        };
 
         function normalizeTechnicalProgram(value) {
             const key = String(value || '').trim().toLowerCase();
@@ -4108,7 +4148,7 @@
                 note.textContent = program === 'federal_b'
                     ? 'Bibliothèque et valeurs Fédéral B. Au saut, les valeurs correspondent au trampo-tremp.'
                     : program === 'all'
-                        ? 'Bibliothèque réunie. Les éléments communs utilisent les valeurs Fédéral A ; les éléments propres au B conservent leurs valeurs B.'
+                        ? 'Bibliothèque réunie. Les valeurs et bonifications A et B sont affichées et calculées séparément.'
                         : 'Valeurs, bonifications et bibliothèque du programme Fédéral A.';
             }
             if (program === 'federal_b') {
@@ -4124,7 +4164,7 @@
             const note = document.getElementById('progression-program-note');
             if (note) {
                 note.textContent = program === 'all'
-                    ? 'Tous les éléments sont affichés. Les éléments communs ne sont pas dupliqués.'
+                    ? 'Tous les éléments sont affichés sans doublon. Les valeurs et bonifications A et B restent visibles séparément.'
                     : `Éléments du programme ${getTechnicalProgramLabel(program)}. Les éléments communs à A et B conservent la même progression personnelle.`;
             }
             return program;
@@ -9592,6 +9632,22 @@
                 : 'rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-700';
             apparatus.textContent = apparatusMissing ? 'Agrès à classer' : getProgressionApparatusLabel(item.apparatus);
             container.appendChild(apparatus);
+            const movementEntry = getMovementEntryForProgressionItem(item, getProgressionProgramFilter());
+            if (movementEntry && movementEntry.item) {
+                const scoreRows = getMovementScoringRows(
+                    movementEntry.item,
+                    normalizeProgressionApparatus(item.apparatus),
+                    movementEntry.kind,
+                    getProgressionProgramFilter()
+                );
+                scoreRows.forEach(row => {
+                    const style = MOVEMENT_PROGRAM_STYLES[row.program];
+                    const badge = document.createElement('span');
+                    badge.className = `rounded border px-1.5 py-0.5 text-[9px] font-bold ${style ? `${style.borderClass} ${style.backgroundClass} ${style.textClass}` : 'border-slate-200 bg-slate-50 text-slate-600'}`;
+                    badge.textContent = formatMovementScoringRow(row);
+                    container.appendChild(badge);
+                });
+            }
             const families = normalizeProgressionFamilies(item.families);
             if (families.length === 0) {
                 const missing = document.createElement('span');
@@ -10201,6 +10257,7 @@
 
         function buildSelectedProgressionPdfRows(items) {
             const apparatusOrder = new Map(PROGRESSION_APPARATUS.map((apparatus, index) => [apparatus.key, index]));
+            const metadata = new Map(getProgressionEvaluationPdfItems(items).map(item => [item.key, item]));
             return [...(Array.isArray(items) ? items : [])]
                 .sort((left, right) =>
                     (apparatusOrder.get(normalizeProgressionApparatus(left.apparatus)) ?? 99) -
@@ -10209,6 +10266,7 @@
                     String(left.name || '').localeCompare(String(right.name || ''), 'fr', {sensitivity: 'base'})
                 )
                 .map(item => {
+                    const meta = metadata.get(getProgressionExportKey(item));
                     const badge = typeof getProgressionItemTechnicalProgramBadge === 'function'
                         ? getProgressionItemTechnicalProgramBadge(item)
                         : {label: 'Perso', color: '#64748b'};
@@ -10227,7 +10285,8 @@
                                 fontStyle: 'bold',
                                 halign: 'center'
                             }
-                        }
+                        },
+                        formatMovementScoringRowsText(meta && meta.scoringRows)
                     ];
                 });
         }
@@ -10269,7 +10328,7 @@
 
             doc.autoTable({
                 startY: 41,
-                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité', 'Programme']],
+                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité', 'Programme', 'Valeur / bonification']],
                 body: rows,
                 theme: 'grid',
                 showHead: 'everyPage',
@@ -10290,11 +10349,12 @@
                 },
                 alternateRowStyles: {fillColor: [250, 250, 252]},
                 columnStyles: {
-                    0: {cellWidth: 56, fontStyle: 'bold'},
-                    1: {cellWidth: 24},
-                    2: {cellWidth: 30, fontStyle: 'bold'},
-                    3: {cellWidth: 147},
-                    4: {cellWidth: 18, halign: 'center', fontStyle: 'bold'}
+                    0: {cellWidth: 50, fontStyle: 'bold'},
+                    1: {cellWidth: 20},
+                    2: {cellWidth: 25, fontStyle: 'bold'},
+                    3: {cellWidth: 119},
+                    4: {cellWidth: 18, halign: 'center', fontStyle: 'bold'},
+                    5: {cellWidth: 45, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]}
                 },
                 margin: getPdfPrintSafeTableMargins({top: 12}),
                 rowPageBreak: 'avoid'
@@ -10417,9 +10477,12 @@
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(107, 33, 168);
             doc.setFontSize(6.2);
-            const value = item.movementValue === null ? '—' : formatMovementScoringValue(item.movementValue);
-            const bonus = formatMovementScoringValue(item.bonusValue);
-            doc.text(`Valeur : ${value}   Bonus : ${bonus}`, textX, detailY + 4);
+            const scoreText = formatMovementScoringRowsText(
+                Array.isArray(item.scoringRows) && item.scoringRows.length
+                    ? item.scoringRows
+                    : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue}]
+            );
+            doc.text(doc.splitTextToSize(scoreText, textWidth).slice(0, 2), textX, detailY + 4);
 
             const statusY = y + height - 10;
             const innerWidth = width - 4;
@@ -10586,11 +10649,10 @@
                         ? getMovementCategoryDefinition(source.category, source.nom)
                         : getMovementCategoryDefinitions().find(category => category.key === 'other') ||
                             getMovementCategoryDefinitions()[getMovementCategoryDefinitions().length - 1];
-                    const scoring = entry
-                        ? entry.kind === 'default'
-                            ? getDefaultSigleScoring(source, apparatus, program)
-                            : getCustomSigleScoring(source, apparatus, program)
-                        : {movementValue: null, bonusValue: 0};
+                    const scoringRows = entry
+                        ? getMovementScoringRows(source, apparatus, entry.kind, program)
+                        : [];
+                    const scoring = scoringRows[0] || {movementValue: null, bonusValue: 0, program};
                     const programBadge = typeof getItemTechnicalProgramBadge === 'function'
                         ? getItemTechnicalProgramBadge(source)
                         : {key: 'personal', label: 'Perso', color: '#64748b'};
@@ -10610,6 +10672,7 @@
                         categoryAccent: categoryDefinition.accent || '#64748b',
                         movementValue: scoring.movementValue,
                         bonusValue: scoring.bonusValue,
+                        scoringRows,
                         programKey: programBadge.key,
                         programLabel: programBadge.label,
                         programColor: programBadge.color,
@@ -10654,7 +10717,7 @@
             const usableHeight = 161;
             const categoryHeaderHeight = 6.5;
             const categoryHeaderGap = 1.25;
-            const cardHeight = 29;
+            const cardHeight = 33;
             const rowGap = 1.25;
             const pages = [{blocks: [], usedHeight: 0}];
             let page = pages[0];
@@ -10849,11 +10912,15 @@
             doc.setFontSize(5.3);
             doc.setTextColor(107, 114, 128);
             doc.text(doc.splitTextToSize(`${item.apparatusLabel} · ${item.category}`, textWidth).slice(0, 1), textX, detailY);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(107, 33, 168);
-            doc.setFontSize(5.8);
-            const value = item.movementValue === null ? '—' : formatMovementScoringValue(item.movementValue);
-            doc.text(`Valeur : ${value}   Bonus : ${formatMovementScoringValue(item.bonusValue)}`, textX, detailY + 3.8);
+            const scoringRows = Array.isArray(item.scoringRows) && item.scoringRows.length
+                ? item.scoringRows
+                : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue, color: item.programColor}];
+            scoringRows.slice(0, 2).forEach((row, index) => {
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...parsePdfHexColor(row.color || item.programColor, [107, 33, 168]));
+                doc.setFontSize(5.2);
+                doc.text(fitProgressionPdfText(doc, formatMovementScoringRow(row), textWidth), textX, detailY + 3.5 + index * 3);
+            });
 
             const statusY = y + height - 10;
             const optionWidth = (width - 4) / 4;
@@ -10894,7 +10961,7 @@
             const gapY = 1.25;
             const categoryHeaderHeight = 6.5;
             const categoryHeaderGap = 1.25;
-            const cardHeight = 29;
+            const cardHeight = 33;
             const cardWidth = (pageWidth - left - right - gapX * (columns - 1)) / columns;
             const pages = buildProgressionEvaluationPdfPages(items);
             pages.forEach((page, pageIndex) => {
@@ -11067,16 +11134,15 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
             doc.text(fitProgressionPdfText(doc, item.name, nameWidth), nameX, y + 3.9);
-            const movementValue = item.movementValue === null || item.movementValue === undefined
-                ? '—'
-                : formatMovementScoringValue(item.movementValue);
-            const bonusValue = item.bonusValue === null || item.bonusValue === undefined
-                ? '0'
-                : formatMovementScoringValue(item.bonusValue);
+            const scoreText = formatMovementScoringRowsText(
+                Array.isArray(item.scoringRows) && item.scoringRows.length
+                    ? item.scoringRows
+                    : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue}]
+            );
             doc.setTextColor(126, 34, 206);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(5.2);
-            doc.text(`Valeur ${movementValue} · Bonification ${bonusValue}`, nameX, y + 6.1);
+            doc.setFontSize(4.6);
+            doc.text(fitProgressionPdfText(doc, scoreText, nameWidth), nameX, y + 6.1);
             const statuses = [
                 {key: 'not_performed', label: 'NR'},
                 {key: 'studied', label: 'ÉT'},
@@ -11221,7 +11287,7 @@
                     const count = groupCounts.get(groupKey) || 0;
                     rows.push([{
                         content: `${meta.apparatusLabel} — ${meta.category} (${count})`,
-                        colSpan: 8,
+                        colSpan: 9,
                         styles: {
                             fillColor: color,
                             textColor: [255, 255, 255],
@@ -11245,6 +11311,7 @@
                             halign: 'center'
                         }
                     },
+                    formatMovementScoringRowsText(meta.scoringRows),
                     meta.apparatusLabel,
                     getProgressionFamilyQualityText(item),
                     item.status === 'not_performed' ? 'X' : '',
@@ -11326,20 +11393,21 @@
 
             doc.autoTable({
                 startY: classificationWarnings.length ? 126 : 121,
-                head: [["Nom de l'élément", 'Programme', 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
+                head: [["Nom de l'élément", 'Programme', 'Valeur / bonification', 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
                 body: buildGroupedProgressionPdfTableRows(items, program),
                 theme: 'grid',
                 styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                 headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
                 columnStyles: {
-                    0: {cellWidth: 30, halign: 'left', fontStyle: 'bold'},
-                    1: {cellWidth: 15, halign: 'center', fontStyle: 'bold'},
-                    2: {cellWidth: 17, halign: 'left'},
-                    3: {cellWidth: 38, halign: 'left'},
-                    4: {cellWidth: 20, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                    5: {cellWidth: 20, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
-                    6: {cellWidth: 20, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                    7: {cellWidth: 20, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                    0: {cellWidth: 25, halign: 'left', fontStyle: 'bold'},
+                    1: {cellWidth: 13, halign: 'center', fontStyle: 'bold'},
+                    2: {cellWidth: 28, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]},
+                    3: {cellWidth: 13, halign: 'left'},
+                    4: {cellWidth: 29, halign: 'left'},
+                    5: {cellWidth: 18, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                    6: {cellWidth: 18, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                    7: {cellWidth: 18, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                    8: {cellWidth: 18, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                 },
                 margin: getPdfPrintSafeTableMargins(),
                 showHead: 'everyPage',
@@ -12084,6 +12152,127 @@
             }).join(' | ') || 'Valeur non renseignée';
         }
 
+        function getMovementScoringRows(item, apparatus = getCurrentMovementApparatusKey(), kind = 'default', requestedProgram = undefined) {
+            if (!item) return [];
+            const selected = normalizeTechnicalProgram(
+                requestedProgram === undefined ? getMovementProgramFilter() : requestedProgram
+            );
+            const getter = kind === 'custom' ? getCustomSigleScoring : getDefaultSigleScoring;
+            if (!item.catalogId) {
+                const scoring = getter(item, apparatus, selected === 'all' ? 'federal_a' : selected);
+                return [{...scoring, program: 'personal', shortLabel: 'Perso', label: 'Personnel', color: '#64748b'}];
+            }
+            const supported = getItemTechnicalPrograms(item);
+            const programs = selected === 'all' ? supported : supported.includes(selected) ? [selected] : [];
+            return programs.map(program => {
+                const style = MOVEMENT_PROGRAM_STYLES[program] || MOVEMENT_PROGRAM_STYLES.federal_a;
+                return {
+                    program,
+                    shortLabel: style.shortLabel,
+                    label: style.label,
+                    color: style.color,
+                    ...getter(item, apparatus, program)
+                };
+            });
+        }
+
+        function formatMovementScoringRow(row) {
+            if (!row) return 'Valeur non renseignée';
+            const value = row.movementValue === null ? '-' : formatMovementScoringValue(row.movementValue);
+            const valueCondition = row.program === 'federal_b' && Number(row.movementValue) >= 0.8 ? ' (10+)' : '';
+            const bonusCondition = row.program === 'federal_b' && Number(row.bonusValue) > 0 ? ' (10+)' : '';
+            return `${row.shortLabel} : V ${value}${valueCondition} - Bon. ${formatMovementScoringValue(row.bonusValue)}${bonusCondition}`;
+        }
+
+        function formatMovementScoringRowsText(rows) {
+            return (Array.isArray(rows) ? rows : []).map(formatMovementScoringRow).join(' / ') || 'Valeur non renseignée';
+        }
+
+        function renderMovementScoringRowsHtml(rows, compact = false) {
+            const source = Array.isArray(rows) ? rows : [];
+            return `<span class="${compact ? 'mt-0.5' : 'mt-1'} flex w-full flex-wrap justify-center gap-1">${source.map(row => {
+                const style = MOVEMENT_PROGRAM_STYLES[row.program];
+                const classes = style
+                    ? `${style.borderClass} ${style.backgroundClass} ${style.textClass}`
+                    : 'border-slate-200 bg-slate-50 text-slate-600';
+                return `<span class="rounded border px-1 py-0.5 ${compact ? 'text-[6.5px]' : 'text-[8px]'} font-bold ${classes}">${escapeHtml(formatMovementScoringRow(row))}</span>`;
+            }).join('')}</span>`;
+        }
+
+        function getMovementBonusCriteriaDefinitions(program, apparatus = getCurrentMovementApparatusKey()) {
+            const normalizedProgram = normalizeTechnicalProgram(program);
+            return normalizedProgram === 'all'
+                ? []
+                : [...(MOVEMENT_COMPOSITION_BONUS_CRITERIA[normalizedProgram] &&
+                    MOVEMENT_COMPOSITION_BONUS_CRITERIA[normalizedProgram][apparatus] || [])];
+        }
+
+        function getMovementBonusCriteriaSelection(program, apparatus = getCurrentMovementApparatusKey(), create = false) {
+            if (!currentGymId) return {};
+            if (!data.mouvements[currentGymId] || typeof data.mouvements[currentGymId] !== 'object') {
+                if (!create) return {};
+                data.mouvements[currentGymId] = {Saut: '', Barres: '', Poutre: '', Sol: ''};
+            }
+            const movements = data.mouvements[currentGymId];
+            if (!movements._bonusCriteria || typeof movements._bonusCriteria !== 'object' || Array.isArray(movements._bonusCriteria)) {
+                if (!create) return {};
+                movements._bonusCriteria = {};
+            }
+            const normalizedProgram = normalizeTechnicalProgram(program);
+            if (!movements._bonusCriteria[normalizedProgram] || typeof movements._bonusCriteria[normalizedProgram] !== 'object') {
+                if (!create) return {};
+                movements._bonusCriteria[normalizedProgram] = {};
+            }
+            if (!movements._bonusCriteria[normalizedProgram][apparatus] || typeof movements._bonusCriteria[normalizedProgram][apparatus] !== 'object') {
+                if (!create) return {};
+                movements._bonusCriteria[normalizedProgram][apparatus] = {};
+            }
+            return movements._bonusCriteria[normalizedProgram][apparatus];
+        }
+
+        function getMovementCriteriaTotals(program, apparatus = getCurrentMovementApparatusKey()) {
+            const selected = getMovementBonusCriteriaSelection(program, apparatus, false);
+            return getMovementBonusCriteriaDefinitions(program, apparatus).reduce((totals, criterion) => {
+                if (!selected[criterion.key]) return totals;
+                if (criterion.kind === 'artistic') totals.artistic += criterion.value;
+                else totals.start += criterion.value;
+                totals.labels.push(criterion.label);
+                return totals;
+            }, {start: 0, artistic: 0, labels: []});
+        }
+
+        function setMovementBonusCriterion(program, apparatus, criterionKey, checked) {
+            const selected = getMovementBonusCriteriaSelection(program, apparatus, true);
+            if (checked) selected[criterionKey] = true;
+            else delete selected[criterionKey];
+            saveAllData();
+            updateMovementStartScoreDisplay();
+        }
+
+        function renderMovementBonusCriteriaPanel() {
+            const panel = document.getElementById('movement-bonus-criteria-panel');
+            if (!panel) return;
+            const apparatus = getCurrentMovementApparatusKey();
+            const selectedProgram = getMovementProgramFilter();
+            const programs = selectedProgram === 'all' ? ['federal_a', 'federal_b'] : [selectedProgram];
+            const sections = programs.map(program => {
+                const definitions = getMovementBonusCriteriaDefinitions(program, apparatus);
+                if (!definitions.length) return '';
+                const selected = getMovementBonusCriteriaSelection(program, apparatus, false);
+                const style = MOVEMENT_PROGRAM_STYLES[program];
+                const renderGroup = (kind, title) => {
+                    const entries = definitions.filter(item => item.kind === kind);
+                    if (!entries.length) return '';
+                    return `<div class="space-y-1.5"><p class="text-[9px] font-black uppercase tracking-wide text-gray-500">${escapeHtml(title)}</p>${entries.map(criterion => `<label class="flex cursor-pointer items-start gap-2 rounded-lg border border-emerald-100 bg-white p-2 text-[10px] text-gray-700"><input type="checkbox" ${selected[criterion.key] ? 'checked' : ''} onchange="setMovementBonusCriterion('${program}', '${apparatus}', '${criterion.key}', this.checked)" class="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"><span><strong class="text-emerald-700">+${formatMovementScoringValue(criterion.value)}</strong> ${escapeHtml(criterion.label)}</span></label>`).join('')}</div>`;
+                };
+                return `<section class="space-y-2 rounded-lg border ${style.borderClass} ${style.backgroundClass} p-2"><p class="text-[10px] font-black ${style.textClass}">${style.label}</p>${renderGroup('start', 'Bonifications de composition - ajoutées à la note de départ')}${renderGroup('artistic', 'Bonus artistique - affiché séparément')}</section>`;
+            }).filter(Boolean);
+            panel.classList.toggle('hidden', !sections.length);
+            panel.innerHTML = sections.length
+                ? `<div class="mb-2"><p class="text-[10px] font-black text-emerald-800">Critères réalisés sans chute</p><p class="text-[9px] text-emerald-700">Cochez uniquement les critères réellement validés. Les bonus artistiques restent séparés de la note D.</p></div><div class="grid gap-2 sm:grid-cols-2">${sections.join('')}</div>`
+                : '';
+        }
+
         function countMovementTokenOccurrences(content, token) {
             const text = String(content || '');
             if (!token) return 0;
@@ -12096,45 +12285,44 @@
             return count;
         }
 
-        function calculateMovementStartScore(content) {
+        function calculateMovementStartScore(content, requestedProgram = undefined) {
             const text = String(content || '');
-            const selectedProgram = typeof getMovementProgramFilter === 'function'
-                ? getMovementProgramFilter()
-                : 'all';
+            const selectedProgram = normalizeTechnicalProgram(
+                requestedProgram === undefined && typeof getMovementProgramFilter === 'function'
+                    ? getMovementProgramFilter()
+                    : requestedProgram || 'federal_a'
+            );
+            const scoringProgram = selectedProgram === 'all' ? 'federal_a' : selectedProgram;
+            const apparatus = getCurrentMovementApparatusKey();
             const availableDefaults = getResolvedDefaultSigles().filter(item =>
                 !item || !item.catalogId || typeof itemSupportsTechnicalProgram !== 'function' ||
-                itemSupportsTechnicalProgram(item, selectedProgram)
+                itemSupportsTechnicalProgram(item, scoringProgram)
             );
-            let movementValueTotal = 0;
-            let bonusTotal = 0;
             let recognizedCount = 0;
             let unvaluedCount = 0;
             const details = [];
-            const appliedBonusRules = new Set();
+            const occurrences = [];
             const addOccurrences = (label, token, scoring) => {
                 const count = countMovementTokenOccurrences(text, token);
                 if (!count) return;
-                const movementValue = scoring.movementValue || 0;
-                const bonusValue = scoring.bonusValue || 0;
                 recognizedCount += count;
                 if (scoring.movementValue === null) unvaluedCount += count;
-                movementValueTotal += movementValue * count;
-                if (scoring.bonusRule) {
-                    if (!appliedBonusRules.has(scoring.bonusRule)) {
-                        appliedBonusRules.add(scoring.bonusRule);
-                        bonusTotal += bonusValue;
-                    }
-                } else {
-                    bonusTotal += bonusValue * count;
-                }
-                details.push({label, token, count, movementValue, bonusValue});
+                for (let index = 0; index < count; index += 1) occurrences.push({
+                    key: token,
+                    label,
+                    token,
+                    movementValue: scoring.movementValue || 0,
+                    bonusValue: scoring.bonusValue || 0,
+                    bonusRule: scoring.bonusRule || ''
+                });
+                details.push({label, token, count, movementValue: scoring.movementValue || 0, bonusValue: scoring.bonusValue || 0});
             };
             availableDefaults.forEach(item => {
                 const token = item && item.catalogId ? `[${item.abrev}]` : `${item.symbole} (${item.abrev})`;
-                addOccurrences(item.nom, token, getDefaultSigleScoring(item));
+                addOccurrences(item.nom, token, getDefaultSigleScoring(item, apparatus, scoringProgram));
             });
             data.customSigles.forEach(item => {
-                addOccurrences(item.nom || item.abrev, `[${item.abrev}]`, getCustomSigleScoring(item));
+                addOccurrences(item.nom || item.abrev, `[${item.abrev}]`, getCustomSigleScoring(item, apparatus, scoringProgram));
             });
             const knownCustomCodes = new Set([
                 ...data.customSigles.map(item => String(item.abrev || '')),
@@ -12142,16 +12330,122 @@
             ]);
             const unknownCount = [...text.matchAll(/\[([A-Z0-9_-]{1,12})\]/g)]
                 .filter(match => !knownCustomCodes.has(match[1])).length;
+            const criteria = getMovementCriteriaTotals(scoringProgram, apparatus);
+            const warnings = [];
+            const uniqueOccurrences = [];
+            const seenOccurrenceKeys = new Set();
+            let duplicateCount = 0;
+            occurrences.forEach(occurrence => {
+                if (seenOccurrenceKeys.has(occurrence.key)) {
+                    duplicateCount += 1;
+                    return;
+                }
+                seenOccurrenceKeys.add(occurrence.key);
+                uniqueOccurrences.push(occurrence);
+            });
+            if (duplicateCount) warnings.push(`${duplicateCount} répétition${duplicateCount === 1 ? '' : 's'} non comptée${duplicateCount === 1 ? '' : 's'} dans la note D`);
+            let countedOccurrences = uniqueOccurrences;
+            let movementValueTotal = 0;
+            let automaticBonusTotal = 0;
+            let maxStartScore = null;
+            let officialBonusCap = null;
+            const gymnast = data.gymnastes.find(item => item.id === currentGymId);
+            const age = gymnast ? calculateAge(gymnast.ddn) : null;
+            if (apparatus === 'saut') {
+                countedOccurrences = [...uniqueOccurrences]
+                    .sort((left, right) => right.movementValue - left.movementValue)
+                    .slice(0, 1);
+                if (uniqueOccurrences.length > 1)
+                    warnings.push(`${uniqueOccurrences.length - 1} saut${uniqueOccurrences.length - 1 === 1 ? '' : 's'} supplémentaire${uniqueOccurrences.length - 1 === 1 ? '' : 's'} non additionné${uniqueOccurrences.length - 1 === 1 ? '' : 's'} à la note D`);
+                movementValueTotal = countedOccurrences.reduce((total, occurrence) => total + occurrence.movementValue, 0);
+            } else if (scoringProgram === 'federal_b') {
+                const underTen = age !== null && age < 10;
+                if (age === null) warnings.push("date de naissance manquante : règles 10 ans et plus appliquées provisoirement");
+                if (age !== null && age < 7) warnings.push('programme Fédéral B prévu à partir de 7 ans');
+                let invalidHighValueCount = 0;
+                const eligible = uniqueOccurrences.filter(occurrence => {
+                    const value = occurrence.movementValue;
+                    if (underTen && value > 0.6) {
+                        invalidHighValueCount += 1;
+                        return false;
+                    }
+                    if (!underTen && value > 0.8) {
+                        invalidHighValueCount += 1;
+                        return false;
+                    }
+                    return true;
+                });
+                const orderedEligible = [...eligible].sort((left, right) =>
+                    right.movementValue - left.movementValue || right.bonusValue - left.bonusValue
+                );
+                let highValueUsed = false;
+                let extraElementCount = 0;
+                countedOccurrences = [];
+                orderedEligible.forEach(occurrence => {
+                    if (!underTen && occurrence.movementValue >= 0.8) {
+                        if (highValueUsed) {
+                            invalidHighValueCount += 1;
+                            return;
+                        }
+                        highValueUsed = true;
+                    }
+                    if (countedOccurrences.length >= 5) {
+                        extraElementCount += 1;
+                        return;
+                    }
+                    countedOccurrences.push(occurrence);
+                });
+                if (extraElementCount) warnings.push(`${extraElementCount} élément${extraElementCount === 1 ? '' : 's'} au-delà des 5 éléments autorisés non compté${extraElementCount === 1 ? '' : 's'}`);
+                if (invalidHighValueCount) warnings.push(`${invalidHighValueCount} élément${invalidHighValueCount === 1 ? '' : 's'} de valeur non autorisée pour cette tranche d’âge non compté${invalidHighValueCount === 1 ? '' : 's'}`);
+                movementValueTotal = countedOccurrences.reduce((total, occurrence) => total + occurrence.movementValue, 0);
+                if (!underTen) automaticBonusTotal = Math.min(0.5, eligible.reduce((highest, occurrence) => Math.max(highest, occurrence.bonusValue), 0));
+                officialBonusCap = underTen ? 0 : 0.5;
+                maxStartScore = underTen ? (apparatus === 'barres' ? 2.8 : 3) : 3.7;
+            } else {
+                const orderedEligible = [...uniqueOccurrences].sort((left, right) =>
+                    right.movementValue - left.movementValue || right.bonusValue - left.bonusValue
+                );
+                countedOccurrences = orderedEligible.slice(0, 7);
+                const extraElementCount = Math.max(0, orderedEligible.length - countedOccurrences.length);
+                if (extraElementCount) warnings.push(`${extraElementCount} élément${extraElementCount === 1 ? '' : 's'} au-delà des 7 éléments autorisés non compté${extraElementCount === 1 ? '' : 's'}`);
+                movementValueTotal = countedOccurrences.reduce((total, occurrence) => total + occurrence.movementValue, 0);
+                const appliedBonusRules = new Set();
+                uniqueOccurrences.forEach(occurrence => {
+                    if (occurrence.bonusRule) {
+                        if (appliedBonusRules.has(occurrence.bonusRule)) return;
+                        appliedBonusRules.add(occurrence.bonusRule);
+                        automaticBonusTotal += occurrence.bonusValue;
+                    } else automaticBonusTotal += occurrence.bonusValue;
+                });
+                officialBonusCap = 1.5;
+                maxStartScore = 8.5;
+            }
             movementValueTotal = Math.round(movementValueTotal * 1000) / 1000;
-            bonusTotal = Math.round(bonusTotal * 1000) / 1000;
+            const rawBonusTotal = Math.round((automaticBonusTotal + criteria.start) * 1000) / 1000;
+            const bonusTotal = officialBonusCap === null ? rawBonusTotal : Math.min(rawBonusTotal, officialBonusCap);
+            if (officialBonusCap !== null && rawBonusTotal > officialBonusCap)
+                warnings.push(`bonifications plafonnées à ${formatMovementScoringValue(officialBonusCap)}`);
+            const artisticBonusTotal = Math.round(criteria.artistic * 1000) / 1000;
+            const rawStartScore = Math.round((movementValueTotal + bonusTotal) * 1000) / 1000;
+            const startScore = maxStartScore === null ? rawStartScore : Math.min(rawStartScore, maxStartScore);
+            if (maxStartScore !== null && rawStartScore > maxStartScore)
+                warnings.push(`note D plafonnée à ${formatMovementScoringValue(maxStartScore)} pour cette tranche d’âge`);
             return {
+                program: scoringProgram,
+                age,
                 movementValueTotal,
                 bonusTotal,
-                startScore: Math.round((movementValueTotal + bonusTotal) * 1000) / 1000,
+                automaticBonusTotal: Math.round(automaticBonusTotal * 1000) / 1000,
+                compositionBonusTotal: Math.round(criteria.start * 1000) / 1000,
+                artisticBonusTotal,
+                rawStartScore,
+                startScore,
                 recognizedCount,
+                countedCount: countedOccurrences.length,
                 unvaluedCount,
                 unknownCount,
-                details
+                details,
+                warnings
             };
         }
 
@@ -12312,25 +12606,57 @@
             const area = document.getElementById('txt-mouvement-content');
             const currentContent = normalizeMovementCompositionContent(content === undefined && area ? area.value : content);
             if (area) area.value = currentContent;
-            const score = calculateMovementStartScore(currentContent);
+            const selectedProgram = getMovementProgramFilter();
+            const programs = selectedProgram === 'all' ? ['federal_a', 'federal_b'] : [selectedProgram];
+            const scores = programs.map(program => calculateMovementStartScore(currentContent, program));
             const totalOutput = document.getElementById('movement-start-score');
             const movementOutput = document.getElementById('movement-value-total');
             const bonusOutput = document.getElementById('movement-bonus-total');
+            const artisticRow = document.getElementById('movement-artistic-bonus-row');
+            const artisticOutput = document.getElementById('movement-artistic-bonus-total');
+            const context = document.getElementById('movement-score-context');
             const warning = document.getElementById('movement-score-warning');
-            if (totalOutput) totalOutput.textContent = formatMovementScoringValue(score.startScore);
-            if (movementOutput) movementOutput.textContent = formatMovementScoringValue(score.movementValueTotal);
-            if (bonusOutput) bonusOutput.textContent = formatMovementScoringValue(score.bonusTotal);
+            const formatScoreField = field => scores.map(score => {
+                const label = MOVEMENT_PROGRAM_STYLES[score.program] && MOVEMENT_PROGRAM_STYLES[score.program].shortLabel || '';
+                return `${programs.length > 1 ? `${label} ` : ''}${formatMovementScoringValue(score[field])}`;
+            }).join(' / ');
+            if (totalOutput) {
+                totalOutput.textContent = formatScoreField('startScore');
+                totalOutput.classList.toggle('text-xl', programs.length === 1);
+                totalOutput.classList.toggle('text-sm', programs.length > 1);
+            }
+            if (movementOutput) movementOutput.textContent = formatScoreField('movementValueTotal');
+            if (bonusOutput) bonusOutput.textContent = formatScoreField('bonusTotal');
+            const hasArtisticCriteria = programs.some(program =>
+                getMovementBonusCriteriaDefinitions(program).some(item => item.kind === 'artistic')
+            );
+            if (artisticRow) artisticRow.classList.toggle('hidden', !hasArtisticCriteria);
+            if (artisticOutput) artisticOutput.textContent = formatScoreField('artisticBonusTotal');
+            if (context) {
+                if (programs.length > 1) context.textContent = 'Les notes A et B sont calculées séparément avec leurs propres valeurs et bonifications.';
+                else if (selectedProgram === 'federal_b') {
+                    const age = scores[0] && scores[0].age;
+                    context.textContent = age === null
+                        ? "Fédéral B : indiquez la date de naissance pour appliquer précisément la règle d’âge."
+                        : `Fédéral B : âge sportif ${age} ans - ${age < 10 ? 'règles 7-9 ans' : 'règles 10 ans et plus'}.`;
+                } else context.textContent = 'Fédéral A : bonifications automatiques aux barres et critères de composition à cocher.';
+            }
             if (warning) {
                 const messages = [];
-                if (score.unvaluedCount)
-                    messages.push(`${score.unvaluedCount} mouvement${score.unvaluedCount === 1 ? '' : 's'} sans valeur renseignée`);
-                if (score.unknownCount)
-                    messages.push(`${score.unknownCount} code${score.unknownCount === 1 ? '' : 's'} non reconnu${score.unknownCount === 1 ? '' : 's'}`);
+                scores.forEach(score => {
+                    const prefix = programs.length > 1 ? `${MOVEMENT_PROGRAM_STYLES[score.program].shortLabel} : ` : '';
+                    if (score.unvaluedCount)
+                        messages.push(`${prefix}${score.unvaluedCount} mouvement${score.unvaluedCount === 1 ? '' : 's'} sans valeur renseignée`);
+                    if (score.unknownCount)
+                        messages.push(`${prefix}${score.unknownCount} code${score.unknownCount === 1 ? '' : 's'} non reconnu${score.unknownCount === 1 ? '' : 's'}`);
+                    score.warnings.forEach(message => messages.push(`${prefix}${message}`));
+                });
                 warning.textContent = messages.join(' · ');
                 warning.classList.toggle('hidden', messages.length === 0);
             }
+            renderMovementBonusCriteriaPanel();
             renderMovementCompositionPreview(currentContent);
-            return score;
+            return programs.length === 1 ? scores[0] : {programScores: scores};
         }
 
         function saveDefaultSigleScoring(index) {
@@ -12387,6 +12713,76 @@
             renderCustomSiglesManager();
             updateMovementStartScoreDisplay();
             alert('🟢 Valeurs enregistrées !');
+            return true;
+        }
+
+        function getOfficialMovementScoringKeys(item, baseItem = null) {
+            return [...new Set([
+                item && item.abrev,
+                item && item.catalogId,
+                item && item._baseAbrev,
+                baseItem && baseItem.abrev,
+                baseItem && baseItem.catalogId
+            ].map(value => String(value || '').trim()).filter(Boolean))];
+        }
+
+        function isOfficialMovementScoringOverridden(item) {
+            if (!item || !item.catalogId || !data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object') return false;
+            return getOfficialMovementScoringKeys(item).some(key => Object.hasOwn(data.defaultSigleScoring, key));
+        }
+
+        function refreshMovementScoringViews() {
+            renderSiglesPalette();
+            renderCustomSiglesManager();
+            updateMovementStartScoreDisplay();
+            if (typeof renderProgressionTable === 'function') renderProgressionTable();
+            if (typeof renderProgressionStatistics === 'function') renderProgressionStatistics();
+        }
+
+        function restoreOfficialMovementScoring(index) {
+            const baseItem = defaultSiglesGym[Number(index)];
+            const item = resolveIntegratedSigle(baseItem);
+            if (!item || !item.catalogId) return false;
+            if (!confirm(`Restaurer les valeurs et bonifications officielles A et B de « ${item.nom} » ?`)) return false;
+            const previous = JSON.parse(JSON.stringify(data.defaultSigleScoring || {}));
+            getOfficialMovementScoringKeys(item, baseItem).forEach(key => delete data.defaultSigleScoring[key]);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.defaultSigleScoring = previous;
+                alert("❌ Les valeurs officielles n'ont pas pu être restaurées.");
+                return false;
+            }
+            refreshMovementScoringViews();
+            alert('🟢 Valeurs officielles A et B restaurées.');
+            return true;
+        }
+
+        function restoreAllOfficialMovementScoring() {
+            if (!data.defaultSigleScoring || typeof data.defaultSigleScoring !== 'object') data.defaultSigleScoring = {};
+            const officialKeys = new Set();
+            getOfficialProgramCatalog().forEach(item => getOfficialMovementScoringKeys(item).forEach(key => officialKeys.add(key)));
+            getResolvedDefaultSigleEntries().forEach(entry => {
+                if (!entry.item || !entry.item.catalogId) return;
+                getOfficialMovementScoringKeys(entry.item, entry.baseItem).forEach(key => officialKeys.add(key));
+            });
+            const keysToDelete = Object.keys(data.defaultSigleScoring).filter(key => officialKeys.has(key));
+            if (!keysToDelete.length) {
+                alert('Toutes les valeurs du catalogue correspondent déjà aux brochures officielles.');
+                return false;
+            }
+            if (!confirm(`Restaurer les valeurs officielles A et B pour ${keysToDelete.length} élément${keysToDelete.length === 1 ? '' : 's'} ?\n\nLes valeurs des éléments personnels seront conservées.`)) return false;
+            const previous = JSON.parse(JSON.stringify(data.defaultSigleScoring));
+            keysToDelete.forEach(key => delete data.defaultSigleScoring[key]);
+            try {
+                saveAllData();
+            } catch (error) {
+                data.defaultSigleScoring = previous;
+                alert("❌ Les valeurs officielles n'ont pas pu être restaurées.");
+                return false;
+            }
+            refreshMovementScoringViews();
+            alert(`🟢 ${keysToDelete.length} valeur${keysToDelete.length === 1 ? '' : 's'} officielle${keysToDelete.length === 1 ? '' : 's'} restaurée${keysToDelete.length === 1 ? '' : 's'}.`);
             return true;
         }
 
@@ -12624,7 +13020,7 @@
             const insertAction = entry.kind === 'custom'
                 ? `insertCustomSigleToken(${entry.index})`
                 : `insertDefaultSigleToken(${entry.index})`;
-            const scoring = entry.kind === 'custom' ? getCustomSigleScoring(item) : getDefaultSigleScoring(item);
+            const scoringRows = getMovementScoringRows(item, getCurrentMovementApparatusKey(), entry.kind);
             const visuals = renderMovementElementVisuals(item, 'palette');
             const programBadge = item.catalogId
                 ? getItemTechnicalPrograms(item).map(program => program === 'federal_a' ? 'A' : 'B').join(' · ')
@@ -12634,7 +13030,7 @@
                     ${visuals}
                     <span class="mt-1 block min-h-7 w-full text-[9px] font-black leading-tight text-gray-800">${escapeHtml(item.nom)}</span>
                     <span class="block w-full truncate text-[7px] text-gray-400">${escapeHtml(item.abrev)} · ${escapeHtml(categoryLabel)} · ${escapeHtml(programBadge)}</span>
-                    <span class="block w-full truncate text-[7px] font-bold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</span>
+                    ${renderMovementScoringRowsHtml(scoringRows, true)}
                 </button>
             </article>`;
         }
@@ -13087,24 +13483,25 @@
             count.innerText = `${entries.length} élément${entries.length === 1 ? '' : 's'} affiché${entries.length === 1 ? '' : 's'}`;
             list.innerHTML = renderMovementManagerCategoryGroups(entries, entry => {
                 const {item, index, kind} = entry;
-                const scoring = kind === 'default'
-                    ? getDefaultSigleScoring(item)
-                    : getCustomSigleScoring(item);
+                const scoringRows = getMovementScoringRows(item, getCurrentMovementApparatusKey(), kind);
                 const visual = renderMovementElementVisuals(item, 'manager');
                 const editAction = kind === 'default' ? `editDefaultSigle(${index})` : `editCustomSigle(${index})`;
                 const deleteAction = kind === 'default' ? `deleteDefaultSigle(${index})` : `deleteCustomSigle(${index})`;
+                const overridden = kind === 'default' && isOfficialMovementScoringOverridden(item);
                 return `<div class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
                     ${visual}
                     <div class="min-w-0 flex-1">
                         <p class="font-bold text-gray-800">${escapeHtml(item.nom)}</p>
                         <p class="text-[9px] font-semibold text-gray-400">Code ${escapeHtml(item.abrev)} · ${kind === 'default' ? 'catalogue intégré' : 'élément personnalisé'}</p>
                         <p class="text-[9px] font-bold text-pink-600">${escapeHtml(getMovementCategoryLabel(item.category, item.nom))}</p>
-                        <p class="text-[9px] font-semibold text-purple-600">V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}</p>
+                        <div class="justify-start">${renderMovementScoringRowsHtml(scoringRows)}</div>
+                        ${overridden ? '<p class="mt-1 text-[8px] font-bold text-amber-700">Valeur personnalisée enregistrée</p>' : ''}
                         <p class="text-[9px] text-blue-600">${escapeHtml(getProgressionApparatusLabels(item.apparatuses).join(' · '))}</p>
                         <p class="line-clamp-2 text-[9px] text-gray-500">${escapeHtml(getProgressionFamilyLabels(item.families).join(' · ') || 'Profil à classer')}</p>
                     </div>
                     <div class="flex w-full gap-1 sm:w-auto sm:flex-col">
                         <button type="button" onclick="${editAction}" class="flex-1 rounded border border-blue-200 bg-blue-50 px-3 py-1.5 font-bold text-blue-700">✏️ Modifier</button>
+                        ${overridden ? `<button type="button" onclick="restoreOfficialMovementScoring(${index})" class="flex-1 rounded border border-indigo-200 bg-indigo-50 px-3 py-1.5 font-bold text-indigo-700">↺ Valeurs officielles</button>` : ''}
                         <button type="button" onclick="${deleteAction}" class="flex-1 rounded border border-red-200 bg-red-50 px-3 py-1.5 font-bold text-red-600">🗑️ Supprimer</button>
                     </div>
                 </div>`;
