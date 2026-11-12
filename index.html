@@ -1100,8 +1100,8 @@
                                 </label>
                                 <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-purple-700">
                                     <span>Valeur des mouvements : <strong id="movement-value-total">0</strong></span>
-                                    <span>Bonifications potentielles : <strong id="movement-bonus-total">0</strong></span>
-                                    <span id="movement-artistic-bonus-row" class="hidden">Bonus artistique : <strong id="movement-artistic-bonus-total">0</strong></span>
+                                    <span id="movement-bonus-row" class="hidden font-bold text-red-600">Bonification : <strong id="movement-bonus-total">0</strong></span>
+                                    <span id="movement-artistic-bonus-row" class="hidden font-bold text-red-600">Bonus artistique : <strong id="movement-artistic-bonus-total">0</strong></span>
                                 </div>
                                 <p id="movement-score-context" class="mt-1 text-[9px] font-semibold text-purple-600"></p>
                                 <p id="movement-score-warning" class="hidden mt-1 text-[10px] font-semibold text-amber-700"></p>
@@ -2114,7 +2114,7 @@
 
         // ────────────────────────────────────────────────────────────── CONFIGURATION
         // ──────────────────────────────────────────────────────────────
-        const APP_VERSION = '1.43.0';
+        const APP_VERSION = '1.44.0';
         const COMPETITION_LEVEL_ID = 'COMP-ZONE';
         const COMPETITION_LEVEL_NAME = '🏆 Compétition & Équipes';
         const PLANNING_LEVEL_ID = 'PLAN-ZONE';
@@ -9642,10 +9642,17 @@
                 );
                 scoreRows.forEach(row => {
                     const style = MOVEMENT_PROGRAM_STYLES[row.program];
-                    const badge = document.createElement('span');
-                    badge.className = `rounded border px-1.5 py-0.5 text-[9px] font-bold ${style ? `${style.borderClass} ${style.backgroundClass} ${style.textClass}` : 'border-slate-200 bg-slate-50 text-slate-600'}`;
-                    badge.textContent = formatMovementScoringRow(row);
-                    container.appendChild(badge);
+                    const valueBadge = document.createElement('span');
+                    valueBadge.className = `rounded border px-1.5 py-0.5 text-[9px] font-bold ${style ? `${style.borderClass} ${style.backgroundClass} ${style.textClass}` : 'border-slate-200 bg-slate-50 text-slate-600'}`;
+                    valueBadge.textContent = formatMovementScoringValueRow(row);
+                    container.appendChild(valueBadge);
+                    const bonusText = formatMovementScoringBonusRow(row);
+                    if (bonusText) {
+                        const bonusBadge = document.createElement('span');
+                        bonusBadge.className = 'rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-black text-red-600';
+                        bonusBadge.textContent = bonusText;
+                        container.appendChild(bonusBadge);
+                    }
                 });
             }
             const families = normalizeProgressionFamilies(item.families);
@@ -10286,7 +10293,14 @@
                                 halign: 'center'
                             }
                         },
-                        formatMovementScoringRowsText(meta && meta.scoringRows)
+                        formatMovementScoringValuesText(meta && meta.scoringRows),
+                        {
+                            content: formatMovementScoringBonusesText(meta && meta.scoringRows),
+                            styles: {
+                                textColor: [220, 38, 38],
+                                fontStyle: 'bold'
+                            }
+                        }
                     ];
                 });
         }
@@ -10303,7 +10317,9 @@
         function createSelectedProgressionPdfDocument(jsPDF, gymnast, items, layout) {
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
-            const rows = buildSelectedProgressionPdfRows(items);
+            const rowsWithBonus = buildSelectedProgressionPdfRows(items);
+            const includeBonusColumn = rowsWithBonus.some(row => String(row[6] && row[6].content || '').trim());
+            const rows = includeBonusColumn ? rowsWithBonus : rowsWithBonus.map(row => row.slice(0, 6));
             const summary = calculateProgressionSummary(items);
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFillColor(126, 34, 206);
@@ -10328,7 +10344,15 @@
 
             doc.autoTable({
                 startY: 41,
-                head: [["Nom de l'élément", 'Agrès', 'Statut', 'Profils techniques et qualité', 'Programme', 'Valeur / bonification']],
+                head: [[
+                    "Nom de l'élément",
+                    'Agrès',
+                    'Statut',
+                    'Profils techniques et qualité',
+                    'Programme',
+                    'Valeur',
+                    ...(includeBonusColumn ? ['Bonification'] : [])
+                ]],
                 body: rows,
                 theme: 'grid',
                 showHead: 'everyPage',
@@ -10348,13 +10372,21 @@
                     fontSize: Math.max(layout.fontSize, 6.5)
                 },
                 alternateRowStyles: {fillColor: [250, 250, 252]},
-                columnStyles: {
-                    0: {cellWidth: 50, fontStyle: 'bold'},
-                    1: {cellWidth: 20},
-                    2: {cellWidth: 25, fontStyle: 'bold'},
-                    3: {cellWidth: 119},
-                    4: {cellWidth: 18, halign: 'center', fontStyle: 'bold'},
-                    5: {cellWidth: 45, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]}
+                columnStyles: includeBonusColumn ? {
+                    0: {cellWidth: 45, fontStyle: 'bold'},
+                    1: {cellWidth: 18},
+                    2: {cellWidth: 23, fontStyle: 'bold'},
+                    3: {cellWidth: 105},
+                    4: {cellWidth: 16, halign: 'center', fontStyle: 'bold'},
+                    5: {cellWidth: 40, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]},
+                    6: {cellWidth: 30, halign: 'left', fontStyle: 'bold', textColor: [220, 38, 38]}
+                } : {
+                    0: {cellWidth: 45, fontStyle: 'bold'},
+                    1: {cellWidth: 18},
+                    2: {cellWidth: 23, fontStyle: 'bold'},
+                    3: {cellWidth: 135},
+                    4: {cellWidth: 16, halign: 'center', fontStyle: 'bold'},
+                    5: {cellWidth: 40, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]}
                 },
                 margin: getPdfPrintSafeTableMargins({top: 12}),
                 rowPageBreak: 'avoid'
@@ -10474,15 +10506,12 @@
             doc.setTextColor(107, 114, 128);
             const details = `${item.apparatusLabel} · ${item.category}`;
             doc.text(doc.splitTextToSize(details, textWidth).slice(0, 1), textX, detailY);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(107, 33, 168);
-            doc.setFontSize(6.2);
-            const scoreText = formatMovementScoringRowsText(
+            const scoringRows = (
                 Array.isArray(item.scoringRows) && item.scoringRows.length
                     ? item.scoringRows
                     : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue}]
             );
-            doc.text(doc.splitTextToSize(scoreText, textWidth).slice(0, 2), textX, detailY + 4);
+            drawMovementScoringPdfSummaryLine(doc, scoringRows, textX, detailY + 4, textWidth, 6.2);
 
             const statusY = y + height - 10;
             const innerWidth = width - 4;
@@ -10916,10 +10945,15 @@
                 ? item.scoringRows
                 : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue, color: item.programColor}];
             scoringRows.slice(0, 2).forEach((row, index) => {
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(...parsePdfHexColor(row.color || item.programColor, [107, 33, 168]));
-                doc.setFontSize(5.2);
-                doc.text(fitProgressionPdfText(doc, formatMovementScoringRow(row), textWidth), textX, detailY + 3.5 + index * 3);
+                drawMovementScoringPdfLine(
+                    doc,
+                    row,
+                    textX,
+                    detailY + 3.5 + index * 3,
+                    textWidth,
+                    5.2,
+                    row.color || item.programColor
+                );
             });
 
             const statusY = y + height - 10;
@@ -11087,6 +11121,55 @@
             return `${shortened.trimEnd()}…`;
         }
 
+        function drawPdfValueAndBonusText(doc, valueText, bonusText, x, y, maxWidth, fontSize = 5.2, valueColor = [107, 33, 168]) {
+            const value = String(valueText || 'Valeur non renseignée');
+            const bonus = String(bonusText || '').trim();
+            const width = Math.max(1, Number(maxWidth) || 1);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(fontSize);
+            if (!bonus) {
+                doc.setTextColor(...valueColor);
+                doc.text(fitProgressionPdfText(doc, value, width), x, y);
+                return;
+            }
+            const gap = 1.2;
+            const measuredBonusWidth = doc.getTextWidth(bonus);
+            const reservedBonusWidth = Math.min(measuredBonusWidth, width * 0.48);
+            const displayedValue = fitProgressionPdfText(doc, value, Math.max(1, width - reservedBonusWidth - gap));
+            const valueWidth = Math.min(doc.getTextWidth(displayedValue), width - gap);
+            const displayedBonus = fitProgressionPdfText(doc, bonus, Math.max(1, width - valueWidth - gap));
+            doc.setTextColor(...valueColor);
+            doc.text(displayedValue, x, y);
+            doc.setTextColor(220, 38, 38);
+            doc.text(displayedBonus, x + valueWidth + gap, y);
+        }
+
+        function drawMovementScoringPdfLine(doc, row, x, y, maxWidth, fontSize = 5.2, color = undefined) {
+            drawPdfValueAndBonusText(
+                doc,
+                formatMovementScoringValueRow(row),
+                formatMovementScoringBonusOnly(row),
+                x,
+                y,
+                maxWidth,
+                fontSize,
+                parsePdfHexColor(color || row && row.color, [107, 33, 168])
+            );
+        }
+
+        function drawMovementScoringPdfSummaryLine(doc, rows, x, y, maxWidth, fontSize = 5.2) {
+            drawPdfValueAndBonusText(
+                doc,
+                formatMovementScoringValuesText(rows),
+                formatMovementScoringBonusesText(rows),
+                x,
+                y,
+                maxWidth,
+                fontSize,
+                [107, 33, 168]
+            );
+        }
+
         async function prepareCompactProgressionPdfSymbols(items) {
             const symbolSources = [...new Set((Array.isArray(items) ? items : [])
                 .map(item => String(item.symbolImage || '').trim()).filter(Boolean))];
@@ -11134,15 +11217,12 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6.2);
             doc.text(fitProgressionPdfText(doc, item.name, nameWidth), nameX, y + 3.9);
-            const scoreText = formatMovementScoringRowsText(
+            const scoringRows = (
                 Array.isArray(item.scoringRows) && item.scoringRows.length
                     ? item.scoringRows
                     : [{shortLabel: item.programLabel || 'Perso', movementValue: item.movementValue, bonusValue: item.bonusValue}]
             );
-            doc.setTextColor(126, 34, 206);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(4.6);
-            doc.text(fitProgressionPdfText(doc, scoreText, nameWidth), nameX, y + 6.1);
+            drawMovementScoringPdfSummaryLine(doc, scoringRows, nameX, y + 6.1, nameWidth, 4.6);
             const statuses = [
                 {key: 'not_performed', label: 'NR'},
                 {key: 'studied', label: 'ÉT'},
@@ -11175,6 +11255,9 @@
             const doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
             const bounds = getPdfPrintSafeBounds(doc);
             const pages = buildCompactProgressionEvaluationPdfPages(items);
+            const includeBonusLegend = (Array.isArray(items) ? items : []).some(item =>
+                hasMovementScoringBonus(item && item.scoringRows || [{bonusValue: item && item.bonusValue}])
+            );
             const settings = options && typeof options === 'object' ? options : {};
             const markCurrentStatus = Boolean(settings.markCurrentStatus);
             const title = String(settings.title || 'Évaluation de progression - version allégée');
@@ -11201,7 +11284,11 @@
                 doc.setTextColor(71, 85, 105);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(6.3);
-                doc.text('NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis · V : valeur · B : bonification', bounds.left, 34);
+                doc.text(
+                    `NR : non réalisé · ÉT : étudié · EC : en cours · AC : acquis · V : valeur${includeBonusLegend ? ' · B : bonification' : ''}`,
+                    bounds.left,
+                    34
+                );
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(5.8);
                 doc.text(getTechnicalProgramPdfLegendText(), bounds.right, 34, {align: 'right'});
@@ -11269,10 +11356,13 @@
             return exportSelectedProgressionEvaluationPDF();
         }
 
-        function buildGroupedProgressionPdfTableRows(items, requestedProgram = undefined) {
+        function buildGroupedProgressionPdfTableRows(items, requestedProgram = undefined, includeBonusColumn = undefined) {
             const source = Array.isArray(items) ? items : [];
             const itemsByKey = new Map(source.map(item => [getProgressionExportKey(item), item]));
             const metadata = getProgressionEvaluationPdfItems(source, requestedProgram);
+            const showBonus = includeBonusColumn === undefined
+                ? metadata.some(meta => hasMovementScoringBonus(meta.scoringRows))
+                : Boolean(includeBonusColumn);
             const groupCounts = metadata.reduce((counts, item) => {
                 const key = `${item.apparatus}::${item.categoryKey}`;
                 counts.set(key, (counts.get(key) || 0) + 1);
@@ -11287,7 +11377,7 @@
                     const count = groupCounts.get(groupKey) || 0;
                     rows.push([{
                         content: `${meta.apparatusLabel} — ${meta.category} (${count})`,
-                        colSpan: 9,
+                        colSpan: showBonus ? 10 : 9,
                         styles: {
                             fillColor: color,
                             textColor: [255, 255, 255],
@@ -11300,7 +11390,7 @@
                 }
                 const item = itemsByKey.get(meta.key);
                 if (!item) return;
-                rows.push([
+                const row = [
                     item.name,
                     {
                         content: meta.programLabel,
@@ -11311,14 +11401,24 @@
                             halign: 'center'
                         }
                     },
-                    formatMovementScoringRowsText(meta.scoringRows),
+                    formatMovementScoringValuesText(meta.scoringRows)
+                ];
+                if (showBonus) row.push({
+                        content: formatMovementScoringBonusesText(meta.scoringRows),
+                        styles: {
+                            textColor: [220, 38, 38],
+                            fontStyle: 'bold'
+                        }
+                    });
+                row.push(
                     meta.apparatusLabel,
                     getProgressionFamilyQualityText(item),
                     item.status === 'not_performed' ? 'X' : '',
                     item.status === 'studied' ? 'X' : '',
                     item.status === 'in_progress' ? 'X' : '',
                     item.status === 'acquired' ? 'X' : ''
-                ]);
+                );
+                rows.push(row);
             });
             return rows;
         }
@@ -11338,6 +11438,8 @@
             const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
             if (typeof doc.autoTable !== 'function') throw new Error('Le module de tableau PDF est indisponible.');
             const summary = calculateProgressionSummary(items);
+            const includeBonusColumn = getProgressionEvaluationPdfItems(items, program)
+                .some(meta => hasMovementScoringBonus(meta.scoringRows));
             const apparatusLabels = Array.isArray(selectedApparatusLabels) ? selectedApparatusLabels.filter(Boolean) : [];
             const title = apparatusLabels.length && apparatusLabels.length < PROGRESSION_APPARATUS.length
                 ? `Progression - ${apparatusLabels.join(', ')}`
@@ -11393,21 +11495,43 @@
 
             doc.autoTable({
                 startY: classificationWarnings.length ? 126 : 121,
-                head: [["Nom de l'élément", 'Programme', 'Valeur / bonification', 'Agrès', 'Famille(s) et qualité', 'Non réalisé', 'Étudié', 'En cours', 'Acquis']],
-                body: buildGroupedProgressionPdfTableRows(items, program),
+                head: [[
+                    "Nom de l'élément",
+                    'Programme',
+                    'Valeur',
+                    ...(includeBonusColumn ? ['Bonification'] : []),
+                    'Agrès',
+                    'Famille(s) et qualité',
+                    'Non réalisé',
+                    'Étudié',
+                    'En cours',
+                    'Acquis'
+                ]],
+                body: buildGroupedProgressionPdfTableRows(items, program, includeBonusColumn),
                 theme: 'grid',
                 styles: {fontSize: 6.3, cellPadding: 1.5, valign: 'middle', lineColor: [209, 213, 219], lineWidth: 0.2},
                 headStyles: {fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold', halign: 'center'},
-                columnStyles: {
-                    0: {cellWidth: 25, halign: 'left', fontStyle: 'bold'},
+                columnStyles: includeBonusColumn ? {
+                    0: {cellWidth: 23, halign: 'left', fontStyle: 'bold'},
+                    1: {cellWidth: 12, halign: 'center', fontStyle: 'bold'},
+                    2: {cellWidth: 24, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]},
+                    3: {cellWidth: 20, halign: 'left', fontStyle: 'bold', textColor: [220, 38, 38]},
+                    4: {cellWidth: 12, halign: 'left'},
+                    5: {cellWidth: 25, halign: 'left'},
+                    6: {cellWidth: 16, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                    7: {cellWidth: 16, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                    8: {cellWidth: 16, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                    9: {cellWidth: 16, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                } : {
+                    0: {cellWidth: 27, halign: 'left', fontStyle: 'bold'},
                     1: {cellWidth: 13, halign: 'center', fontStyle: 'bold'},
-                    2: {cellWidth: 28, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]},
+                    2: {cellWidth: 29, halign: 'left', fontStyle: 'bold', textColor: [107, 33, 168]},
                     3: {cellWidth: 13, halign: 'left'},
-                    4: {cellWidth: 29, halign: 'left'},
-                    5: {cellWidth: 18, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
-                    6: {cellWidth: 18, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
-                    7: {cellWidth: 18, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
-                    8: {cellWidth: 18, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
+                    4: {cellWidth: 34, halign: 'left'},
+                    5: {cellWidth: 16, halign: 'center', textColor: [220, 38, 38], fontStyle: 'bold'},
+                    6: {cellWidth: 16, halign: 'center', textColor: [37, 99, 235], fontStyle: 'bold'},
+                    7: {cellWidth: 16, halign: 'center', textColor: [217, 119, 6], fontStyle: 'bold'},
+                    8: {cellWidth: 16, halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold'}
                 },
                 margin: getPdfPrintSafeTableMargins(),
                 showHead: 'everyPage',
@@ -12148,7 +12272,10 @@
             return apparatuses.map(apparatus => {
                 const definition = PROGRESSION_APPARATUS.find(entry => entry.key === apparatus);
                 const scoring = getCustomSigleScoring(item, apparatus);
-                return `${definition ? definition.label : apparatus} : V ${scoring.movementValue === null ? '—' : formatMovementScoringValue(scoring.movementValue)} · B ${formatMovementScoringValue(scoring.bonusValue)}`;
+                const value = `${definition ? definition.label : apparatus} : V ${scoring.movementValue === null ? '-' : formatMovementScoringValue(scoring.movementValue)}`;
+                return Number(scoring.bonusValue) > 0
+                    ? `${value} - Bon. +${formatMovementScoringValue(scoring.bonusValue)}`
+                    : value;
             }).join(' | ') || 'Valeur non renseignée';
         }
 
@@ -12178,14 +12305,44 @@
 
         function formatMovementScoringRow(row) {
             if (!row) return 'Valeur non renseignée';
+            const valueText = formatMovementScoringValueRow(row);
+            const bonusText = formatMovementScoringBonusOnly(row);
+            return bonusText ? `${valueText} - ${bonusText}` : valueText;
+        }
+
+        function formatMovementScoringValueRow(row) {
+            if (!row) return 'Valeur non renseignée';
             const value = row.movementValue === null ? '-' : formatMovementScoringValue(row.movementValue);
             const valueCondition = row.program === 'federal_b' && Number(row.movementValue) >= 0.8 ? ' (10+)' : '';
-            const bonusCondition = row.program === 'federal_b' && Number(row.bonusValue) > 0 ? ' (10+)' : '';
-            return `${row.shortLabel} : V ${value}${valueCondition} - Bon. ${formatMovementScoringValue(row.bonusValue)}${bonusCondition}`;
+            return `${row.shortLabel} : V ${value}${valueCondition}`;
+        }
+
+        function formatMovementScoringBonusOnly(row) {
+            const bonus = Number(row && row.bonusValue);
+            if (!(bonus > 0)) return '';
+            const bonusCondition = row.program === 'federal_b' ? ' (10+)' : '';
+            return `Bon. +${formatMovementScoringValue(bonus)}${bonusCondition}`;
+        }
+
+        function formatMovementScoringBonusRow(row) {
+            const bonusText = formatMovementScoringBonusOnly(row);
+            return bonusText ? `${row.shortLabel} : ${bonusText}` : '';
         }
 
         function formatMovementScoringRowsText(rows) {
             return (Array.isArray(rows) ? rows : []).map(formatMovementScoringRow).join(' / ') || 'Valeur non renseignée';
+        }
+
+        function formatMovementScoringValuesText(rows) {
+            return (Array.isArray(rows) ? rows : []).map(formatMovementScoringValueRow).join(' / ') || 'Valeur non renseignée';
+        }
+
+        function formatMovementScoringBonusesText(rows) {
+            return (Array.isArray(rows) ? rows : []).map(formatMovementScoringBonusRow).filter(Boolean).join(' / ');
+        }
+
+        function hasMovementScoringBonus(rows) {
+            return (Array.isArray(rows) ? rows : []).some(row => Number(row && row.bonusValue) > 0);
         }
 
         function renderMovementScoringRowsHtml(rows, compact = false) {
@@ -12195,7 +12352,8 @@
                 const classes = style
                     ? `${style.borderClass} ${style.backgroundClass} ${style.textClass}`
                     : 'border-slate-200 bg-slate-50 text-slate-600';
-                return `<span class="rounded border px-1 py-0.5 ${compact ? 'text-[6.5px]' : 'text-[8px]'} font-bold ${classes}">${escapeHtml(formatMovementScoringRow(row))}</span>`;
+                const bonusText = formatMovementScoringBonusRow(row);
+                return `<span class="inline-flex flex-wrap items-center gap-1"><span class="rounded border px-1 py-0.5 ${compact ? 'text-[6.5px]' : 'text-[8px]'} font-bold ${classes}">${escapeHtml(formatMovementScoringValueRow(row))}</span>${bonusText ? `<span class="rounded border border-red-200 bg-red-50 px-1 py-0.5 ${compact ? 'text-[6.5px]' : 'text-[8px]'} font-black text-red-600">${escapeHtml(bonusText)}</span>` : ''}</span>`;
             }).join('')}</span>`;
         }
 
@@ -12611,6 +12769,7 @@
             const scores = programs.map(program => calculateMovementStartScore(currentContent, program));
             const totalOutput = document.getElementById('movement-start-score');
             const movementOutput = document.getElementById('movement-value-total');
+            const bonusRow = document.getElementById('movement-bonus-row');
             const bonusOutput = document.getElementById('movement-bonus-total');
             const artisticRow = document.getElementById('movement-artistic-bonus-row');
             const artisticOutput = document.getElementById('movement-artistic-bonus-total');
@@ -12620,18 +12779,22 @@
                 const label = MOVEMENT_PROGRAM_STYLES[score.program] && MOVEMENT_PROGRAM_STYLES[score.program].shortLabel || '';
                 return `${programs.length > 1 ? `${label} ` : ''}${formatMovementScoringValue(score[field])}`;
             }).join(' / ');
+            const formatPositiveScoreField = field => scores.filter(score => Number(score[field]) > 0).map(score => {
+                const label = MOVEMENT_PROGRAM_STYLES[score.program] && MOVEMENT_PROGRAM_STYLES[score.program].shortLabel || '';
+                return `${programs.length > 1 ? `${label} ` : ''}+${formatMovementScoringValue(score[field])}`;
+            }).join(' / ');
             if (totalOutput) {
                 totalOutput.textContent = formatScoreField('startScore');
                 totalOutput.classList.toggle('text-xl', programs.length === 1);
                 totalOutput.classList.toggle('text-sm', programs.length > 1);
             }
             if (movementOutput) movementOutput.textContent = formatScoreField('movementValueTotal');
-            if (bonusOutput) bonusOutput.textContent = formatScoreField('bonusTotal');
-            const hasArtisticCriteria = programs.some(program =>
-                getMovementBonusCriteriaDefinitions(program).some(item => item.kind === 'artistic')
-            );
-            if (artisticRow) artisticRow.classList.toggle('hidden', !hasArtisticCriteria);
-            if (artisticOutput) artisticOutput.textContent = formatScoreField('artisticBonusTotal');
+            const bonusText = formatPositiveScoreField('bonusTotal');
+            if (bonusRow) bonusRow.classList.toggle('hidden', !bonusText);
+            if (bonusOutput) bonusOutput.textContent = bonusText;
+            const artisticText = formatPositiveScoreField('artisticBonusTotal');
+            if (artisticRow) artisticRow.classList.toggle('hidden', !artisticText);
+            if (artisticOutput) artisticOutput.textContent = artisticText;
             if (context) {
                 if (programs.length > 1) context.textContent = 'Les notes A et B sont calculées séparément avec leurs propres valeurs et bonifications.';
                 else if (selectedProgram === 'federal_b') {
